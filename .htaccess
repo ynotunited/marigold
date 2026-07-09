@@ -3,6 +3,10 @@
         Options -MultiViews -Indexes
     </IfModule>
 
-    RewriteEngine on
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteEngine On
+
+    # Route directly to the application front controller when present.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
 </IfModule>
