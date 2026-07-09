@@ -1,0 +1,257 @@
+<?php // app/View/pages/public/about.php ?>
+
+<div class="pb-0 bg-[var(--bg-primary)] overflow-hidden">
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[75vh]">
+        <div class="absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1920&auto=format&fit=crop" class="w-full h-full object-cover" alt="Marigold Signature About Us">
+            <div class="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)] via-black/75 to-transparent"></div>
+        </div>
+        <!-- Spacer that pushes content below the fixed header -->
+        <div style="height: 120px;"></div>
+        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px] relative z-10 py-16">
+            <div class="max-w-2xl">
+                <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">About Us</span>
+                <h1 class="font-['Manrope'] text-5xl sm:text-7xl font-extrabold leading-tight mb-6">
+                    The Gift That<br><span class="text-[var(--gold)]">Changes</span> How a Brand Is Remembered.
+                </h1>
+                <p class="text-[var(--text-secondary)] text-lg leading-relaxed max-w-xl">
+                    Premium promotional merchandise and corporate gifts, built on one belief — that the right gift, delivered at the right moment, transforms how a brand is remembered.
+                </p>
+                <div class="flex gap-4 mt-10">
+                    <a href="/solutions" class="inline-flex items-center gap-2 bg-[var(--gold)] text-black font-bold px-8 py-4 rounded-xl hover:brightness-110 transition-all">
+                        Our Solutions <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                    <a href="/contact" class="inline-flex items-center gap-2 border border-[var(--border)] text-white font-semibold px-8 py-4 rounded-xl hover:border-[var(--gold)] transition-all">
+                        Get in Touch
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who We Are -->
+    <section class="py-20 sm:py-28 bg-[var(--surface)] border-y border-[var(--border)]">
+        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
+            <div class="flex flex-col lg:flex-row gap-16 items-start">
+
+                <div class="w-full lg:w-1/2">
+                    <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Our Story</span>
+                    <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-8 leading-tight">Who We Are</h2>
+                    <div class="space-y-5 text-[var(--text-secondary)] leading-relaxed text-base">
+                        <p>Marigold Signature Nigeria Limited is a premium promotional merchandise and corporate gifts company, built on one belief: that the right gift, delivered at the right moment, changes how a brand is remembered.</p>
+                        <p>We design, source, and deliver curated gift solutions and branded merchandise tailored to each client's objectives, helping organisations strengthen visibility, deepen audience connection, and leave impressions that outlast the moment.</p>
+                        <p>We also provide strategic event support, integrating branded products seamlessly into corporate campaigns and activations to ensure consistency and impact at every touchpoint.</p>
+                        <p>For over 15 years, Marigold Signature has partnered with some of Nigeria's most recognised organisations, bringing together innovation, precision, and operational excellence to deliver work that reflects the standards of the brands we serve. We do not simply supply products. We build the experiences behind them.</p>
+                    </div>
+                </div>
+
+                <div class="w-full lg:w-1/2 grid grid-cols-2 gap-4">
+                    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center hover:border-[var(--gold)] transition-colors">
+                        <div class="font-['Manrope'] text-5xl font-extrabold text-[var(--gold)] mb-2">15+</div>
+                        <div class="text-sm font-bold text-white uppercase tracking-wider mb-1">Years</div>
+                        <div class="text-[var(--text-secondary)] text-xs">Industry Experience</div>
+                    </div>
+                    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center hover:border-[var(--gold)] transition-colors">
+                        <div class="font-['Manrope'] text-5xl font-extrabold text-[var(--gold)] mb-2">500+</div>
+                        <div class="text-sm font-bold text-white uppercase tracking-wider mb-1">Clients</div>
+                        <div class="text-[var(--text-secondary)] text-xs">Corporate Partners</div>
+                    </div>
+                    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center hover:border-[var(--gold)] transition-colors">
+                        <div class="font-['Manrope'] text-5xl font-extrabold text-[var(--gold)] mb-2">250k+</div>
+                        <div class="text-sm font-bold text-white uppercase tracking-wider mb-1">Items</div>
+                        <div class="text-[var(--text-secondary)] text-xs">Delivered Nationwide</div>
+                    </div>
+                    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center hover:border-[var(--gold)] transition-colors">
+                        <div class="font-['Manrope'] text-5xl font-extrabold text-[var(--gold)] mb-2">99%</div>
+                        <div class="text-sm font-bold text-white uppercase tracking-wider mb-1">Retention</div>
+                        <div class="text-[var(--text-secondary)] text-xs">Client Satisfaction Rate</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Philosophy -->
+    <section class="py-20 sm:py-28">
+        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">OUR PHILOSOPHY</span>
+                <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-4">We get it right the first time — every time</h2>
+            </div>
+
+            <!-- Mission & Vision — side by side with clear styling -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <!-- Vision -->
+                <div class="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-10 hover:border-[var(--gold)] transition-colors">
+                    <div class="w-14 h-14 rounded-2xl bg-[var(--gold)]/10 flex items-center justify-center mb-6">
+                        <i data-lucide="eye" class="w-7 h-7 text-[var(--gold)]"></i>
+                    </div>
+                    <p class="text-[var(--gold)] text-xs font-bold tracking-widest uppercase mb-3">Vision</p>
+                    <h3 class="font-['Manrope'] text-2xl font-bold text-white mb-4">Leading the Industry</h3>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        To lead the industry in innovative promotional merchandise, delivering quality-driven branding solutions that elevate organisations and strengthen their market presence.
+                    </p>
+                </div>
+
+                <!-- Mission -->
+                <div class="bg-[var(--gold)] rounded-3xl p-10">
+                    <div class="w-14 h-14 rounded-2xl bg-black/20 flex items-center justify-center mb-6">
+                        <i data-lucide="target" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <p class="text-black/60 text-xs font-bold tracking-widest uppercase mb-3">Mission</p>
+                    <h3 class="font-['Manrope'] text-2xl font-bold text-black mb-4">Premium, Purposeful, Precise</h3>
+                    <p class="text-black/80 leading-relaxed">
+                        To design, source, and deliver premium promotional merchandise tailored to our clients' brand goals, combining innovation, quality craftsmanship, and reliable execution.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="py-20 sm:py-28 bg-[var(--surface)] border-t border-[var(--border)]">
+        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Why Choose Us</span>
+                <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-4">What Sets Us Apart</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <?php
+                $reasons = [
+                    ['icon' => 'award',       'title' => '20+ Years of Proven Excellence',  'desc' => 'Two decades of delivering first-class corporate events and merchandise across Nigeria and beyond.'],
+                    ['icon' => 'globe',        'title' => 'Global Sourcing Network',          'desc' => 'Direct partnerships with manufacturing facilities in China, Asia, and Europe with strict quality control.'],
+                    ['icon' => 'truck',        'title' => 'End-to-End Delivery',              'desc' => 'We own the entire process from concept to delivery, eliminating coordination gaps and ensuring accountability.'],
+                    ['icon' => 'shield-check', 'title' => 'Certified Quality Standards',     'desc' => 'RoHS, CE, and OEKO-TEX certified products. We deliver quality you can stake your brand on.'],
+                    ['icon' => 'handshake',    'title' => 'Bespoke Client Solutions',        'desc' => 'We listen deeply and design specifically. Every solution is tailored — never off-the-shelf.'],
+                    ['icon' => 'building-2',   'title' => 'Multinational Portfolio',         'desc' => 'MTN, Microsoft, MasterCard, Stanbic Bank, Virgin Atlantic, SAP — names that trust us with their brand.'],
+                ];
+                foreach ($reasons as $r): ?>
+                <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 hover:border-[var(--gold)] transition-all group">
+                    <div class="w-14 h-14 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--gold)] transition-colors">
+                        <i data-lucide="<?= $r['icon'] ?>" class="w-6 h-6 text-[var(--gold)] group-hover:text-black transition-colors"></i>
+                    </div>
+                    <h3 class="font-['Manrope'] text-lg font-bold text-white mb-3"><?= $r['title'] ?></h3>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed"><?= $r['desc'] ?></p>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- The EPIC Standard (Core Values) -->
+    <section class="py-20 sm:py-28">
+        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">CORE VALUES</span>
+                <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-4">The EPIC Standard</h2>
+                <p class="text-[var(--text-secondary)]">Four pillars that define everything we do.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-[var(--gold)]/30 rounded-2xl overflow-hidden max-w-5xl mx-auto">
+                <?php
+                $epic = [
+                    ['letter' => 'E', 'title' => 'Excellence',    'desc' => 'Every brief executed flawlessly, on brief, on budget, on time.'],
+                    ['letter' => 'P', 'title' => 'Professionalism','desc' => 'Disciplined process, dependable people, immaculate presentation.'],
+                    ['letter' => 'I', 'title' => 'Integrity',      'desc' => 'Honest counsel, transparent pricing, ethical sourcing — always.'],
+                    ['letter' => 'C', 'title' => 'Creativity',     'desc' => 'Original thinking that transforms every brief into a signature experience.'],
+                ];
+                foreach ($epic as $i => $e):
+                    $border = $i < count($epic) - 1 ? 'border-r border-[var(--gold)]/30' : '';
+                ?>
+                <div class="bg-[var(--card)] <?= $border ?> p-10 flex flex-col items-center text-center hover:bg-[var(--surface)] transition-colors group">
+                    <div class="text-7xl font-extrabold text-[var(--gold)]/20 group-hover:text-[var(--gold)]/40 transition-colors mb-4 font-['Manrope'] leading-none"><?= $e['letter'] ?></div>
+                    <h3 class="font-['Manrope'] font-bold text-lg text-white mb-3"><?= $e['title'] ?></h3>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed"><?= $e['desc'] ?></p>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trusted By -->
+    <section class="py-16 bg-[var(--surface)] border-t border-[var(--border)]">
+        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
+            <p class="text-center text-[var(--text-secondary)] text-sm font-semibold tracking-widest uppercase mb-10">Trusted By Nigeria's Most Recognised Brands</p>
+            <div class="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+
+                <!-- MTN -->
+                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
+                    <svg height="40" viewBox="0 0 200 67" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="200" height="67" rx="8" fill="#FFCB00"/>
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="42" fill="#000">MTN</text>
+                    </svg>
+                </div>
+
+                <!-- Microsoft -->
+                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
+                    <svg height="32" viewBox="0 0 108 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Windows logo grid -->
+                        <rect x="0" y="0" width="11" height="11" fill="#F25022"/>
+                        <rect x="12" y="0" width="11" height="11" fill="#7FBA00"/>
+                        <rect x="0" y="12" width="11" height="11" fill="#00A4EF"/>
+                        <rect x="12" y="12" width="11" height="11" fill="#FFB900"/>
+                        <!-- Microsoft wordmark -->
+                        <text x="27" y="17" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="600" fill="white">Microsoft</text>
+                    </svg>
+                </div>
+
+                <!-- Mastercard -->
+                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
+                    <svg height="40" viewBox="0 0 152 95" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="57" cy="47" r="40" fill="#EB001B"/>
+                        <circle cx="95" cy="47" r="40" fill="#F79E1B"/>
+                        <path d="M76 18.3C83.9 24.1 89 33.4 89 44s-5.1 19.9-13 25.7C68.1 63.9 63 54.6 63 44s5.1-19.9 13-25.7z" fill="#FF5F00"/>
+                    </svg>
+                </div>
+
+                <!-- Stanbic IBTC -->
+                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
+                    <svg height="36" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="0" y="8" width="6" height="24" fill="#009FE3"/>
+                        <rect x="9" y="0" width="6" height="40" fill="#009FE3"/>
+                        <rect x="18" y="8" width="6" height="24" fill="#009FE3"/>
+                        <text x="32" y="28" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="white">Stanbic IBTC</text>
+                    </svg>
+                </div>
+
+                <!-- Virgin Atlantic -->
+                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
+                    <svg height="36" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <text x="0" y="30" font-family="Georgia, serif" font-style="italic" font-size="26" font-weight="700" fill="#E01A22">virgin</text>
+                        <text x="98" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="2" fill="white">ATLANTIC</text>
+                    </svg>
+                </div>
+
+                <!-- SAP -->
+                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
+                    <svg height="36" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="40" rx="4" fill="#0070F2"/>
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="white">SAP</text>
+                    </svg>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 bg-[var(--gold)] text-black text-center">
+        <div class="container mx-auto px-4 max-w-3xl">
+            <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-6">Ready to elevate your brand?</h2>
+            <p class="text-black/80 text-lg mb-10">Let's discuss how Marigold Signature can create a bespoke merchandise program tailored to your organisation's unique needs and goals.</p>
+            <div class="flex flex-wrap gap-4 justify-center">
+                <a href="/quote" class="inline-flex items-center gap-2 bg-black text-white font-bold px-10 py-5 rounded-xl hover:bg-gray-900 transition-transform hover:-translate-y-1">
+                    Request a Corporate Quote <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                <a href="/contact" class="inline-flex items-center gap-2 border-2 border-black text-black font-bold px-10 py-5 rounded-xl hover:bg-black/10 transition-transform hover:-translate-y-1">
+                    Contact Us
+                </a>
+            </div>
+        </div>
+    </section>
+
+</div>

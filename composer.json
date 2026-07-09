@@ -1,0 +1,22 @@
+{
+    "name": "marigold/commerce-platform",
+    "description": "Premium Corporate Merchandise Platform",
+    "type": "project",
+    "require": {
+        "php": "^8.2",
+        "phpmailer/phpmailer": "^6.9",
+        "dompdf/dompdf": "^3.0",
+        "intervention/image": "^3.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
+}
