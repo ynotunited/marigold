@@ -9,7 +9,7 @@
         </a>
         <a href="/shop" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors <?php echo (strpos($_SERVER['REQUEST_URI'], '/shop') !== false) ? 'text-[var(--gold)]' : ''; ?>">
             <i data-lucide="layout-grid" class="w-5 h-5 mb-1"></i>
-            <span class="text-[10px] font-semibold">Shop</span>
+            <span class="text-[10px] font-semibold">Sales</span>
         </a>
         <a href="/wishlist" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors relative <?php echo (strpos($_SERVER['REQUEST_URI'], '/wishlist') !== false) ? 'text-[var(--gold)]' : ''; ?>">
             <i data-lucide="heart" class="w-5 h-5 mb-1"></i>

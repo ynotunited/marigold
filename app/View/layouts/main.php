@@ -2,7 +2,7 @@
 // app/View/layouts/main.php
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="overflow-x: hidden;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -73,7 +73,7 @@
     <!-- Custom Animations JS -->
     <script src="/assets/js/animations.js" defer></script>
 </head>
-<body class="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen flex flex-col antialiased">
+<body class="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen flex flex-col antialiased overflow-x-hidden">
     
     <?php \App\Core\View::render('components/header') ?>
 

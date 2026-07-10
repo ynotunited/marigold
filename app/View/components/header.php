@@ -2,22 +2,26 @@
 // app/View/components/header.php
 ?>
 <header 
-    x-data="{ scrolled: false, mobileMenuOpen: false, searchOpen: false, cartOpen: false }" 
+    x-data="{ scrolled: false, mobileMenuOpen: false, searchOpen: false, cartOpen: false, announcementOpen: true }" 
     @scroll.window="scrolled = (window.pageYOffset > 50)"
-    :class="{ 'bg-[var(--bg-primary)]/90 backdrop-blur-md shadow-md py-4': scrolled, 'bg-transparent py-6': !scrolled }"
-    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent"
+    :class="{ 'bg-[var(--bg-primary)]/95 backdrop-blur-md shadow-md py-4 border-[var(--border)]': scrolled, 'bg-transparent py-5 border-transparent': !scrolled }"
+    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b"
     :style="scrolled ? 'border-bottom-color: var(--border)' : ''"
 >
     <!-- Announcement Bar -->
-    <div class="bg-[var(--gold)] text-black text-xs font-semibold py-2 px-4 text-center absolute top-0 w-full transition-transform duration-300 origin-top"
+    <div x-show="announcementOpen"
+         class="bg-[var(--gold)] text-black text-xs font-semibold py-2 px-4 text-center absolute top-0 w-full transition-transform duration-300 origin-top flex items-center justify-center"
          :class="{ 'scale-y-0': scrolled, 'scale-y-100': !scrolled }"
          style="height: 40px; line-height: 24px;">
-        Complimentary shipping on corporate orders over ₦500,000
+        <span class="flex-grow">Complimentary shipping on corporate orders over ₦500,000</span>
+        <button @click="announcementOpen = false" class="absolute right-4 hover:opacity-70 transition-opacity" aria-label="Close Announcement">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
     </div>
 
     <!-- Main Header -->
-    <div class="container mx-auto px-4 sm:px-8 max-w-[1440px] flex items-center justify-between"
-         :class="{ 'mt-0': scrolled, 'mt-[40px]': !scrolled }">
+    <div class="container mx-auto px-4 sm:px-8 max-w-[1440px] flex items-center justify-between gap-6 transition-all duration-300"
+         :class="{ 'mt-0': scrolled || !announcementOpen, 'mt-[40px]': !scrolled && announcementOpen }">
          
         <!-- Mobile Left: Hamburger -->
         <button @click="mobileMenuOpen = true" class="lg:hidden text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
@@ -25,13 +29,13 @@
         </button>
 
         <!-- Logo -->
-        <a href="/" class="flex items-center">
-            <img src="/ms-logo-removebg-preview.png" alt="Marigold Signature" class="h-8 w-auto max-w-[160px] object-contain">
+        <a href="/" class="flex items-center gap-3 shrink-0">
+            <img src="/ms-logo-removebg-preview.png" alt="Marigold Signature" style="height: 46px; width: auto; max-width: 160px; object-fit: contain;">
         </a>
 
         <!-- Desktop Navigation -->
-        <nav class="hidden lg:flex items-center gap-8 font-medium text-sm text-[var(--text-secondary)]">
-            <a href="/shop" class="hover:text-[var(--gold)] transition-colors">Shop</a>
+        <nav class="hidden lg:flex items-center gap-8 font-medium text-[15px] text-[var(--text-secondary)]">
+            <a href="/shop" class="hover:text-white transition-colors">Sales</a>
             
             <!-- Events Dropdown -->
             <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
@@ -64,16 +68,17 @@
         </nav>
 
         <!-- Right Icons -->
-        <div class="flex items-center gap-5">
+        <div class="flex items-center gap-4 sm:gap-5">
+            <a href="/login" class="hidden xl:flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-white transition-colors text-sm">
+                <i data-lucide="user-round" class="w-4 h-4"></i>
+                <span>Login / Register</span>
+            </a>
             <button @click="searchOpen = true" class="text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
                 <i data-lucide="search" class="w-5 h-5"></i>
             </button>
             <a href="/wishlist" class="hidden lg:block relative text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
                 <i data-lucide="heart" class="w-5 h-5"></i>
                 <span class="absolute -top-2 -right-2 bg-[var(--gold)] text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
-            </a>
-            <a href="/account" class="hidden lg:block text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
-                <i data-lucide="user" class="w-5 h-5"></i>
             </a>
             <button @click="cartOpen = true" class="relative text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
                 <i data-lucide="shopping-bag" class="w-5 h-5"></i>
@@ -105,7 +110,7 @@
                 </div>
 
                 <nav class="flex flex-col gap-1 text-lg font-['Manrope'] flex-grow overflow-y-auto">
-                    <a href="/shop" class="px-2 py-3 hover:text-[var(--gold)] transition-colors">Shop</a>
+                    <a href="/shop" class="px-2 py-3 hover:text-[var(--gold)] transition-colors">Sales</a>
 
                     <!-- Events accordion -->
                     <div x-data="{ open: false }">

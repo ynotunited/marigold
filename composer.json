@@ -3,7 +3,7 @@
     "description": "Premium Corporate Merchandise Platform",
     "type": "project",
     "require": {
-        "php": "^8.2",
+        "php": "^8.1",
         "phpmailer/phpmailer": "^6.9",
         "dompdf/dompdf": "^3.0",
         "intervention/image": "^3.9"

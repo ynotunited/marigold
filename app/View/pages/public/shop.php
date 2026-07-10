@@ -11,18 +11,18 @@ $showBestSeller  = !empty($_GET['bestseller']);
 
 // Demo product data (will come from DB later)
 $products = [
-    ['id'=>1,  'name'=>'Executive Leather Notebook',     'price'=>24500, 'sale_price'=>null,  'badge'=>'New',     'category'=>'Stationery',    'brand'=>'Moleskine',  'stock'=>true,  'img1'=>'https://picsum.photos/seed/notebook1/600/600',  'img2'=>'https://picsum.photos/seed/notebook2/600/600'],
-    ['id'=>2,  'name'=>'Branded Vacuum Flask 1L',         'price'=>18000, 'sale_price'=>14500, 'badge'=>'Sale',    'category'=>'Drinkware',     'brand'=>'Thermos',    'stock'=>true,  'img1'=>'https://picsum.photos/seed/flask1/600/600',     'img2'=>'https://picsum.photos/seed/flask2/600/600'],
-    ['id'=>3,  'name'=>'Slim Metal Pen Set (3pcs)',        'price'=>12000, 'sale_price'=>null,  'badge'=>'',        'category'=>'Stationery',    'brand'=>'Cross',      'stock'=>true,  'img1'=>'https://picsum.photos/seed/pens1/600/600',      'img2'=>'https://picsum.photos/seed/pens2/600/600'],
-    ['id'=>4,  'name'=>'USB-C Hub & Organiser',           'price'=>35000, 'sale_price'=>null,  'badge'=>'New',     'category'=>'Tech',          'brand'=>'Anker',      'stock'=>true,  'img1'=>'https://picsum.photos/seed/usbc1/600/600',      'img2'=>'https://picsum.photos/seed/usbc2/600/600'],
-    ['id'=>5,  'name'=>'Premium Cotton Polo Shirt',        'price'=>9500,  'sale_price'=>null,  'badge'=>'',        'category'=>'Apparel',       'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/polo1/600/600',      'img2'=>'https://picsum.photos/seed/polo2/600/600'],
-    ['id'=>6,  'name'=>'Wireless Charging Pad',            'price'=>28000, 'sale_price'=>22000, 'badge'=>'Sale',    'category'=>'Tech',          'brand'=>'Anker',      'stock'=>false, 'img1'=>'https://picsum.photos/seed/charge1/600/600',    'img2'=>'https://picsum.photos/seed/charge2/600/600'],
-    ['id'=>7,  'name'=>'Branded Canvas Tote Bag',          'price'=>7500,  'sale_price'=>null,  'badge'=>'',        'category'=>'Bags',          'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/tote1/600/600',      'img2'=>'https://picsum.photos/seed/tote2/600/600'],
-    ['id'=>8,  'name'=>'Executive Laptop Backpack',        'price'=>55000, 'sale_price'=>null,  'badge'=>'Popular', 'category'=>'Bags',          'brand'=>'Targus',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/laptop1/600/600',    'img2'=>'https://picsum.photos/seed/laptop2/600/600'],
-    ['id'=>9,  'name'=>'Leatherette Card Holder',          'price'=>6500,  'sale_price'=>null,  'badge'=>'New',     'category'=>'Accessories',   'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/cardholder1/600/600','img2'=>'https://picsum.photos/seed/cardholder2/600/600'],
-    ['id'=>10, 'name'=>'Bamboo Desk Organiser',            'price'=>15000, 'sale_price'=>null,  'badge'=>'',        'category'=>'Stationery',    'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/bamboo1/600/600',    'img2'=>'https://picsum.photos/seed/bamboo2/600/600'],
-    ['id'=>11, 'name'=>'Smart Power Bank 20000mAh',        'price'=>42000, 'sale_price'=>36000, 'badge'=>'Sale',    'category'=>'Tech',          'brand'=>'Anker',      'stock'=>true,  'img1'=>'https://picsum.photos/seed/power1/600/600',     'img2'=>'https://picsum.photos/seed/power2/600/600'],
-    ['id'=>12, 'name'=>'Branded Cap Collection',           'price'=>5500,  'sale_price'=>null,  'badge'=>'',        'category'=>'Apparel',       'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/cap1/600/600',       'img2'=>'https://picsum.photos/seed/cap2/600/600'],
+    ['id'=>1,  'slug'=>'executive-leather-notebook',     'name'=>'Executive Leather Notebook',     'price'=>24500, 'sale_price'=>null,  'badge'=>'New',     'category'=>'Stationery',    'brand'=>'Moleskine',  'stock'=>true,  'img1'=>'https://picsum.photos/seed/notebook1/600/600',  'img2'=>'https://picsum.photos/seed/notebook2/600/600'],
+    ['id'=>2,  'slug'=>'branded-vacuum-flask-1l',         'name'=>'Branded Vacuum Flask 1L',         'price'=>18000, 'sale_price'=>14500, 'badge'=>'Sale',    'category'=>'Drinkware',     'brand'=>'Thermos',    'stock'=>true,  'img1'=>'https://picsum.photos/seed/flask1/600/600',     'img2'=>'https://picsum.photos/seed/flask2/600/600'],
+    ['id'=>3,  'slug'=>'slim-metal-pen-set',               'name'=>'Slim Metal Pen Set (3pcs)',        'price'=>12000, 'sale_price'=>null,  'badge'=>'',        'category'=>'Stationery',    'brand'=>'Cross',      'stock'=>true,  'img1'=>'https://picsum.photos/seed/pens1/600/600',      'img2'=>'https://picsum.photos/seed/pens2/600/600'],
+    ['id'=>4,  'slug'=>'usb-c-hub-organiser',             'name'=>'USB-C Hub & Organiser',           'price'=>35000, 'sale_price'=>null,  'badge'=>'New',     'category'=>'Tech',          'brand'=>'Anker',      'stock'=>true,  'img1'=>'https://picsum.photos/seed/usbc1/600/600',      'img2'=>'https://picsum.photos/seed/usbc2/600/600'],
+    ['id'=>5,  'slug'=>'premium-cotton-polo-shirt',        'name'=>'Premium Cotton Polo Shirt',        'price'=>9500,  'sale_price'=>null,  'badge'=>'',        'category'=>'Apparel',       'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/polo1/600/600',      'img2'=>'https://picsum.photos/seed/polo2/600/600'],
+    ['id'=>6,  'slug'=>'wireless-charging-pad',            'name'=>'Wireless Charging Pad',            'price'=>28000, 'sale_price'=>22000, 'badge'=>'Sale',    'category'=>'Tech',          'brand'=>'Anker',      'stock'=>false, 'img1'=>'https://picsum.photos/seed/charge1/600/600',    'img2'=>'https://picsum.photos/seed/charge2/600/600'],
+    ['id'=>7,  'slug'=>'branded-canvas-tote-bag',          'name'=>'Branded Canvas Tote Bag',          'price'=>7500,  'sale_price'=>null,  'badge'=>'',        'category'=>'Bags',          'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/tote1/600/600',      'img2'=>'https://picsum.photos/seed/tote2/600/600'],
+    ['id'=>8,  'slug'=>'executive-laptop-backpack',        'name'=>'Executive Laptop Backpack',        'price'=>55000, 'sale_price'=>null,  'badge'=>'Popular', 'category'=>'Bags',          'brand'=>'Targus',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/laptop1/600/600',    'img2'=>'https://picsum.photos/seed/laptop2/600/600'],
+    ['id'=>9,  'slug'=>'leatherette-card-holder',          'name'=>'Leatherette Card Holder',          'price'=>6500,  'sale_price'=>null,  'badge'=>'New',     'category'=>'Accessories',   'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/cardholder1/600/600','img2'=>'https://picsum.photos/seed/cardholder2/600/600'],
+    ['id'=>10, 'slug'=>'bamboo-desk-organiser',            'name'=>'Bamboo Desk Organiser',            'price'=>15000, 'sale_price'=>null,  'badge'=>'',        'category'=>'Stationery',    'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/bamboo1/600/600',    'img2'=>'https://picsum.photos/seed/bamboo2/600/600'],
+    ['id'=>11, 'slug'=>'smart-power-bank-20000mah',        'name'=>'Smart Power Bank 20000mAh',        'price'=>42000, 'sale_price'=>36000, 'badge'=>'Sale',    'category'=>'Tech',          'brand'=>'Anker',      'stock'=>true,  'img1'=>'https://picsum.photos/seed/power1/600/600',     'img2'=>'https://picsum.photos/seed/power2/600/600'],
+    ['id'=>12, 'slug'=>'branded-cap-collection',           'name'=>'Branded Cap Collection',           'price'=>5500,  'sale_price'=>null,  'badge'=>'',        'category'=>'Apparel',       'brand'=>'Custom',     'stock'=>true,  'img1'=>'https://picsum.photos/seed/cap1/600/600',       'img2'=>'https://picsum.photos/seed/cap2/600/600'],
 ];
 
 $categories = ['Drinkware', 'Technology & Accessories', 'Bags & Travel', 'Apparels', 'Corporate Gifts', 'Souvenirs', 'Seasonal Gifts'];
@@ -208,12 +208,14 @@ $shown   = min($total, $perPage);
                      data-preview-name="<?= htmlspecialchars($p['name']) ?>">
                     <!-- Image container -->
                     <div class="relative aspect-square overflow-hidden bg-[var(--surface)]">
+                        <a href="/product/<?= $p['slug'] ?>" class="block absolute inset-0" tabindex="-1" aria-hidden="true">
                         <img src="<?= $p['img1'] ?>" alt="<?= htmlspecialchars($p['name']) ?>"
                              class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0" loading="lazy"
                              onerror="this.onerror=null;this.src='https://placehold.co/600x600/191919/444444?text=No+Image'">
                         <img src="<?= $p['img2'] ?>" alt="<?= htmlspecialchars($p['name']) ?> alt view"
                              class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0 group-hover:opacity-100" loading="lazy"
                              onerror="this.onerror=null;this.src='https://placehold.co/600x600/191919/444444?text=No+Image'">
+                        </a>
 
                         <!-- Badge -->
                         <?php if ($p['badge']): ?>
@@ -241,7 +243,7 @@ $shown   = min($total, $perPage);
                             <button class="flex-1 bg-[var(--gold)] text-black text-xs font-bold py-2.5 rounded-xl hover:bg-[#D4AF37] transition-colors">
                                 Add to Cart
                             </button>
-                            <a href="/quote-request?product_id=<?= $p['id'] ?>" class="px-3 bg-black/70 backdrop-blur-sm border border-[var(--border)] text-white text-xs font-bold rounded-xl hover:bg-[var(--gold)] hover:text-black hover:border-[var(--gold)] transition-colors flex items-center">
+                            <a href="/quote-request?product=<?= $p['slug'] ?>" class="px-3 bg-black/70 backdrop-blur-sm border border-[var(--border)] text-white text-xs font-bold rounded-xl hover:bg-[var(--gold)] hover:text-black hover:border-[var(--gold)] transition-colors flex items-center">
                                 Quote
                             </a>
                         </div>
@@ -251,7 +253,9 @@ $shown   = min($total, $perPage);
                     <!-- Product info -->
                     <div class="p-4">
                         <p class="text-[var(--text-muted)] text-[10px] uppercase tracking-wide mb-1"><?= htmlspecialchars($p['category']) ?></p>
-                        <h3 class="text-sm font-semibold leading-snug mb-2 line-clamp-2"><?= htmlspecialchars($p['name']) ?></h3>
+                        <a href="/product/<?= $p['slug'] ?>" class="block mb-2">
+                            <h3 class="text-sm font-semibold leading-snug line-clamp-2 hover:text-[var(--gold)] transition-colors"><?= htmlspecialchars($p['name']) ?></h3>
+                        </a>
                         <div class="flex items-center gap-2">
                             <span class="font-['Manrope'] font-bold text-[var(--gold)]">
                                 ₦<?= number_format($p['sale_price'] ?? $p['price']) ?>

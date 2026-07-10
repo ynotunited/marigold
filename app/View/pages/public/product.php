@@ -29,10 +29,10 @@ $product = [
 ];
 
 $related = [
-    ['id'=>2, 'name'=>'Branded Vacuum Flask 1L', 'price'=>18000, 'img'=>'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop'],
-    ['id'=>3, 'name'=>'USB-C Hub & Organiser', 'price'=>35000, 'img'=>'https://images.unsplash.com/photo-1612815292673-ab2ad8a5a95b?q=80&w=600&auto=format&fit=crop'],
-    ['id'=>4, 'name'=>'Executive Laptop Backpack', 'price'=>55000, 'img'=>'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop'],
-    ['id'=>5, 'name'=>'Smart Power Bank 20000mAh', 'price'=>42000, 'img'=>'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?q=80&w=600&auto=format&fit=crop'],
+    ['id'=>2, 'slug'=>'branded-vacuum-flask-1l',      'name'=>'Branded Vacuum Flask 1L',     'price'=>18000, 'img'=>'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop'],
+    ['id'=>3, 'slug'=>'usb-c-hub-organiser',           'name'=>'USB-C Hub & Organiser',       'price'=>35000, 'img'=>'https://images.unsplash.com/photo-1612815292673-ab2ad8a5a95b?q=80&w=600&auto=format&fit=crop'],
+    ['id'=>4, 'slug'=>'executive-laptop-backpack',     'name'=>'Executive Laptop Backpack',   'price'=>55000, 'img'=>'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop'],
+    ['id'=>5, 'slug'=>'smart-power-bank-20000mah',     'name'=>'Smart Power Bank 20000mAh',   'price'=>42000, 'img'=>'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?q=80&w=600&auto=format&fit=crop'],
 ];
 ?>
 
@@ -60,7 +60,7 @@ $related = [
 }
 </script>
 
-<div class="pt-24 pb-12 px-4 sm:px-8 bg-[var(--bg-primary)]">
+<div id="product-page-content" class="pb-12 px-4 sm:px-8 bg-[var(--bg-primary)]">
     <div class="container mx-auto max-w-[1440px]">
         <!-- Breadcrumbs -->
         <nav class="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-8">
@@ -322,19 +322,20 @@ $related = [
         
         <div class="flex sm:grid sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 sm:mx-0 px-4 sm:px-0">
             <?php foreach ($related as $p): ?>
-                <div class="group relative bg-[var(--card)] rounded-2xl overflow-hidden border border-[var(--border)] hover:border-[var(--gold)]/50 transition-all duration-300 hover:-translate-y-1 w-[280px] sm:w-auto flex-shrink-0 snap-start">
+                <a href="/product/<?= $p['slug'] ?>"
+                   class="group relative bg-[var(--card)] rounded-2xl overflow-hidden border border-[var(--border)] hover:border-[var(--gold)]/50 transition-all duration-300 hover:-translate-y-1 w-[280px] sm:w-auto flex-shrink-0 snap-start block">
                     <div class="aspect-square overflow-hidden bg-[var(--surface)] relative">
-                        <img src="<?= $p['img'] ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                        <img src="<?= $p['img'] ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                         <!-- Quick Actions -->
                         <div class="absolute bottom-0 left-0 right-0 p-3 flex gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                            <button class="flex-1 bg-[var(--gold)] text-black text-xs font-bold py-2.5 rounded-xl hover:bg-[#D4AF37]">Add</button>
+                            <button class="flex-1 bg-[var(--gold)] text-black text-xs font-bold py-2.5 rounded-xl hover:bg-[#D4AF37]" onclick="event.preventDefault()">Add</button>
                         </div>
                     </div>
                     <div class="p-4">
-                        <h3 class="text-sm font-semibold mb-2 line-clamp-1"><?= htmlspecialchars($p['name']) ?></h3>
+                        <h3 class="text-sm font-semibold mb-2 line-clamp-1 group-hover:text-[var(--gold)] transition-colors"><?= htmlspecialchars($p['name']) ?></h3>
                         <p class="font-['Manrope'] font-bold text-[var(--gold)]">₦<?= number_format($p['price']) ?></p>
                     </div>
-                </div>
+                </a>
             <?php endforeach; ?>
         </div>
     </div>
@@ -354,3 +355,25 @@ $related = [
     .no-scrollbar { scrollbar-width: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
 </style>
+
+<script>
+    // Dynamically offset page content below the fixed header
+    function setProductPageOffset() {
+        const header = document.querySelector('header');
+        const content = document.getElementById('product-page-content');
+        if (header && content) {
+            content.style.paddingTop = (header.offsetHeight + 32) + 'px';
+        }
+    }
+
+    // Run immediately, after fonts/images load, and on resize
+    setProductPageOffset();
+    window.addEventListener('load', setProductPageOffset);
+    window.addEventListener('resize', setProductPageOffset);
+
+    // Also re-run after Alpine has had a tick to render the announcement bar
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(setProductPageOffset, 50);
+        setTimeout(setProductPageOffset, 200);
+    });
+</script>

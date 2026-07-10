@@ -175,68 +175,73 @@
     <!-- Trusted By -->
     <section class="py-16 bg-[var(--surface)] border-t border-[var(--border)]">
         <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
-            <p class="text-center text-[var(--text-secondary)] text-sm font-semibold tracking-widest uppercase mb-10">Trusted By Nigeria's Most Recognised Brands</p>
-            <div class="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+            <p class="text-center text-[var(--text-secondary)] text-sm font-semibold tracking-widest uppercase mb-12">Trusted By Nigeria's Most Recognised Brands</p>
 
-                <!-- MTN -->
-                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
-                    <svg height="40" viewBox="0 0 200 67" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="200" height="67" rx="8" fill="#FFCB00"/>
-                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="42" fill="#000">MTN</text>
-                    </svg>
+            <div class="relative overflow-hidden">
+                <!-- Fade edges -->
+                <div class="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none" style="background: linear-gradient(to right, var(--surface), transparent);"></div>
+                <div class="absolute right-0 top-0 h-full w-20 z-10 pointer-events-none" style="background: linear-gradient(to left, var(--surface), transparent);"></div>
+
+                <div class="clients-track flex items-center gap-16">
+                    <?php
+                    $clients = [
+                        ['file' => 'Afren-Nigeria.png',          'name' => 'Afren Nigeria'],
+                        ['file' => 'Airtel.jpg',                 'name' => 'Airtel'],
+                        ['file' => 'FM-97.1.png',                'name' => 'FM 97.1'],
+                        ['file' => 'Napims.png',                 'name' => 'Napims'],
+                        ['file' => 'nigerian-stock-exchange.jpg', 'name' => 'Nigerian Stock Exchange'],
+                        ['file' => 'Sahcol.png',                 'name' => 'Sahcol'],
+                        ['file' => 'SAP_logo.png',               'name' => 'SAP'],
+                        ['file' => 'sprite.png',                 'name' => 'Sprite'],
+                        ['file' => 'virgin-atlantic.jpeg',       'name' => 'Virgin Atlantic'],
+                        // Duplicate for seamless loop
+                        ['file' => 'Afren-Nigeria.png',          'name' => 'Afren Nigeria'],
+                        ['file' => 'Airtel.jpg',                 'name' => 'Airtel'],
+                        ['file' => 'FM-97.1.png',                'name' => 'FM 97.1'],
+                        ['file' => 'Napims.png',                 'name' => 'Napims'],
+                        ['file' => 'nigerian-stock-exchange.jpg', 'name' => 'Nigerian Stock Exchange'],
+                        ['file' => 'Sahcol.png',                 'name' => 'Sahcol'],
+                        ['file' => 'SAP_logo.png',               'name' => 'SAP'],
+                        ['file' => 'sprite.png',                 'name' => 'Sprite'],
+                        ['file' => 'virgin-atlantic.jpeg',       'name' => 'Virgin Atlantic'],
+                    ];
+                    foreach ($clients as $c): ?>
+                        <div class="client-logo flex-shrink-0 flex items-center justify-center">
+                            <img src="/clients/<?= $c['file'] ?>"
+                                 alt="<?= htmlspecialchars($c['name']) ?>"
+                                 loading="lazy">
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-
-                <!-- Microsoft -->
-                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
-                    <svg height="32" viewBox="0 0 108 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Windows logo grid -->
-                        <rect x="0" y="0" width="11" height="11" fill="#F25022"/>
-                        <rect x="12" y="0" width="11" height="11" fill="#7FBA00"/>
-                        <rect x="0" y="12" width="11" height="11" fill="#00A4EF"/>
-                        <rect x="12" y="12" width="11" height="11" fill="#FFB900"/>
-                        <!-- Microsoft wordmark -->
-                        <text x="27" y="17" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="600" fill="white">Microsoft</text>
-                    </svg>
-                </div>
-
-                <!-- Mastercard -->
-                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
-                    <svg height="40" viewBox="0 0 152 95" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="57" cy="47" r="40" fill="#EB001B"/>
-                        <circle cx="95" cy="47" r="40" fill="#F79E1B"/>
-                        <path d="M76 18.3C83.9 24.1 89 33.4 89 44s-5.1 19.9-13 25.7C68.1 63.9 63 54.6 63 44s5.1-19.9 13-25.7z" fill="#FF5F00"/>
-                    </svg>
-                </div>
-
-                <!-- Stanbic IBTC -->
-                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
-                    <svg height="36" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="0" y="8" width="6" height="24" fill="#009FE3"/>
-                        <rect x="9" y="0" width="6" height="40" fill="#009FE3"/>
-                        <rect x="18" y="8" width="6" height="24" fill="#009FE3"/>
-                        <text x="32" y="28" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="white">Stanbic IBTC</text>
-                    </svg>
-                </div>
-
-                <!-- Virgin Atlantic -->
-                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
-                    <svg height="36" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <text x="0" y="30" font-family="Georgia, serif" font-style="italic" font-size="26" font-weight="700" fill="#E01A22">virgin</text>
-                        <text x="98" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="2" fill="white">ATLANTIC</text>
-                    </svg>
-                </div>
-
-                <!-- SAP -->
-                <div class="opacity-50 hover:opacity-100 transition-opacity duration-300">
-                    <svg height="36" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="100" height="40" rx="4" fill="#0070F2"/>
-                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="white">SAP</text>
-                    </svg>
-                </div>
-
             </div>
         </div>
     </section>
+
+    <style>
+        .clients-track {
+            animation: clientsScroll 28s linear infinite;
+            width: max-content;
+        }
+        @keyframes clientsScroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        .client-logo {
+            filter: grayscale(100%) opacity(0.55);
+            transition: filter 0.35s ease, transform 0.3s ease;
+        }
+        .client-logo:hover {
+            filter: grayscale(0%) opacity(1);
+            transform: scale(1.06);
+        }
+        .client-logo img {
+            height: 36px;
+            width: auto;
+            max-width: 120px;
+            object-fit: contain;
+            display: block;
+        }
+    </style>
 
     <!-- CTA -->
     <section class="py-24 bg-[var(--gold)] text-black text-center">

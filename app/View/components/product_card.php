@@ -2,10 +2,12 @@
 /**
  * Product Card Component
  * 
- * @param array $product ['id', 'name', 'price', 'sale_price', 'image', 'category', 'badge']
+ * @param array $product ['id', 'slug', 'name', 'price', 'sale_price', 'image', 'category', 'badge']
  */
 $badge = $product['badge'] ?? null;
 $isOnSale = isset($product['sale_price']) && $product['sale_price'] > 0;
+$slug = $product['slug'] ?? $product['id'] ?? '#';
+$productUrl = '/product/' . $slug;
 ?>
 <div class="product-card group flex flex-col h-full">
     <div class="relative aspect-square overflow-hidden bg-black/20">
@@ -19,7 +21,9 @@ $isOnSale = isset($product['sale_price']) && $product['sale_price'] > 0;
             <i data-lucide="heart" class="w-5 h-5"></i>
         </button>
 
-        <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" loading="lazy">
+        <a href="<?= $productUrl ?>" class="block absolute inset-0" tabindex="-1" aria-hidden="true">
+            <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" loading="lazy">
+        </a>
         
         <!-- Quick Actions Overlay -->
         <div class="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/80 to-transparent flex gap-2">
@@ -29,7 +33,9 @@ $isOnSale = isset($product['sale_price']) && $product['sale_price'] > 0;
     
     <div class="p-5 flex flex-col grow">
         <span class="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-2 font-semibold"><?= htmlspecialchars($product['category']) ?></span>
-        <h3 class="text-lg font-bold text-white mb-2 line-clamp-2"><?= htmlspecialchars($product['name']) ?></h3>
+        <a href="<?= $productUrl ?>" class="block mb-2">
+            <h3 class="text-lg font-bold text-white line-clamp-2 hover:text-[var(--gold)] transition-colors"><?= htmlspecialchars($product['name']) ?></h3>
+        </a>
         
         <div class="mt-auto flex items-center gap-3">
             <?php if ($isOnSale): ?>
