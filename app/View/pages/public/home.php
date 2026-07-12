@@ -6,25 +6,25 @@
 <section id="hero" class="relative min-h-screen flex items-center overflow-hidden">
 
     <!-- ── Slides ─────────────────────────────────────────────── -->
-    <!-- Slide 1 -->
-    <div class="hero-slide absolute inset-0" data-slide="0">
-        <div class="absolute inset-0 scale-110 origin-center">
-            <img src="/100.png" alt="Marigold Signature Corporate Merchandise" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-transparent"></div>
+    <!-- Slide 1 — frame-sequence animation -->
+    <div class="hero-slide absolute inset-0" data-slide="0" style="isolation:isolate;">
+        <div class="absolute inset-0">
+            <canvas id="hero-canvas" class="absolute inset-0 w-full h-full" style="display:block; z-index:0;"></canvas>
+            <div class="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-transparent" style="z-index:1;"></div>
         </div>
     </div>
-    <!-- Slide 2 -->
-    <div class="hero-slide absolute inset-0 opacity-0" data-slide="1">
-        <div class="absolute inset-0 scale-110 origin-center">
-            <img src="/101.png" alt="Marigold Signature Premium Gifts" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-transparent"></div>
+    <!-- Slide 2 — frame-sequence animation -->
+    <div class="hero-slide absolute inset-0 opacity-0" data-slide="1" style="isolation:isolate;">
+        <div class="absolute inset-0">
+            <canvas id="hero-canvas-2" class="absolute inset-0 w-full h-full" style="display:block; z-index:0;"></canvas>
+            <div class="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-transparent" style="z-index:1;"></div>
         </div>
     </div>
-    <!-- Slide 3 -->
-    <div class="hero-slide absolute inset-0 opacity-0" data-slide="2">
-        <div class="absolute inset-0 scale-110 origin-center">
-            <img src="/102.png" alt="Marigold Signature Bespoke Experiences" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-transparent"></div>
+    <!-- Slide 3 — frame-sequence animation -->
+    <div class="hero-slide absolute inset-0 opacity-0" data-slide="2" style="isolation:isolate;">
+        <div class="absolute inset-0">
+            <canvas id="hero-canvas-3" class="absolute inset-0 w-full h-full" style="display:block; z-index:0;"></canvas>
+            <div class="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-transparent" style="z-index:1;"></div>
         </div>
     </div>
 
@@ -733,6 +733,104 @@
 
 </style>
 
+<!-- ── Frame-sequence animation engine for Hero Slides 1 & 2 ────────── -->
+<script>
+(function () {
+    const FPS = 24;
+    const interval = 1000 / FPS;
+
+    function pad(n, len) { return String(n).padStart(len, '0'); }
+
+    function drawFrame(ctx, canvas, img) {
+        const cw = canvas.width, ch = canvas.height;
+        const iw = img.naturalWidth, ih = img.naturalHeight;
+        const scale = Math.max(cw / iw, ch / ih);
+        const dx = (cw - iw * scale) / 2;
+        const dy = (ch - ih * scale) / 2;
+        ctx.clearRect(0, 0, cw, ch);
+        ctx.drawImage(img, dx, dy, iw * scale, ih * scale);
+    }
+
+    /**
+     * makeSequence(canvasId, base, total, pad)
+     * Loads frames from `base + padded(i) + '.jpg'` and plays them
+     * on the given canvas at FPS, looping forever.
+     * Playback only runs while the slide is visible (opacity > 0).
+     */
+    function makeSequence(canvasId, base, total, padLen) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx    = canvas.getContext('2d');
+        const frames = [];
+        let loaded   = 0;
+        let current  = 0;
+        let lastTime = 0;
+        let rafId    = null;
+        let running  = false;
+
+        function resize() {
+            canvas.width  = canvas.offsetWidth  || window.innerWidth;
+            canvas.height = canvas.offsetHeight || window.innerHeight;
+            if (frames[current] && frames[current].complete) {
+                drawFrame(ctx, canvas, frames[current]);
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        function tick(ts) {
+            if (ts - lastTime >= interval) {
+                if (frames[current] && frames[current].complete) {
+                    drawFrame(ctx, canvas, frames[current]);
+                }
+                current  = (current + 1) % total;
+                lastTime = ts;
+            }
+            rafId = requestAnimationFrame(tick);
+        }
+
+        function start() {
+            if (running) return;
+            running = true;
+            resize();
+            rafId = requestAnimationFrame(tick);
+        }
+
+        // Expose start so the hero slider can activate on slide change
+        canvas._startSequence = start;
+
+        // Preload all frames
+        for (let i = 1; i <= total; i++) {
+            const img = new Image();
+            img.src = base + pad(i, padLen) + '.jpg';
+            img.onload = function () {
+                loaded++;
+                // Auto-start slide 1 immediately; slide 2 starts on first switch
+                if (loaded === 1 && canvasId === 'hero-canvas') {
+                    start();
+                }
+            };
+            frames.push(img);
+        }
+    }
+
+    // Initialise all three sequences
+    makeSequence('hero-canvas',   '/100/frame-',        51, 3);
+    makeSequence('hero-canvas-2', '/101/frame-',        51, 3);
+    makeSequence('hero-canvas-3', '/102/ezgif-frame-',  51, 3);
+
+    // When the hero slider switches slides, start that canvas
+    document.addEventListener('hero:slideChange', function (e) {
+        const idx = e.detail.index;
+        const map = { 0: 'hero-canvas', 1: 'hero-canvas-2', 2: 'hero-canvas-3' };
+        const id  = map[idx];
+        if (id) {
+            const c = document.getElementById(id);
+            if (c && c._startSequence) c._startSequence();
+        }
+    });
+})();
+</script>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -784,6 +882,9 @@ document.addEventListener('DOMContentLoaded', () => {
             slideEls[heroCurrentSlide].style.transition = animate ? `opacity ${fadeDuration} ease` : 'none';
             slideEls[prev].style.opacity = '0';
             slideEls[heroCurrentSlide].style.opacity = '1';
+
+            // Notify canvas animation engine which slide is now active
+            document.dispatchEvent(new CustomEvent('hero:slideChange', { detail: { index: heroCurrentSlide } }));
 
             // Fade content out, swap text, fade back in
             const contentEls = ['#hero-tag-text','#hero-line-1','#hero-line-2','#hero-line-3','#hero-sub'];

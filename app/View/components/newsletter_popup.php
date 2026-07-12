@@ -3,24 +3,26 @@
 ?>
 <!-- Landing Page Newsletter Popup -->
 <div x-data="{ open: false, name: '', contact: '' }"
+     x-effect="document.body.classList.toggle('overflow-hidden', open)"
      x-init="setTimeout(() => { if (!sessionStorage.getItem('newsletter_popup_seen')) { open = true; sessionStorage.setItem('newsletter_popup_seen', 'true'); } }, 3500)"
      @keydown.escape.window="open = false"
-     class="relative z-[100]"
-     style="display: none;"
-     :style="open ? 'display: block;' : 'display: none;'">
+     class="relative"
+     style="z-index: 9999;">
     
     <!-- Backdrop -->
     <div x-show="open" 
          x-transition.opacity
-         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+         class="fixed inset-0 bg-black/80 backdrop-blur-sm"
+         style="z-index: 9998;"
          @click="open = false"></div>
 
     <!-- Modal Panel -->
     <div x-show="open"
          x-transition
-         class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none z-50">
+         class="fixed inset-0 grid place-items-center p-4 sm:p-6 pointer-events-none"
+         style="z-index: 9999;">
          
-         <div class="bg-[var(--card)] sm:bg-[var(--card)] rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-5xl pointer-events-auto flex flex-col sm:flex-row overflow-hidden relative border border-[var(--border)]">
+         <div class="bg-[var(--card)] sm:bg-[var(--card)] rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-5xl max-h-[calc(100vh-2rem)] overflow-auto pointer-events-auto flex flex-col sm:flex-row relative border border-[var(--border)]">
              
              <!-- Close button -->
              <button @click="open = false" class="absolute top-4 right-4 z-20 text-[var(--text-secondary)] hover:text-white transition-colors bg-black/40 sm:bg-black/20 rounded-full p-2 backdrop-blur-md">
