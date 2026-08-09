@@ -2,56 +2,37 @@
 
 namespace App\Controller\Customer;
 
-
 use App\Core\Controller;
 use App\Core\View;
+use App\Core\Model;
+use App\Core\Session;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = [
-            [
-                'id' => 1,
-                'type' => 'order',
-                'icon' => 'package',
-                'title' => 'Order ORD-9823 is being processed',
-                'message' => 'Your order for 10× Executive Leather Folio is now in production.',
-                'time' => date('Y-m-d H:i:s', strtotime('-2 hours')),
-                'is_read' => false,
-                'link' => '/account/orders/ORD-9823'
-            ],
-            [
-                'id' => 2,
-                'type' => 'quote',
-                'icon' => 'file-text',
-                'title' => 'New message on Quote QT-1045',
-                'message' => 'Sarah Jenkins has updated your quote with pricing details.',
-                'time' => date('Y-m-d H:i:s', strtotime('-18 hours')),
-                'is_read' => false,
-                'link' => '/account/quotes/QT-1045'
-            ],
-            [
-                'id' => 3,
-                'type' => 'promotion',
-                'icon' => 'tag',
-                'title' => 'New catalogue available',
-                'message' => 'Our 2026 corporate merchandise catalogue is ready for download.',
-                'time' => date('Y-m-d H:i:s', strtotime('-3 days')),
-                'is_read' => true,
-                'link' => '/account/downloads'
-            ],
-            [
-                'id' => 4,
-                'type' => 'order',
-                'icon' => 'check-circle',
-                'title' => 'Order ORD-9810 delivered',
-                'message' => 'Your order has been successfully delivered. We hope you love it!',
-                'time' => date('Y-m-d H:i:s', strtotime('-15 days')),
-                'is_read' => true,
-                'link' => '/account/orders/ORD-9810'
-            ]
-        ];
+        $stmt = Model::getDB()->prepare("
+            SELECT id, type, data_json, read_at, created_at
+            FROM notifications
+            WHERE user_id = :user_id
+            ORDER BY created_at DESC
+            LIMIT 50
+        ");
+        $stmt->execute(['user_id' => Session::get('user_id')]);
+
+        $notifications = array_map(function ($row) {
+            $data = json_decode($row['data_json'] ?? '{}', true) ?: [];
+            return [
+                'id' => $row['id'],
+                'type' => $row['type'],
+                'icon' => $data['icon'] ?? 'bell',
+                'title' => $data['title'] ?? 'Notification',
+                'message' => $data['message'] ?? '',
+                'time' => $row['created_at'],
+                'is_read' => !empty($row['read_at']),
+                'link' => $data['link'] ?? '#',
+            ];
+        }, $stmt->fetchAll());
 
         return View::renderTemplate('pages/customer/notifications', 'customer', [
             'title' => 'Notifications | Marigold Signature',

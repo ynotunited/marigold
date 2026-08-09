@@ -135,13 +135,13 @@
         <div class="bg-[var(--card)] border border-[var(--border)] rounded-[16px] p-6">
             <h3 class="text-lg font-bold font-manrope mb-4">Shipping Address</h3>
             <address class="not-italic text-[var(--text-secondary)] leading-relaxed text-sm">
-                <span class="block text-white font-medium mb-1"><?= $order['shipping_address']['name'] ?></span>
+                <span class="block text-white font-medium mb-1"><?= htmlspecialchars($order['shipping_address']['name']) ?></span>
                 <?php if($order['shipping_address']['company']): ?>
-                    <span class="block mb-1"><?= $order['shipping_address']['company'] ?></span>
+                    <span class="block mb-1"><?= htmlspecialchars($order['shipping_address']['company']) ?></span>
                 <?php endif; ?>
-                <span class="block"><?= $order['shipping_address']['street'] ?></span>
-                <span class="block"><?= $order['shipping_address']['city'] ?>, <?= $order['shipping_address']['state'] ?></span>
-                <span class="block"><?= $order['shipping_address']['country'] ?></span>
+                <span class="block"><?= htmlspecialchars($order['shipping_address']['street']) ?></span>
+                <span class="block"><?= htmlspecialchars($order['shipping_address']['city']) ?>, <?= htmlspecialchars($order['shipping_address']['state']) ?></span>
+                <span class="block"><?= htmlspecialchars($order['shipping_address']['country']) ?></span>
             </address>
         </div>
         

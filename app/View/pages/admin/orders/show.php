@@ -91,7 +91,7 @@
                 <div class="w-10 h-10 rounded-full bg-[var(--gold)]/20 border border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold">
                     <?= strtoupper(substr($order['customer']['name'], 0, 1)) ?>
                 </div>
-                <div><p class="font-medium text-sm"><?= htmlspecialchars($order['customer']['name']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= $order['customer']['email'] ?></p></div>
+                <div><p class="font-medium text-sm"><?= htmlspecialchars($order['customer']['name']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= htmlspecialchars($order['customer']['email']) ?></p></div>
             </div>
             <div class="text-sm text-[var(--text-secondary)] space-y-1">
                 <p><?= htmlspecialchars($order['customer']['company']) ?></p>
@@ -103,9 +103,9 @@
         <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
             <h3 class="font-bold font-manrope mb-4">Shipping Address</h3>
             <address class="not-italic text-sm text-[var(--text-secondary)] leading-relaxed">
-                <?= $order['shipping_address']['street'] ?><br>
-                <?= $order['shipping_address']['city'] ?>, <?= $order['shipping_address']['state'] ?><br>
-                <?= $order['shipping_address']['country'] ?>
+                <?= htmlspecialchars($order['shipping_address']['street']) ?><br>
+                <?= htmlspecialchars($order['shipping_address']['city']) ?>, <?= htmlspecialchars($order['shipping_address']['state']) ?><br>
+                <?= htmlspecialchars($order['shipping_address']['country']) ?>
             </address>
         </div>
 

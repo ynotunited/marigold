@@ -14,14 +14,20 @@ return [
             avatar VARCHAR(255) NULL,
             status ENUM('active', 'inactive', 'banned') DEFAULT 'active',
             email_verified_at TIMESTAMP NULL,
+            email_verify_token CHAR(64) NULL,
+            email_verify_expires TIMESTAMP NULL,
+            password_reset_token CHAR(64) NULL,
+            password_reset_expires TIMESTAMP NULL,
             last_login_at TIMESTAMP NULL,
-            remember_token VARCHAR(100) NULL,
+            remember_token VARCHAR(255) NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             deleted_at TIMESTAMP NULL,
             INDEX idx_users_email (email),
             INDEX idx_users_uuid (uuid),
-            INDEX idx_users_status (status)
+            INDEX idx_users_status (status),
+            INDEX idx_users_email_verify_token (email_verify_token),
+            INDEX idx_users_password_reset_token (password_reset_token)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ",
     

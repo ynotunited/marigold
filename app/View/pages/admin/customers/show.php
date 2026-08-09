@@ -17,7 +17,7 @@
         <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6 text-center">
             <div class="w-20 h-20 mx-auto rounded-full bg-[var(--gold)]/20 border-2 border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold text-2xl mb-4"><?= strtoupper(substr($customer['name'], 0, 1)) ?></div>
             <h2 class="text-xl font-bold font-manrope"><?= htmlspecialchars($customer['name']) ?></h2>
-            <p class="text-[var(--text-secondary)] text-sm mb-4"><?= $customer['email'] ?></p>
+            <p class="text-[var(--text-secondary)] text-sm mb-4"><?= htmlspecialchars($customer['email']) ?></p>
             <div class="flex items-center justify-center gap-2 mb-6">
                 <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20"><?= $customer['type'] ?></span>
                 <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-green-500/10 text-green-400 border-green-500/20"><?= $customer['status'] ?></span>
@@ -44,7 +44,7 @@
                 <?php foreach ($customer['addresses'] as $addr): ?>
                 <div class="p-3 bg-[var(--surface)] border border-[var(--border)] rounded-[10px] text-sm">
                     <p class="font-bold text-[var(--gold)] text-xs mb-1 uppercase tracking-wider"><?= $addr['label'] ?></p>
-                    <p class="text-[var(--text-secondary)]"><?= $addr['street'] ?>, <?= $addr['city'] ?>, <?= $addr['state'] ?></p>
+                    <p class="text-[var(--text-secondary)]"><?= htmlspecialchars($addr['street']) ?>, <?= htmlspecialchars($addr['city']) ?>, <?= htmlspecialchars($addr['state']) ?></p>
                 </div>
                 <?php endforeach; ?>
             </div>

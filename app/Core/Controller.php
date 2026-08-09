@@ -13,10 +13,21 @@ abstract class Controller
     }
 
     /**
-     * Redirect to a specific URL
+     * Redirect to a URL. Applies the app base path so redirects work when the
+     * app is served from a subdirectory (e.g. /ms on shared hosting).
+     * Rejects CR/LF to prevent header injection.
      */
     protected function redirect(string $url)
     {
+        if (preg_match('/[\r\n]/', $url)) {
+            $url = '/';
+        }
+
+        $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+        if ($base !== '' && $base !== '/' && stripos($url, $base) !== 0) {
+            $url = $base . $url;
+        }
+
         header("Location: $url");
         exit;
     }

@@ -2,21 +2,24 @@
 
 namespace App\Controller\Customer;
 
-
 use App\Core\Controller;
 use App\Core\View;
+use App\Core\Model;
+use App\Core\Session;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Simulated Authentication State for visual testing
+        $customerId = $this->customerId();
+        $db = Model::getDB();
+
+        // Real authenticated user identity
         $user = [
-            'first_name' => 'David',
-            'last_name' => 'Okon'
+            'first_name' => Session::get('user_first_name') ?: 'Valued',
+            'last_name'  => Session::get('user_last_name') ?: 'Customer',
         ];
 
-        // Determine time of day for greeting
         $hour = date('H');
         if ($hour < 12) {
             $greeting = 'Good morning';
@@ -26,53 +29,86 @@ class DashboardController extends Controller
             $greeting = 'Good evening';
         }
 
-        // Mock Stats
+        // Stats scoped to the authenticated customer
+        $orderStats = $db->prepare("
+            SELECT
+                SUM(status IN ('pending', 'processing')) AS pending,
+                SUM(status = 'completed')               AS completed
+            FROM orders
+            WHERE customer_id = :customer_id
+        ");
+        $orderStats->execute(['customer_id' => $customerId]);
+        $orderRow = $orderStats->fetch();
+
+        $quoteCount = $db->prepare("
+            SELECT COUNT(*) FROM quotes
+            WHERE customer_id = :customer_id
+              AND status IN ('pending', 'reviewed')
+        ");
+        $quoteCount->execute(['customer_id' => $customerId]);
+
+        $wishlistCount = $db->prepare("
+            SELECT COUNT(*) FROM wishlists WHERE customer_id = :customer_id
+        ");
+        $wishlistCount->execute(['customer_id' => $customerId]);
+
         $stats = [
-            'pending_orders' => 2,
-            'completed_orders' => 14,
-            'pending_quotes' => 1,
-            'wishlist_count' => 8
+            'pending_orders'   => (int)($orderRow['pending'] ?? 0),
+            'completed_orders' => (int)($orderRow['completed'] ?? 0),
+            'pending_quotes'   => (int)$quoteCount->fetchColumn(),
+            'wishlist_count'   => (int)$wishlistCount->fetchColumn(),
         ];
 
-        // Mock Recent Orders
-        $recent_orders = [
-            ['order_number' => 'ORD-9823', 'date' => date('Y-m-d', strtotime('-2 days')), 'status' => 'Processing', 'total' => '₦450,000'],
-            ['order_number' => 'ORD-9810', 'date' => date('Y-m-d', strtotime('-15 days')), 'status' => 'Completed', 'total' => '₦1,200,000'],
-            ['order_number' => 'ORD-9755', 'date' => date('Y-m-d', strtotime('-45 days')), 'status' => 'Completed', 'total' => '₦85,000'],
-        ];
+        // Recent orders scoped to the customer
+        $recentStmt = $db->prepare("
+            SELECT order_number, created_at AS date, status, grand_total AS total
+            FROM orders
+            WHERE customer_id = :customer_id
+            ORDER BY created_at DESC
+            LIMIT 5
+        ");
+        $recentStmt->execute(['customer_id' => $customerId]);
+        $recent_orders = array_map(fn($o) => [
+            'order_number' => $o['order_number'],
+            'date'         => $o['date'],
+            'status'       => ucfirst($o['status']),
+            'total'        => '₦' . number_format((float)$o['total'], 2),
+        ], $recentStmt->fetchAll());
 
-        // Mock Pending Quotes
-        $pending_quotes = [
-            ['quote_number' => 'QT-1045', 'date' => date('Y-m-d', strtotime('-1 days')), 'status' => 'Pending Review', 'items' => 5],
-        ];
+        // Pending quotes scoped to the customer
+        $quoteStmt = $db->prepare("
+            SELECT q.quote_number, q.created_at AS date, q.status, COUNT(qi.id) AS items
+            FROM quotes q
+            LEFT JOIN quote_items qi ON qi.quote_id = q.id
+            WHERE q.customer_id = :customer_id
+              AND q.status IN ('pending', 'reviewed')
+            GROUP BY q.id
+            ORDER BY q.created_at DESC
+            LIMIT 5
+        ");
+        $quoteStmt->execute(['customer_id' => $customerId]);
+        $pending_quotes = array_map(fn($q) => [
+            'quote_number' => $q['quote_number'],
+            'date'         => $q['date'],
+            'status'       => ucwords(str_replace('_', ' ', $q['status'])),
+            'items'        => (int)$q['items'],
+        ], $quoteStmt->fetchAll());
 
-        // Mock Recommended Products
-        $recommended_products = [
-            [
-                'name' => 'Executive Leather Folio',
-                'price' => '₦45,000',
-                'image' => 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&auto=format&fit=crop',
-                'badge' => 'Bestseller'
-            ],
-            [
-                'name' => 'Premium Metal Pen Set',
-                'price' => '₦28,000',
-                'image' => 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?q=80&w=400&auto=format&fit=crop',
-                'badge' => ''
-            ],
-            [
-                'name' => 'Custom Moleskine Notebook',
-                'price' => '₦15,000',
-                'image' => 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?q=80&w=400&auto=format&fit=crop',
-                'badge' => 'New'
-            ],
-            [
-                'name' => 'Insulated Smart Flask',
-                'price' => '₦18,500',
-                'image' => 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=400&auto=format&fit=crop',
-                'badge' => ''
-            ]
-        ];
+        // Featured product recommendations (public catalogue data)
+        $recStmt = $db->query("
+            SELECT name, price, sale_price, is_new, is_best_seller, image
+            FROM products
+            LEFT JOIN product_images ON product_images.product_id = products.id AND product_images.is_featured = 1
+            WHERE deleted_at IS NULL AND status = 'active'
+            ORDER BY is_featured DESC, created_at DESC
+            LIMIT 4
+        ");
+        $recommended_products = array_map(fn($p) => [
+            'name'  => $p['name'],
+            'price' => '₦' . number_format((float)($p['sale_price'] ?: $p['price']), 2),
+            'image' => $p['image'] ?: '/ms-logo-icon.png',
+            'badge' => $p['is_best_seller'] ? 'Bestseller' : ($p['is_new'] ? 'New' : ''),
+        ], $recStmt->fetchAll());
 
         return View::renderTemplate('pages/customer/dashboard', 'customer', [
             'title' => 'Dashboard | Marigold Signature',
@@ -81,7 +117,18 @@ class DashboardController extends Controller
             'stats' => $stats,
             'recent_orders' => $recent_orders,
             'pending_quotes' => $pending_quotes,
-            'recommended_products' => $recommended_products
+            'recommended_products' => $recommended_products,
         ]);
+    }
+
+    private function customerId(): int
+    {
+        $stmt = Model::getDB()->prepare("SELECT id FROM customers WHERE user_id = :user_id LIMIT 1");
+        $stmt->execute(['user_id' => Session::get('user_id')]);
+        $id = $stmt->fetchColumn();
+        if (!$id) {
+            throw new \Exception('Customer profile not found', 403);
+        }
+        return (int)$id;
     }
 }

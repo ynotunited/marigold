@@ -39,8 +39,8 @@
         <div x-show="tab === 'payment'" class="space-y-6" style="display:none">
             <h2 class="font-bold font-manrope text-lg mb-4 pb-2 border-b border-[var(--border)]">Paystack Integration</h2>
             <div class="grid grid-cols-1 gap-5">
-                <div><label class="form-label">Public Key</label><input type="text" value="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxx" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
-                <div><label class="form-label">Secret Key</label><input type="password" value="sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxx" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+                <div><label class="form-label">Public Key</label><input type="text" value="" placeholder="pk_test_..." class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+                <div><label class="form-label">Secret Key</label><input type="password" value="" placeholder="sk_test_..." autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
             </div>
             <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Tax Settings</h2>
             <div class="grid grid-cols-2 gap-5">

@@ -13,6 +13,12 @@ $errors = \App\Core\Session::get('errors') ?? [];
     <form action="/forgot-password" method="POST" @submit="submit">
         <?= \App\Core\CSRF::field() ?>
 
+        <!-- Honeypot (anti-bot) — hidden from humans -->
+        <div class="hidden" aria-hidden="true">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
         <div class="space-y-5">
             <!-- Email -->
             <div class="relative">

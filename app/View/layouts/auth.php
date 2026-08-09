@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?= $title ?? 'Marigold Signature' ?></title>
+    <title><?= htmlspecialchars($title ?? 'Marigold Signature', ENT_QUOTES, 'UTF-8') ?></title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

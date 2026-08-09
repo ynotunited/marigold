@@ -32,7 +32,7 @@
                             <div class="w-10 h-10 rounded-full bg-[var(--gold)]/20 border border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold shrink-0"><?= strtoupper(substr($c['name'], 0, 1)) ?></div>
                             <div>
                                 <p class="text-sm font-medium group-hover:text-[var(--gold)] transition-colors"><?= htmlspecialchars($c['name']) ?></p>
-                                <p class="text-xs text-[var(--text-muted)]"><?= $c['email'] ?><?= $c['company'] ? ' · ' . htmlspecialchars($c['company']) : '' ?></p>
+                                <p class="text-xs text-[var(--text-muted)]"><?= htmlspecialchars($c['email']) ?><?= $c['company'] ? ' · ' . htmlspecialchars($c['company']) : '' ?></p>
                             </div>
                         </div>
                     </td>

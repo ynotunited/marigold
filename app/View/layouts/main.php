@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?= $title ?? 'Marigold Signature | Premium Corporate Merchandise' ?></title>
+    <title><?= htmlspecialchars($title ?? 'Marigold Signature | Premium Corporate Merchandise', ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="description" content="<?= $meta_description ?? 'Marigold Signature offers premium corporate merchandise, bespoke gifting solutions, and high-quality branded items for businesses.' ?>">
     
     <?php
@@ -18,7 +18,7 @@
     <link rel="canonical" href="<?= $canonical_url ?? $currentUrl ?>">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="<?= $title ?? 'Marigold Signature | Premium Corporate Merchandise' ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($title ?? 'Marigold Signature | Premium Corporate Merchandise', ENT_QUOTES, 'UTF-8') ?>">
     <meta property="og:description" content="<?= $meta_description ?? 'Marigold Signature offers premium corporate merchandise and bespoke gifting solutions.' ?>">
     <meta property="og:url" content="<?= $currentUrl ?>">
     <meta property="og:type" content="<?= $og_type ?? 'website' ?>">
@@ -26,7 +26,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="<?= $title ?? 'Marigold Signature' ?>">
+    <meta name="twitter:title" content="<?= htmlspecialchars($title ?? 'Marigold Signature', ENT_QUOTES, 'UTF-8') ?>">
     <meta name="twitter:description" content="<?= $meta_description ?? 'Premium corporate merchandise and bespoke gifting solutions.' ?>">
     <meta name="twitter:image" content="<?= $ogImageFull ?>">
 

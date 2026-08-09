@@ -72,9 +72,12 @@
                 &copy; <?= date('Y') ?> Marigold Signature Nigeria Limited. All rights reserved.
             </p>
             <div class="flex flex-wrap justify-center gap-4 text-sm text-[var(--text-muted)]">
-                <a href="/privacy" class="hover:text-[var(--gold)] transition-colors">Privacy Policy</a>
-                <a href="/terms" class="hover:text-[var(--gold)] transition-colors">Terms of Service</a>
-                <a href="/shipping" class="hover:text-[var(--gold)] transition-colors">Shipping Policy</a>
+                <a href="/privacy-policy" class="hover:text-[var(--gold)] transition-colors">Privacy Policy</a>
+                <a href="/terms-and-conditions" class="hover:text-[var(--gold)] transition-colors">Terms of Use</a>
+                <a href="/shipping-policy" class="hover:text-[var(--gold)] transition-colors">Shipping Policy</a>
+                <a href="/return-policy" class="hover:text-[var(--gold)] transition-colors">Return Policy</a>
+                <a href="/data-and-compliance" class="hover:text-[var(--gold)] transition-colors">Data &amp; Compliance</a>
+                <a href="/ip-infringement" class="hover:text-[var(--gold)] transition-colors">IP Infringement</a>
             </div>
         </div>
     </div>

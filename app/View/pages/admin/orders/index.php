@@ -34,7 +34,7 @@
                     <td class="px-5 py-4" onclick="event.stopPropagation()"><input type="checkbox" class="rounded border-[var(--border)]"></td>
                     <td class="px-5 py-4 font-medium text-sm group-hover:text-[var(--gold)] transition-colors"><?= $o['id'] ?></td>
                     <td class="px-5 py-4">
-                        <div><p class="text-sm font-medium"><?= htmlspecialchars($o['customer']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= $o['email'] ?></p></div>
+                        <div><p class="text-sm font-medium"><?= htmlspecialchars($o['customer']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= htmlspecialchars($o['email']) ?></p></div>
                     </td>
                     <td class="px-5 py-4 text-sm text-[var(--text-muted)]"><?= date('M j, Y', strtotime($o['date'])) ?></td>
                     <td class="px-5 py-4"><span class="text-xs font-medium <?= $o['payment'] === 'Paid' ? 'text-green-400' : 'text-yellow-400' ?>"><?= $o['payment'] ?></span></td>

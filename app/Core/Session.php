@@ -10,18 +10,30 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
-            $lifetime = $_ENV['SESSION_LIFETIME'] ?? 120;
+            $isHttps = filter_var($_ENV['SESSION_SECURE'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (($_SERVER['SERVER_PORT'] ?? null) == 443);
             
+            session_name($_ENV['SESSION_NAME'] ?? 'ms_sess');
+            ini_set('session.use_strict_mode', '1');
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.cookie_httponly', '1');
+            ini_set('session.cookie_samesite', 'Strict');
+
             session_set_cookie_params([
-                'lifetime' => $lifetime * 60,
+                'lifetime' => 0,
                 'path' => '/',
                 'domain' => '',
-                'secure' => filter_var($_ENV['SESSION_SECURE'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                'httponly' => filter_var($_ENV['SESSION_HTTPONLY'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                'samesite' => 'Lax'
+                'secure' => $isHttps,
+                'httponly' => true,
+                'samesite' => 'Strict'
             ]);
 
             session_start();
+
+            if (!isset($_SESSION['_created_at'])) {
+                $_SESSION['_created_at'] = time();
+            }
         }
     }
 
@@ -59,7 +71,15 @@ class Session
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_unset();
             session_destroy();
-            setcookie(session_name(), '', time() - 3600, '/');
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires' => time() - 3600,
+                'path' => $params['path'],
+                'domain' => $params['domain'],
+                'secure' => $params['secure'],
+                'httponly' => $params['httponly'],
+                'samesite' => $params['samesite'] ?? 'Strict',
+            ]);
         }
     }
 
@@ -69,5 +89,12 @@ class Session
     public static function regenerate(): void
     {
         session_regenerate_id(true);
+        $_SESSION['_created_at'] = time();
+        unset($_SESSION['csrf_token']);
+    }
+
+    public static function flash(string $key, string $message): void
+    {
+        self::set($key, $message);
     }
 }

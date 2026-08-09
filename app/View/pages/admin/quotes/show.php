@@ -101,7 +101,7 @@
             <h3 class="font-bold font-manrope mb-4">Customer</h3>
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-10 h-10 rounded-full bg-[var(--gold)]/20 border border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold"><?= strtoupper(substr($quote['customer']['name'], 0, 1)) ?></div>
-                <div><p class="font-medium text-sm"><?= htmlspecialchars($quote['customer']['name']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= $quote['customer']['email'] ?></p></div>
+                <div><p class="font-medium text-sm"><?= htmlspecialchars($quote['customer']['name']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= htmlspecialchars($quote['customer']['email']) ?></p></div>
             </div>
             <div class="text-sm text-[var(--text-secondary)] space-y-1">
                 <p><?= htmlspecialchars($quote['customer']['company']) ?></p>

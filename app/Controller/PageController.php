@@ -122,4 +122,18 @@ class PageController extends Controller
             'title' => 'Return Policy | Marigold Signature'
         ]);
     }
+
+    public function dataCompliance()
+    {
+        return View::renderTemplate('pages/public/static/data-compliance', 'main', [
+            'title' => 'Data & Compliance | Marigold Signature'
+        ]);
+    }
+
+    public function ipInfringement()
+    {
+        return View::renderTemplate('pages/public/static/ip-infringement', 'main', [
+            'title' => 'Intellectual Property Infringement | Marigold Signature'
+        ]);
+    }
 }

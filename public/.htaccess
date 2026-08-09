@@ -5,6 +5,17 @@
 
     RewriteEngine On
 
+    # Force HTTPS (production only — keep localhost/dev working)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|::1)(:[0-9]+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Block dotfiles and environment/config files in case public/ is the docroot
+    RewriteRule ^\. - [F,L]
+    RewriteRule ^\.env.*$ - [F,L]
+    RewriteRule ^uploads/(.*)\.(php|phtml|php\d+)$ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -22,8 +33,12 @@
 
 # Security Headers
 <IfModule mod_headers.c>
-    Header set X-XSS-Protection "1; mode=block"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
+    # Content-Security-Policy baseline (matches app's CDN + inline usage)
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://js.paystack.co; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.paystack.co https://js.paystack.co; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
 </IfModule>

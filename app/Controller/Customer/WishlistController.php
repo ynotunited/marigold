@@ -2,49 +2,49 @@
 
 namespace App\Controller\Customer;
 
-
 use App\Core\Controller;
 use App\Core\View;
+use App\Core\Model;
+use App\Core\Session;
 
 class WishlistController extends Controller
 {
     public function index()
     {
-        // Mock data
-        $products = [
-            [
-                'id' => 1,
-                'name' => 'Executive Leather Folio',
-                'price' => '₦45,000',
-                'image' => 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&auto=format&fit=crop',
-                'in_stock' => true
-            ],
-            [
-                'id' => 2,
-                'name' => 'Premium Metal Pen Set',
-                'price' => '₦28,000',
-                'image' => 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?q=80&w=400&auto=format&fit=crop',
-                'in_stock' => true
-            ],
-            [
-                'id' => 3,
-                'name' => 'Custom Moleskine Notebook',
-                'price' => '₦15,000',
-                'image' => 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?q=80&w=400&auto=format&fit=crop',
-                'in_stock' => false
-            ],
-            [
-                'id' => 4,
-                'name' => 'Insulated Smart Flask',
-                'price' => '₦18,500',
-                'image' => 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=400&auto=format&fit=crop',
-                'in_stock' => true
-            ]
-        ];
+        $customerId = $this->customerId();
+        $stmt = Model::getDB()->prepare("
+            SELECT p.id, p.name, p.price, p.sale_price, p.stock_quantity, pi.image
+            FROM wishlists w
+            JOIN products p ON p.id = w.product_id
+            LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_featured = 1
+            WHERE w.customer_id = :customer_id
+              AND p.deleted_at IS NULL
+            ORDER BY w.created_at DESC
+        ");
+        $stmt->execute(['customer_id' => $customerId]);
+
+        $products = array_map(fn($row) => [
+            'id' => $row['id'],
+            'name' => $row['name'],
+            'price' => '₦' . number_format((float)($row['sale_price'] ?: $row['price']), 2),
+            'image' => $row['image'] ?: '/public/ms-logo-icon.png',
+            'in_stock' => (int)$row['stock_quantity'] > 0,
+        ], $stmt->fetchAll());
 
         return View::renderTemplate('pages/customer/wishlist', 'customer', [
             'title' => 'My Wishlist | Marigold Signature',
             'products' => $products
         ]);
+    }
+
+    private function customerId(): int
+    {
+        $stmt = Model::getDB()->prepare("SELECT id FROM customers WHERE user_id = :user_id LIMIT 1");
+        $stmt->execute(['user_id' => Session::get('user_id')]);
+        $id = $stmt->fetchColumn();
+        if (!$id) {
+            throw new \Exception('Customer profile not found', 403);
+        }
+        return (int)$id;
     }
 }

@@ -67,7 +67,7 @@ class ProductController extends Controller
     private function save($id = null)
     {
         if (!CSRF::verify($_POST['csrf_token'] ?? '')) {
-            die('Invalid CSRF token');
+            throw new \Exception('Invalid CSRF token', 403);
         }
 
         Session::set('success', $id ? 'Product updated successfully.' : 'Product created successfully.');

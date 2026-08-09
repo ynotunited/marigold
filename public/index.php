@@ -18,12 +18,28 @@ use App\Core\Env;
 use App\Core\Session;
 use App\Core\ExceptionHandler;
 use App\Core\Router;
+use App\Service\RateLimiter;
 
 function adminRoute($handler, array $roles = ['super-admin', 'admin']): callable
 {
     return function (...$params) use ($handler, $roles) {
         \App\Middleware\AuthMiddleware::handle();
         \App\Middleware\RoleMiddleware::handle($roles);
+
+        if (is_array($handler)) {
+            [$controller, $method] = $handler;
+            $controllerObject = new $controller();
+            return call_user_func_array([$controllerObject, $method], $params);
+        }
+
+        return call_user_func_array($handler, $params);
+    };
+}
+
+function customerRoute($handler): callable
+{
+    return function (...$params) use ($handler) {
+        \App\Middleware\AuthMiddleware::handle();
 
         if (is_array($handler)) {
             [$controller, $method] = $handler;
@@ -60,6 +76,7 @@ $router->get('/login', ['App\Controller\AuthController', 'showLogin']);
 $router->post('/login', ['App\Controller\AuthController', 'login']);
 $router->get('/register', ['App\Controller\AuthController', 'showRegister']);
 $router->post('/register', ['App\Controller\AuthController', 'register']);
+$router->get('/verify-email', ['App\Controller\AuthController', 'verifyEmail']);
 $router->get('/forgot-password', ['App\Controller\AuthController', 'showForgotPassword']);
 $router->post('/forgot-password', ['App\Controller\AuthController', 'forgotPassword']);
 $router->get('/reset-password', ['App\Controller\AuthController', 'showResetPassword']);
@@ -72,6 +89,7 @@ $router->get('/shop', ['App\Controller\ShopController', 'index']);
 $router->get('/product/{slug}', ['App\Controller\ProductController', 'show']);
 $router->get('/cart', ['App\Controller\CartController', 'index']);
 $router->get('/checkout', ['App\Controller\CheckoutController', 'index']);
+$router->post('/checkout', ['App\Controller\CheckoutController', 'submit']);
 $router->get('/order-confirmation', ['App\Controller\CheckoutController', 'confirmation']);
 $router->get('/about', ['App\Controller\PageController', 'about']);
 $router->get('/solutions', ['App\Controller\PageController', 'solutions']);
@@ -89,6 +107,8 @@ $router->get('/privacy-policy', ['App\Controller\PageController', 'privacy']);
 $router->get('/terms-and-conditions', ['App\Controller\PageController', 'terms']);
 $router->get('/shipping-policy', ['App\Controller\PageController', 'shipping']);
 $router->get('/return-policy', ['App\Controller\PageController', 'returns']);
+$router->get('/data-and-compliance', ['App\Controller\PageController', 'dataCompliance']);
+$router->get('/ip-infringement', ['App\Controller\PageController', 'ipInfringement']);
 
 // Events Pages
 $router->get('/events/corporate-meeting', ['App\Controller\PageController', 'corporateMeeting']);
@@ -186,19 +206,50 @@ $router->get('/admin/email-previews/{template}', adminRoute(['App\Controller\Adm
 $router->get('/search', ['App\Controller\Storefront\SearchController', 'index']);
 $router->get('/api/search', ['App\Controller\Storefront\SearchController', 'ajaxSearch']);
 
+// Payment Integrity API
+// Browser-initiated writes require an `Idempotency-Key` (UUID) header and an
+// `X-CSRF-Token` header. The webhook endpoint is signed by the gateway (HMAC).
+$router->post('/api/payments', ['App\Controller\Api\PaymentApiController', 'createIntent']);
+$router->post('/api/payments/{id}/capture', ['App\Controller\Api\PaymentApiController', 'capture']);
+$router->post('/api/payments/{id}/refund', ['App\Controller\Api\PaymentApiController', 'refund']);
+$router->get('/api/payments/{id}/events', adminRoute(['App\Controller\Api\PaymentApiController', 'events']));
+$router->post('/api/webhooks/paystack', ['App\Controller\Api\WebhookController', 'handle']);
+
 // Customer Portal Routes
-$router->get('/account/dashboard', ['App\Controller\Customer\DashboardController', 'index']);
-$router->get('/account/orders', ['App\Controller\Customer\OrderController', 'index']);
-$router->get('/account/orders/{id}', ['App\Controller\Customer\OrderController', 'show']);
-$router->get('/account/quotes', ['App\Controller\Customer\QuoteController', 'index']);
-$router->get('/account/quotes/{id}', ['App\Controller\Customer\QuoteController', 'show']);
-$router->get('/account/wishlist', ['App\Controller\Customer\WishlistController', 'index']);
-$router->get('/account/addresses', ['App\Controller\Customer\AddressController', 'index']);
-$router->get('/account/downloads', ['App\Controller\Customer\DownloadController', 'index']);
-$router->get('/account/notifications', ['App\Controller\Customer\NotificationController', 'index']);
-$router->get('/account/settings', ['App\Controller\Customer\SettingsController', 'index']);
+$router->get('/account/dashboard', customerRoute(['App\Controller\Customer\DashboardController', 'index']));
+$router->get('/account/orders', customerRoute(['App\Controller\Customer\OrderController', 'index']));
+$router->get('/account/orders/{id}', customerRoute(['App\Controller\Customer\OrderController', 'show']));
+$router->get('/account/quotes', customerRoute(['App\Controller\Customer\QuoteController', 'index']));
+$router->get('/account/quotes/{id}', customerRoute(['App\Controller\Customer\QuoteController', 'show']));
+$router->get('/account/wishlist', customerRoute(['App\Controller\Customer\WishlistController', 'index']));
+$router->get('/account/addresses', customerRoute(['App\Controller\Customer\AddressController', 'index']));
+$router->get('/account/downloads', customerRoute(['App\Controller\Customer\DownloadController', 'index']));
+$router->get('/account/notifications', customerRoute(['App\Controller\Customer\NotificationController', 'index']));
+$router->get('/account/settings', customerRoute(['App\Controller\Customer\SettingsController', 'index']));
 
 // Dispatch
 $url = $_SERVER['REQUEST_URI'] ?? '/';
+// Strip the app's base path so routing works in a subdirectory (e.g. /ms)
+$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+if ($basePath !== '' && $basePath !== '/') {
+    $path = parse_url($url, PHP_URL_PATH) ?: '/';
+    if (stripos($path, $basePath) === 0) {
+        $url = substr($path, strlen($basePath)) ?: '/';
+    }
+}
+
+// Global rate limit for all /api/* endpoints (per-IP backstop against
+// scraping / abusive bots). Individual endpoints may impose stricter limits.
+if (stripos($url, '/api') === 0) {
+    $apiKey = 'api_' . hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    if (RateLimiter::tooManyAttempts($apiKey, 120)) {
+        http_response_code(429);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Too many requests. Please try again later.']);
+        exit;
+    }
+    RateLimiter::hit($apiKey, 60);
+}
+
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $router->dispatch($url, $method);

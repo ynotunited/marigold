@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?= $title ?? 'Customer Portal | Marigold Signature' ?></title>
+    <title><?= htmlspecialchars($title ?? 'Customer Portal | Marigold Signature', ENT_QUOTES, 'UTF-8') ?></title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/ms-logo-icon.png">

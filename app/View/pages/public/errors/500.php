@@ -5,6 +5,9 @@
         </div>
         <h1 class="text-3xl md:text-4xl font-bold mb-6">Something went wrong</h1>
         <p class="text-[var(--text-secondary)] text-lg mb-8">We're experiencing an internal server issue. Our technical team has been notified and is working to resolve the problem.</p>
+        <?php if (!empty($error_id)): ?>
+            <p class="text-sm text-[var(--text-muted)] mb-8">Reference: <?= htmlspecialchars($error_id, ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
         
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="/" class="btn btn-primary px-8 h-[52px] w-full sm:w-auto">Return to Homepage</a>

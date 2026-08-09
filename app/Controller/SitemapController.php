@@ -23,7 +23,9 @@ class SitemapController extends Controller
             '/privacy-policy',
             '/terms-and-conditions',
             '/shipping-policy',
-            '/return-policy'
+            '/return-policy',
+            '/data-and-compliance',
+            '/ip-infringement'
         ];
 
         header("Content-Type: application/xml; charset=utf-8");

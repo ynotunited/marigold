@@ -16,6 +16,11 @@ class RateLimiter extends Service
         return $attempts >= $maxAttempts;
     }
 
+    public static function availableIn(string $key, int $decaySeconds = 60): int
+    {
+        return FileCache::ttl('ratelimit_' . $key) ?? $decaySeconds;
+    }
+
     /**
      * Increment the attempt count
      */

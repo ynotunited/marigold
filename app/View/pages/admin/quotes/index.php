@@ -26,7 +26,7 @@
                 <tr class="hover:bg-[var(--surface)]/40 transition-colors group cursor-pointer" onclick="window.location='/admin/quotes/<?= $q['id'] ?>'">
                     <td class="px-5 py-4 font-medium text-sm group-hover:text-[var(--gold)] transition-colors"><?= $q['id'] ?></td>
                     <td class="px-5 py-4">
-                        <div><p class="text-sm font-medium"><?= htmlspecialchars($q['customer']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= $q['email'] ?></p></div>
+                        <div><p class="text-sm font-medium"><?= htmlspecialchars($q['customer']) ?></p><p class="text-xs text-[var(--text-muted)]"><?= htmlspecialchars($q['email']) ?></p></div>
                     </td>
                     <td class="px-5 py-4 text-sm text-center"><?= $q['items'] ?></td>
                     <td class="px-5 py-4 text-sm text-[var(--text-muted)]"><?= date('M j, Y', strtotime($q['date'])) ?></td>

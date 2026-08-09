@@ -11,6 +11,10 @@ class FileCache
      */
     public static function set(string $key, $value, int $ttl = 3600): void
     {
+        if (!is_dir(self::$cacheDir)) {
+            mkdir(self::$cacheDir, 0755, true);
+        }
+
         $file = self::$cacheDir . md5($key) . '.cache';
         $data = [
             'expires' => time() + $ttl,
@@ -55,6 +59,28 @@ class FileCache
         if (file_exists($file)) {
             unlink($file);
         }
+    }
+
+    public static function ttl(string $key): ?int
+    {
+        $file = self::$cacheDir . md5($key) . '.cache';
+        if (!file_exists($file)) {
+            return null;
+        }
+
+        $content = file_get_contents($file);
+        if (!$content) {
+            return null;
+        }
+
+        $data = unserialize($content);
+        $remaining = (int)($data['expires'] ?? 0) - time();
+        if ($remaining <= 0) {
+            self::forget($key);
+            return null;
+        }
+
+        return $remaining;
     }
 
     /**

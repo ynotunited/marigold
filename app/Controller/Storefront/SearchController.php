@@ -3,6 +3,8 @@ namespace App\Controller\Storefront;
 
 use App\Core\Controller;
 use App\Core\View;
+use App\Core\Logger;
+use App\Service\RateLimiter;
 
 class SearchController extends Controller
 {
@@ -12,11 +14,23 @@ class SearchController extends Controller
     public function ajaxSearch()
     {
         header('Content-Type: application/json');
-        
-        $query = $_GET['q'] ?? '';
-        
+
+        // Throttle public AJAX search to prevent abuse / scraping.
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $rateLimitKey = 'ajax_search_' . hash('sha256', $ip);
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            Logger::warning("Search AJAX rate-limit hit. IP: $ip", 'auth');
+            http_response_code(429);
+            echo json_encode(['error' => 'Too many requests. Please try again later.']);
+            exit;
+        }
+        RateLimiter::hit($rateLimitKey, 60);
+
+        $query = trim((string)($_GET['q'] ?? ''));
+        $query = mb_substr($query, 0, 100);
+
         // Mock data response based on typical search
-        if (empty(trim($query))) {
+        if (empty($query)) {
             echo json_encode(['results' => [], 'popular' => ['Corporate Gifting', 'Leather Notebooks', 'Vacuum Flasks', 'Pen Sets']]);
             exit;
         }
@@ -54,7 +68,13 @@ class SearchController extends Controller
      */
     public function index()
     {
-        $query = $_GET['q'] ?? 'Notebook';
+        // Sanitize: strip tags/control chars, cap length (HTML output escaping happens in the view)
+        $query = trim(strip_tags((string)($_GET['q'] ?? 'Notebook')));
+        $query = preg_replace('/[\x00-\x1F\x7F]/u', '', $query);
+        $query = mb_substr($query, 0, 100);
+        if ($query === '') {
+            $query = 'Notebook';
+        }
 
         // Mock full results
         $products = [

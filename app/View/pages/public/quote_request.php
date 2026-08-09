@@ -13,7 +13,13 @@
     <div class="max-w-[1100px] mx-auto" x-data="quoteBasket()">
         
         <form action="/quote-request" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 xl:grid-cols-3 gap-12">
-            <?php /* CSRF token would go here in production */ ?>
+            <?= $csrf_token ?? \App\Core\CSRF::field() ?>
+
+            <!-- Honeypot (anti-bot) — hidden from humans -->
+            <div class="hidden" aria-hidden="true">
+                <label for="website">Leave this field empty</label>
+                <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
 
             <!-- Left: Main Form -->
             <div class="xl:col-span-2 space-y-10">
@@ -190,7 +196,7 @@ function quoteBasket() {
     return {
         items: [
             <?php if (!empty($preSelected)): ?>
-            { name: '<?= addslashes($preSelected['name']) ?>', quantity: '', notes: '', image: '<?= $preSelected['image'] ?>' }
+            { name: <?= json_encode($preSelected['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) ?>, quantity: '', notes: '', image: <?= json_encode($preSelected['image'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) ?> }
             <?php else: ?>
             { name: '', quantity: '', notes: '', image: '' }
             <?php endif; ?>
