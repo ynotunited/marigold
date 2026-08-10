@@ -13,6 +13,7 @@ use App\Core\RowSecurity;
 use App\Core\PaymentLedger;
 use App\Service\PaymentService;
 use App\Service\RateLimiter;
+use App\Service\AuthService;
 
 class CheckoutController extends Controller
 {
@@ -37,8 +38,9 @@ class CheckoutController extends Controller
 
     /**
      * Create an order (+ snapshot its addresses) and, for card payments,
-     * initiate a Paystack intent. Priced server-side from the DB — the
-     * client-supplied payload only selects products and quantities.
+     * initiate a payment intent (Paystack or Flutterwave). Priced
+     * server-side from the DB — the client-supplied payload only selects
+     * products and quantities.
      */
     public function submit()
     {
@@ -54,58 +56,180 @@ class CheckoutController extends Controller
         $email = isset($data['email']) ? filter_var(trim((string) $data['email']), FILTER_VALIDATE_EMAIL) : null;
         $first = trim((string) ($data['first_name'] ?? ''));
         $last = trim((string) ($data['last_name'] ?? ''));
+        $phone = trim((string) ($data['phone'] ?? ''));
         if (!$email || $first === '' || mb_strlen($first) > 100 || $last === '' || mb_strlen($last) > 100) {
             $this->json(['error' => 'Valid first name, last name and email are required.'], 422);
         }
 
-        $address1 = trim((string) ($data['address_line1'] ?? ''));
-        $city = trim((string) ($data['city'] ?? ''));
-        if ($address1 === '' || mb_strlen($address1) > 255 || $city === '' || mb_strlen($city) > 100) {
-            $this->json(['error' => 'Street address and city are required.'], 422);
+        // ---- Fulfilment: office pickup by default, delivery via ShipBubble courier ----
+        $deliveryMethod = ($data['delivery_method'] ?? '') === 'delivery' ? 'delivery' : 'pickup';
+        // The legacy /checkout page omits delivery_method but always submits an address.
+        if (!isset($data['delivery_method']) && trim((string) ($data['address_line1'] ?? '')) !== '') {
+            $deliveryMethod = 'delivery';
         }
 
-        $paymentMethod = in_array($data['payment_method'] ?? '', ['paystack', 'transfer'], true)
-            ? (string) $data['payment_method']
-            : 'paystack';
+        $whatsapp = preg_replace('/[^0-9+]/', '', trim((string) ($data['whatsapp'] ?? '')));
+
+        // ---- ShipBubble courier selection (authoritative pricing) ----
+        // The client only sends the quote token + courier identifiers. The fee is
+        // re-read from the server-persisted quote, never trusted from the client.
+        $shipping = 0.0;
+        $shipbubbleMeta = null;
+        if ($deliveryMethod === 'delivery') {
+            $sbToken = trim((string) ($data['shipbubble_request_token'] ?? ''));
+            $sbService = trim((string) ($data['shipbubble_service_code'] ?? ''));
+            $sbCourier = trim((string) ($data['shipbubble_courier_id'] ?? ''));
+
+            if ($sbToken !== '' && $sbService !== '' && $sbCourier !== '') {
+                try {
+                    $shipbubble = new \App\Service\ShipBubbleService();
+                    $quote = $shipbubble->loadQuote($sbToken);
+                    $courier = $quote ? $shipbubble->findCourier($quote, $sbService, $sbCourier) : null;
+                } catch (\Throwable $t) {
+                    \App\Core\Logger::error("Checkout quote lookup failed: {$t->getMessage()}", 'order');
+                    $this->json(['error' => 'Delivery pricing is unavailable. Please try again.'], 502);
+                }
+
+                if (!$courier) {
+                    $this->json(['error' => 'The delivery option you selected has expired. Please refresh the page and choose a courier again.'], 409);
+                }
+
+                $shipping = round((float) ($courier['total'] ?? 0), 2);
+                $shipbubbleMeta = [
+                    'request_token' => $sbToken,
+                    'service_code' => $sbService,
+                    'courier_id' => $sbCourier,
+                    'courier_name' => (string) ($courier['courier_name'] ?? ''),
+                ];
+            } else {
+                // Legacy WhatsApp-coordinated delivery (no ShipBubble selection).
+                // Only enforced when delivery_method was explicitly requested;
+                // the legacy fallback (address present, no delivery_method key)
+                // keeps its original lenient behaviour.
+                if (isset($data['delivery_method']) && $data['delivery_method'] === 'delivery') {
+                    if ($whatsapp === '') {
+                        $this->json(['error' => 'A valid WhatsApp number is required for delivery.'], 422);
+                    }
+                    $waDigits = preg_replace('/[^0-9]/', '', $whatsapp);
+                    if ($waDigits === '' || strlen($waDigits) < 7 || strlen($waDigits) > 15) {
+                        $this->json(['error' => 'A valid WhatsApp number is required for delivery.'], 422);
+                    }
+                }
+            }
+        }
+
+        $address1 = trim((string) ($data['address_line1'] ?? ''));
+        $city = trim((string) ($data['city'] ?? ''));
+        if ($deliveryMethod === 'delivery' && ($address1 === '' || mb_strlen($address1) > 255 || $city === '' || mb_strlen($city) > 100)) {
+            $this->json(['error' => 'Street address and city are required for delivery.'], 422);
+        }
+
+        $paymentMethod = (string) ($data['payment_method'] ?? 'transfer');
+        $paystack = in_array($paymentMethod, ['paystack', 'card'], true);
+        $flutterwave = in_array($paymentMethod, ['flutterwave', 'flw'], true);
+        $paymentMethod = $paystack ? 'paystack' : ($flutterwave ? 'flutterwave' : 'transfer');
         $notes = trim((string) ($data['notes'] ?? ''));
         if (mb_strlen($notes) > 5000) {
             $this->json(['error' => 'Order notes are too long.'], 422);
         }
 
-        // ---- Validate items + price from the DB ----
+        // ---- Optional account creation at checkout (auto-login) ----
+        $customerId = RowSecurity::customerId();
+        $accountCreated = false;
+        if (!empty($data['create_account'])) {
+            $res = AuthService::registerFromCheckout([
+                'first_name' => $first,
+                'last_name' => $last,
+                'email' => $email,
+                'phone' => $phone,
+                'password' => (string) ($data['password'] ?? ''),
+            ]);
+            if (isset($res['error'])) {
+                $this->json(['error' => $res['error']], 422);
+            }
+            $accountCreated = true;
+            $customerId = RowSecurity::customerId();
+        }
+
+        // ---- Validate items + price from the DB (catalogue fallback) ----
         $items = $data['items'] ?? [];
         if (!is_array($items) || count($items) === 0 || count($items) > self::MAX_ITEMS) {
             $this->json(['error' => 'Please add between 1 and ' . self::MAX_ITEMS . ' product(s).'], 422);
         }
 
-        $priced = [];
+        $priced = [];      // 'p{id}' for DB products, 's{slug}' for catalogue items
+        $requested = [];   // extra payload metadata for non-DB items
         foreach ($items as $item) {
             if (!is_array($item)) {
                 $this->json(['error' => 'Invalid item data.'], 422);
             }
-            $productId = (int) ($item['product_id'] ?? 0);
             $qty = (int) ($item['quantity'] ?? 0);
-            if ($productId <= 0 || $qty < 1 || $qty > 1000000) {
-                $this->json(['error' => 'Each item needs a valid product and quantity of at least 1.'], 422);
+            if ($qty < 1 || $qty > 1000000) {
+                $this->json(['error' => 'Each item needs a quantity of at least 1.'], 422);
             }
-            $priced[$productId] = ($priced[$productId] ?? 0) + $qty;
+            $productId = (int) ($item['product_id'] ?? 0);
+            $slug = trim((string) ($item['slug'] ?? ''));
+            if ($productId > 0) {
+                $key = 'p' . $productId;
+            } elseif ($slug !== '') {
+                $key = 's' . $slug;
+                $requested[$key] = [
+                    'name' => mb_substr(trim((string) ($item['name'] ?? '')), 0, 255) ?: $slug,
+                    'unit' => round((float) ($item['price'] ?? 0), 2),
+                ];
+            } else {
+                $this->json(['error' => 'Each item needs a valid product.'], 422);
+            }
+            $priced[$key] = ($priced[$key] ?? 0) + $qty;
         }
 
-        $productRows = $this->loadProducts(array_keys($priced));
+        $productRows = $this->loadProducts(array_map(
+            fn (string $k) => (int) substr($k, 1),
+            array_filter(array_keys($priced), fn (string $k) => str_starts_with($k, 'p'))
+        ));
+
+        $slugToId = [];
+        $slugKeys = array_filter(array_keys($priced), fn (string $k) => str_starts_with($k, 's'));
+        if ($slugKeys) {
+            $slugs = array_map(fn (string $k) => substr($k, 1), $slugKeys);
+            $ph = implode(',', array_fill(0, count($slugs), '?'));
+            $stmt = Model::getDB()->prepare(
+                "SELECT id, slug, name, price, sale_price FROM products WHERE status = 'published' AND slug IN ($ph)"
+            );
+            $stmt->execute($slugs);
+            foreach ($stmt->fetchAll() as $row) {
+                $slugToId[$row['slug']] = $row;
+            }
+        }
+
         $orderItems = [];
         $subtotal = 0.0;
-        foreach ($priced as $productId => $qty) {
-            if (!isset($productRows[$productId])) {
-                $this->json(['error' => 'One or more products are unavailable.'], 422);
+        foreach ($priced as $key => $qty) {
+            if ($key[0] === 'p') {
+                $row = $productRows[(int) substr($key, 1)] ?? null;
+                if (!$row) {
+                    $this->json(['error' => 'One or more products are unavailable.'], 422);
+                }
+                $unit = self::effectiveUnit($row);
+                $name = $row['name'];
+                $productId = (int) $row['id'];
+            } else {
+                $row = $slugToId[substr($key, 1)] ?? null;
+                if ($row) {
+                    $unit = self::effectiveUnit($row);
+                    $name = $row['name'];
+                    $productId = (int) $row['id'];
+                } else {
+                    $unit = $requested[$key]['unit'] ?? 0.0;
+                    $name = $requested[$key]['name'] ?? substr($key, 1);
+                    $productId = null;
+                }
             }
-            $row = $productRows[$productId];
-            $unit = $row['sale_price'] !== null && (float) $row['sale_price'] < (float) $row['price']
-                ? (float) $row['sale_price']
-                : (float) $row['price'];
             $line = round($unit * $qty, 2);
             $subtotal += $line;
             $orderItems[] = [
                 'product_id' => $productId,
+                'name' => $name,
                 'quantity' => $qty,
                 'price' => round($unit, 2),
                 'subtotal' => $line,
@@ -113,7 +237,8 @@ class CheckoutController extends Controller
         }
 
         $tax = round($subtotal * self::VAT_RATE, 2);
-        $shipping = $subtotal > 0 ? self::FLAT_SHIPPING : 0.0;
+        // Shipping is priced authoritatively from the persisted ShipBubble quote
+        // (or 0.00 for pickup / legacy WhatsApp-coordinated delivery).
         $grandTotal = round($subtotal + $tax + $shipping, 2);
         $amountKobo = (int) round($grandTotal * 100);
 
@@ -126,47 +251,76 @@ class CheckoutController extends Controller
             $orderNumber = $this->nextOrderNumber($db);
             $stmt = $db->prepare(
                 "INSERT INTO orders
-                    (order_number, customer_id, status, payment_status, subtotal, tax, shipping, grand_total, payment_method, notes)
+                    (order_number, customer_id, status, payment_status, delivery_method, whatsapp, subtotal, tax, shipping, grand_total, payment_method, notes,
+                     shipbubble_request_token, shipbubble_service_code, shipbubble_courier_id, shipbubble_courier_name)
                  VALUES
-                    (:n, :c, 'pending', 'pending', :sub, :tax, :ship, :gt, :pm, :notes)"
+                    (:n, :c, 'pending', 'pending', :dm, :wa, :sub, :tax, :ship, :gt, :pm, :notes,
+                     :sb_tok, :sb_svc, :sb_cou, :sb_name)"
             );
             $stmt->execute([
                 'n' => $orderNumber,
-                'c' => RowSecurity::customerId(),
+                'c' => $customerId,
+                'dm' => $deliveryMethod,
+                'wa' => $deliveryMethod === 'delivery' ? $whatsapp : null,
                 'sub' => $subtotal,
                 'tax' => $tax,
                 'ship' => $shipping,
                 'gt' => $grandTotal,
-                'pm' => $paymentMethod === 'paystack' ? 'paystack' : 'bank_transfer',
+                'pm' => $paymentMethod,
                 'notes' => $notes ?: null,
+                'sb_tok' => $shipbubbleMeta['request_token'] ?? null,
+                'sb_svc' => $shipbubbleMeta['service_code'] ?? null,
+                'sb_cou' => $shipbubbleMeta['courier_id'] ?? null,
+                'sb_name' => $shipbubbleMeta['courier_name'] ?? null,
             ]);
             $orderId = (int) $db->lastInsertId();
 
             $itemStmt = $db->prepare(
-                "INSERT INTO order_items (order_id, product_id, quantity, price, subtotal)
-                 VALUES (:o, :p, :q, :pr, :s)"
+                "INSERT INTO order_items (order_id, product_id, name, quantity, price, subtotal)
+                 VALUES (:o, :p, :name, :q, :pr, :s)"
             );
             foreach ($orderItems as $oi) {
                 $itemStmt->execute([
                     'o' => $orderId,
                     'p' => $oi['product_id'],
+                    'name' => $oi['name'] ?: null,
                     'q' => $oi['quantity'],
                     'pr' => $oi['price'],
                     's' => $oi['subtotal'],
                 ]);
             }
 
-            $this->insertAddress($db, $orderId, 'shipping', $data);
-            $billing = [
-                'first_name' => $data['billing_first_name'] ?? $first,
-                'last_name' => $data['billing_last_name'] ?? $last,
-                'address_line1' => $data['billing_address_line1'] ?? $address1,
-                'city' => $data['billing_city'] ?? $city,
-                'address_line2' => $data['billing_address_line2'] ?? ($data['address_line2'] ?? ''),
-                'state' => $data['billing_state'] ?? ($data['state'] ?? ''),
-                'postal_code' => $data['billing_postal_code'] ?? ($data['postal_code'] ?? ''),
-            ];
-            $this->insertAddress($db, $orderId, 'billing', $billing);
+            if ($deliveryMethod === 'delivery') {
+                $shippingAddress = [
+                    'first_name' => $first,
+                    'last_name' => $last,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'company' => trim((string) ($data['company'] ?? '')),
+                    'address_line1' => $address1,
+                    'address_line2' => trim((string) ($data['address_line2'] ?? '')),
+                    'city' => $city,
+                    'state' => trim((string) ($data['state'] ?? '')),
+                    'postal_code' => trim((string) ($data['postal_code'] ?? '')),
+                    'country' => 'Nigeria',
+                ];
+            } else {
+                $shippingAddress = [
+                    'first_name' => $first,
+                    'last_name' => $last,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'company' => trim((string) ($data['company'] ?? '')),
+                    'address_line1' => '6 Oluwole Omole Street, Opebi',
+                    'address_line2' => 'Office pickup',
+                    'city' => 'Lagos',
+                    'state' => 'Lagos',
+                    'postal_code' => '',
+                    'country' => 'Nigeria',
+                ];
+            }
+            $this->insertAddress($db, $orderId, 'shipping', $shippingAddress);
+            $this->insertAddress($db, $orderId, 'billing', $shippingAddress);
 
             $db->commit();
         } catch (\Throwable $t) {
@@ -179,17 +333,22 @@ class CheckoutController extends Controller
 
         $confirmationUrl = rtrim((string) ($_ENV['APP_URL'] ?? ''), '/');
 
-        // ---- Initiate payment (card only; transfers are handled offline) ----
+        // ---- Initiate payment (card gateways only; transfers are handled offline) ----
         $intent = null;
-        if ($paymentMethod === 'paystack') {
+        if ($paystack || $flutterwave) {
             try {
-                $payments = new PaymentService();
+                $gatewayName = $flutterwave ? 'flutterwave' : 'paystack';
+                $payments = new PaymentService($gatewayName);
                 $out = $payments->createIntent(
                     [
                         'order_id' => $orderId,
                         'amount_kobo' => $amountKobo,
                         'currency' => 'NGN',
                         'customer_email' => $email,
+                        'gateway' => $gatewayName,
+                        'redirect_url' => $confirmationUrl . '/order-confirmation?method=' . $gatewayName,
+                        'customer_name' => trim($first . ' ' . $last),
+                        'customer_phone' => $phone,
                     ],
                     self::uuidV4(),
                     $this->requestMeta(),
@@ -204,13 +363,32 @@ class CheckoutController extends Controller
             if (!empty($intent['authorization_url'])) {
                 $redirectUrl = $intent['authorization_url'];
             } else {
-                $redirectUrl = $confirmationUrl . '/order-confirmation?ref=' . rawurlencode($intent['reference']) . '&method=paystack';
+                $redirectUrl = $confirmationUrl . '/order-confirmation?ref=' . rawurlencode($intent['reference']) . '&method=' . $gatewayName;
             }
         } else {
             $redirectUrl = $confirmationUrl . '/order-confirmation?ref=' . rawurlencode($orderNumber) . '&method=transfer';
         }
 
-        Logger::info("Order {$orderNumber} placed (total {$grandTotal} NGN, {$paymentMethod})", 'order');
+        // ---- WhatsApp coordination link for deliveries ----
+        $whatsappLink = null;
+        if ($deliveryMethod === 'delivery' && $whatsapp !== '') {
+            $waDigits = ltrim(preg_replace('/[^0-9]/', '', $whatsapp), '0');
+            if (str_starts_with($waDigits, '234')) {
+                $waDigits = '234' . ltrim(substr($waDigits, 3), '0');
+            } elseif (strlen($waDigits) <= 10) {
+                $waDigits = '234' . $waDigits;
+            }
+            if ($shipbubbleMeta) {
+                $message = "Hi {$first}! This is Marigold Signature. Your order {$orderNumber} (total ₦"
+                    . number_format($grandTotal, 0) . ") has been received. Delivery via {$shipbubbleMeta['courier_name']} — we'll confirm the schedule with you here on WhatsApp.";
+            } else {
+                $message = "Hi {$first}! This is Marigold Signature. Your order {$orderNumber} (total ₦"
+                    . number_format($grandTotal, 0) . ") has been received. You chose delivery — we'll confirm the delivery fee and schedule with you here on WhatsApp.";
+            }
+            $whatsappLink = 'https://wa.me/' . $waDigits . '?text=' . rawurlencode($message);
+        }
+
+        Logger::info("Order {$orderNumber} placed (total {$grandTotal} NGN, {$paymentMethod}, {$deliveryMethod})", 'order');
 
         $this->json([
             'order_number' => $orderNumber,
@@ -221,6 +399,10 @@ class CheckoutController extends Controller
             'grand_total' => $grandTotal,
             'amount_kobo' => $amountKobo,
             'currency' => 'NGN',
+            'delivery_method' => $deliveryMethod,
+            'whatsapp' => $deliveryMethod === 'delivery' ? $whatsapp : null,
+            'whatsapp_link' => $whatsappLink,
+            'account_created' => $accountCreated,
         ], 201);
     }
 
@@ -230,7 +412,9 @@ class CheckoutController extends Controller
      */
     public function confirmation()
     {
-        $ref = trim((string) ($_GET['ref'] ?? ''));
+        // Paystack redirects back with `reference`/`trxref`, Flutterwave with
+        // `tx_ref` — accept all three in addition to our own `ref`.
+        $ref = trim((string) ($_GET['ref'] ?? $_GET['tx_ref'] ?? $_GET['reference'] ?? $_GET['trxref'] ?? ''));
         $method = ($_GET['method'] ?? '') === 'transfer' ? 'transfer' : 'paystack';
 
         $data = [
@@ -258,6 +442,23 @@ class CheckoutController extends Controller
             $order = null;
             $statusLabel = null;
             if ($intent) {
+                $gateway = (string) ($intent['gateway'] ?? $method);
+                $ledgerStatus = PaymentLedger::currentStatus((int) $intent['id']);
+                if (!in_array($ledgerStatus, ['captured', 'failed', 'refunded'], true)) {
+                    try {
+                        $payments = new PaymentService($gateway);
+                        $payments->capture(
+                            (int) $intent['id'],
+                            [],
+                            'checkout_return_' . hash('sha256', (string) $intent['gateway_ref']),
+                            $this->requestMeta(),
+                            RowSecurity::actor()
+                        );
+                    } catch (\Throwable $t) {
+                        Logger::warning("Checkout return reconcile failed for intent #{$intent['id']}: {$t->getMessage()}", 'payment');
+                    }
+                }
+
                 $stmt = $db->prepare("SELECT * FROM orders WHERE id = :i LIMIT 1");
                 $stmt->execute(['i' => (int) $intent['order_id']]);
                 $order = $stmt->fetch() ?: null;
@@ -277,6 +478,8 @@ class CheckoutController extends Controller
 
             if ($order) {
                 $data['order'] = $order;
+                // Reflect the actual gateway the order was paid through.
+                $data['method'] = (string) ($order['payment_method'] ?? $method);
                 $data['status_label'] = $statusLabel;
                 $data['amount'] = number_format((float) $order['grand_total'], 2);
                 $data['date'] = date('F j, Y', strtotime((string) $order['created_at']));
@@ -327,6 +530,13 @@ class CheckoutController extends Controller
             $map[(int) $row['id']] = $row;
         }
         return $map;
+    }
+
+    private static function effectiveUnit(array $row): float
+    {
+        return $row['sale_price'] !== null && (float) $row['sale_price'] < (float) $row['price']
+            ? (float) $row['sale_price']
+            : (float) $row['price'];
     }
 
     private function insertAddress(\PDO $db, int $orderId, string $type, array $a): void

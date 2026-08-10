@@ -17,7 +17,7 @@
         <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
             <input type="text" value="<?= $isEdit ? htmlspecialchars($post['title']) : '' ?>" placeholder="Post Title" class="w-full bg-transparent text-3xl font-bold font-manrope placeholder-[var(--text-muted)] focus:outline-none mb-2">
             <div class="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-6 font-mono bg-[var(--surface)] p-2 rounded border border-[var(--border)]">
-                <span>marigoldsignature.com/blog/</span><input type="text" value="<?= $isEdit ? 'top-10-corporate-gift-ideas-for-2026' : '' ?>" placeholder="post-slug" class="bg-transparent border-none focus:outline-none flex-grow text-white">
+                <span>marigoldsignatureng.com/blog/</span><input type="text" value="<?= $isEdit ? 'top-10-corporate-gift-ideas-for-2026' : '' ?>" placeholder="post-slug" class="bg-transparent border-none focus:outline-none flex-grow text-white">
             </div>
             
             <!-- Minimal Rich Text Editor Mock -->

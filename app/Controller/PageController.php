@@ -53,31 +53,48 @@ class PageController extends Controller
     }
 
     // ── Event Pages ──────────────────────────────────────────────
+    public function events()
+    {
+        return View::renderTemplate('pages/public/events/index', 'main', [
+            'title' => 'Events — Marigold Signature | Corporate Meetings, Conferences & Dinners',
+            'meta_description' => 'Marigold Signature Nigeria Limited delivers branded merchandise and event solutions for corporate meetings, conferences and corporate dinners across Nigeria.',
+            'page_key' => 'events'
+        ]);
+    }
+
     public function corporateMeeting()
     {
         return View::renderTemplate('pages/public/events/corporate-meeting', 'main', [
-            'title' => 'Corporate Meeting Solutions | Marigold Signature'
+            'title' => 'Corporate Meetings | Marigold Signature',
+            'meta_description' => 'Premium promotional merchandise and brand solutions for corporate meetings — branded notebooks, delegate kits, name tags, conference folders and more.',
+            'page_key' => 'events'
         ]);
     }
 
     public function conference()
     {
         return View::renderTemplate('pages/public/events/conference', 'main', [
-            'title' => 'Conference Solutions | Marigold Signature'
+            'title' => 'Conferences | Marigold Signature',
+            'meta_description' => 'Premium promotional merchandise and brand solutions for conferences — delegate bags, conference kits, exhibition giveaways, speaker gifts and more.',
+            'page_key' => 'events'
         ]);
     }
 
     public function dinner()
     {
         return View::renderTemplate('pages/public/events/dinner', 'main', [
-            'title' => 'Corporate Dinner Solutions | Marigold Signature'
+            'title' => 'Corporate Dinners | Marigold Signature',
+            'meta_description' => 'Premium promotional merchandise and brand solutions for corporate dinners — executive gift sets, awards, table gifts, branded gift boxes and more.',
+            'page_key' => 'events'
         ]);
     }
 
     public function about()
     {
         return View::renderTemplate('pages/public/about', 'main', [
-            'title' => 'About Us | Marigold Signature'
+            'title' => 'About — Marigold Signature | 15+ Years of Corporate Gifting Excellence',
+            'meta_description' => "For over 15 years, Marigold Signature Nigeria Limited has partnered with Nigeria's most recognised organisations to design and deliver premium corporate gifts and branded merchandise.",
+            'page_key' => 'about'
         ]);
     }
 
@@ -91,7 +108,9 @@ class PageController extends Controller
     public function contact()
     {
         return View::renderTemplate('pages/public/contact', 'main', [
-            'title' => 'Contact Us | Marigold Signature'
+            'title' => 'Contact Us | Marigold Signature',
+            'meta_description' => 'Contact Marigold Signature Nigeria Limited for corporate gifting, branded merchandise and event support. Lagos, Nigeria. Nationwide delivery.',
+            'page_key' => 'contact'
         ]);
     }
 

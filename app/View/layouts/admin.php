@@ -40,6 +40,7 @@
         .sidebar-collapsed .nav-section-label { display: none; }
         .sidebar-collapsed .logo-text { display: none; }
         .sidebar-collapsed .logo-dot { display: none; }
+        .sidebar-collapsed .sidebar-logo { display: none; }
         .sidebar-collapsed .sidebar-footer-text { display: none; }
     </style>
 </head>
@@ -50,9 +51,8 @@
            class="fixed left-0 top-0 h-screen bg-[#0f0f0f] border-r border-[var(--border)] z-40 flex flex-col transition-all duration-300 overflow-hidden hidden lg:flex">
 
         <!-- Logo -->
-        <div class="flex items-center gap-3 px-5 h-[64px] border-b border-[var(--border)] shrink-0">
-            <img src="/ms-logo-icon.png" alt="Marigold Signature" class="w-8 h-8 object-contain shrink-0">
-            <span class="logo-text font-manrope font-bold text-lg tracking-wider uppercase whitespace-nowrap">Marigold<span class="logo-dot text-[var(--gold)]">.</span></span>
+        <div class="flex items-center px-5 h-[64px] border-b border-[var(--border)] shrink-0 overflow-hidden">
+            <img src="/ms-logo.png" alt="Marigold Signature" class="sidebar-logo h-[30px] w-auto max-w-full object-contain shrink-0">
         </div>
 
         <!-- Collapse Toggle -->
@@ -74,9 +74,11 @@
                 ['section' => null, 'href' => '/admin/solutions', 'icon' => 'briefcase', 'label' => 'Corp. Solutions'],
                 ['section' => 'Commerce', 'href' => '/admin/orders', 'icon' => 'package', 'label' => 'Orders'],
                 ['section' => null, 'href' => '/admin/quotes', 'icon' => 'file-text', 'label' => 'Quotes'],
+                ['section' => null, 'href' => '/admin/messages', 'icon' => 'inbox', 'label' => 'Messages'],
                 ['section' => null, 'href' => '/admin/customers', 'icon' => 'users', 'label' => 'Customers'],
                 ['section' => 'Content', 'href' => '/admin/blog', 'icon' => 'pen-tool', 'label' => 'Blog'],
                 ['section' => null, 'href' => '/admin/media', 'icon' => 'image', 'label' => 'Media'],
+                ['section' => null, 'href' => '/admin/newsletter/subscribers', 'icon' => 'mail', 'label' => 'Subscribers'],
                 ['section' => 'Insights', 'href' => '/admin/reports', 'icon' => 'bar-chart-2', 'label' => 'Reports'],
                 ['section' => 'System', 'href' => '/admin/settings', 'icon' => 'settings', 'label' => 'Settings'],
                 ['section' => null, 'href' => '/admin/users', 'icon' => 'shield', 'label' => 'Administration'],
@@ -132,7 +134,7 @@
            class="lg:hidden fixed left-0 top-0 h-screen w-[280px] bg-[#0f0f0f] border-r border-[var(--border)] z-40 flex flex-col overflow-y-auto"
            style="display:none">
         <div class="flex items-center justify-between px-5 h-[64px] border-b border-[var(--border)] shrink-0">
-            <span class="font-manrope font-bold text-lg tracking-wider uppercase">Marigold<span class="text-[var(--gold)]">.</span></span>
+            <img src="/ms-logo.png" alt="Marigold Signature" class="h-[30px] w-auto object-contain">
             <button @click="mobileMenuOpen = false" class="text-[var(--text-secondary)] hover:text-white">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>

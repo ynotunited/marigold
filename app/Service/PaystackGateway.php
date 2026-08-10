@@ -62,8 +62,9 @@ class PaystackGateway implements PaymentGateway
         if (!empty($params['reference'])) {
             $body['reference'] = $params['reference'];
         }
-        if (!empty($params['callback_url'])) {
-            $body['callback_url'] = $params['callback_url'];
+        $callbackUrl = (string) ($params['callback_url'] ?? $params['redirect_url'] ?? '');
+        if ($callbackUrl !== '') {
+            $body['callback_url'] = $callbackUrl;
         }
         if (!empty($params['metadata']) && is_array($params['metadata'])) {
             $body['metadata'] = $params['metadata'];

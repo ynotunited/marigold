@@ -10,17 +10,29 @@ use App\Service\PaymentService;
  * Webhook ingress.
  *
  * NOT CSRF-protected and NOT session-bound — authenticity is established by the
- * provider's HMAC signature (verified inside PaymentService::handleWebhook)
- * before any ledger mutation. Always returns a fast 2xx ack so providers stop
+ * provider's signature (verified inside PaymentService::handleWebhook) before
+ * any ledger mutation. Always returns a fast 2xx ack so providers stop
  * retrying; duplicate event ids are acknowledged and dropped.
+ *
+ * Paystack:    HMAC-SHA512 delivered in the `x-paystack-signature` header.
+ * Flutterwave: the configured secret hash delivered in the `verif-hash` header.
  */
 class WebhookController extends Controller
 {
     public function handle()
     {
+        $this->ingest('paystack', $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ?? '');
+    }
+
+    public function handleFlutterwave()
+    {
+        $this->ingest('flutterwave', $_SERVER['HTTP_VERIF_HASH'] ?? '');
+    }
+
+    private function ingest(string $provider, string $signature)
+    {
         $raw = file_get_contents('php://input');
         $payload = json_decode((string) $raw, true);
-        $signature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ?? '';
 
         if (!is_array($payload)) {
             Logger::warning('Webhook received with invalid JSON payload.', 'payment');
@@ -28,7 +40,7 @@ class WebhookController extends Controller
         }
 
         try {
-            $result = (new PaymentService())->handleWebhook($payload, $signature, (string) $raw);
+            $result = (new PaymentService($provider))->handleWebhook($payload, $signature, (string) $raw, $provider);
         } catch (\InvalidArgumentException $e) {
             $this->json(['received' => false, 'error' => $e->getMessage()], $e->getCode() ?: 400);
         } catch (\Throwable $t) {

@@ -36,8 +36,8 @@ class EmailPreviewController extends Controller
             'quote_id' => 'QT-1045',
             'amount' => '₦450,000',
             'date' => date('M j, Y'),
-            'reset_link' => 'https://marigoldsignature.com/reset-password?token=mock_token_123',
-            'action_link' => 'https://marigoldsignature.com/account/orders/ORD-90210'
+            'reset_link' => 'https://marigoldsignatureng.com/reset-password?token=mock_token_123',
+            'action_link' => 'https://marigoldsignatureng.com/account/orders/ORD-90210'
         ];
 
         // Render the inner content

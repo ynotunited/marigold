@@ -118,6 +118,102 @@ class AuthService extends Service
         }
     }
 
+    /**
+     * Register a customer directly from checkout: the account is created
+     * pre-verified (email_verified_at = NOW()) and the session established
+     * immediately so the order lands on the customer's dashboard.
+     */
+    public static function registerFromCheckout(array $data): array
+    {
+        $db = Model::getDB();
+        $email = strtolower(trim($data['email'] ?? ''));
+        $password = (string) ($data['password'] ?? '');
+        $first = trim((string) ($data['first_name'] ?? ''));
+        $last = trim((string) ($data['last_name'] ?? ''));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['error' => 'Please enter a valid email address.'];
+        }
+        if (mb_strlen($first) < 2 || mb_strlen($last) < 2) {
+            return ['error' => 'Please provide your first and last name.'];
+        }
+        if (strlen($password) < 8) {
+            return ['error' => 'Password must be at least 8 characters.'];
+        }
+
+        $exists = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+        $exists->execute(['email' => $email]);
+        if ($exists->fetchColumn()) {
+            return ['error' => 'An account with this email already exists. Please log in instead.'];
+        }
+
+        $uuid = self::uuid();
+
+        $db->beginTransaction();
+        try {
+            $db->prepare("
+                INSERT INTO users
+                    (uuid, first_name, last_name, email, phone, password, status,
+                     email_verified_at, created_at)
+                VALUES
+                    (:uuid, :first_name, :last_name, :email, :phone, :password, 'active',
+                     NOW(), NOW())
+            ")->execute([
+                'uuid' => $uuid,
+                'first_name' => mb_substr($first, 0, 100),
+                'last_name' => mb_substr($last, 0, 100),
+                'email' => $email,
+                'phone' => trim((string) ($data['phone'] ?? '')) ?: null,
+                'password' => password_hash($password, PASSWORD_BCRYPT, ['cost' => self::hashCost()]),
+            ]);
+
+            $userId = (int) $db->lastInsertId();
+
+            $role = $db->prepare("SELECT id FROM roles WHERE slug = 'customer' LIMIT 1");
+            $role->execute();
+            if ($roleId = $role->fetchColumn()) {
+                $db->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (:user_id, :role_id)")
+                    ->execute(['user_id' => $userId, 'role_id' => $roleId]);
+            }
+
+            $db->prepare("INSERT INTO customers (user_id, created_at) VALUES (:user_id, NOW())")
+                ->execute(['user_id' => $userId]);
+
+            $db->commit();
+            Logger::info("New user registered at checkout. ID: $userId", 'auth');
+
+            self::establishSessionById($userId);
+            return ['user_id' => $userId];
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            Logger::error('Checkout registration failed: ' . $e->getMessage(), 'auth');
+            return ['error' => 'We could not create your account. Please try again.'];
+        }
+    }
+
+    /**
+     * Establish an authenticated session for an existing user id (used right
+     * after checkout registration so the new customer is logged in).
+     */
+    public static function establishSessionById(int $userId): bool
+    {
+        $stmt = Model::getDB()->prepare("
+            SELECT * FROM users
+            WHERE id = :id AND deleted_at IS NULL AND status = 'active'
+            LIMIT 1
+        ");
+        $stmt->execute(['id' => $userId]);
+        $user = $stmt->fetch();
+        if (!$user) {
+            return false;
+        }
+
+        self::establishSession($user);
+        Model::getDB()->prepare("UPDATE users SET last_login_at = NOW() WHERE id = :id")
+            ->execute(['id' => $userId]);
+        return true;
+    }
+
     public static function verifyEmail(string $token): bool
     {
         if (!preg_match('/^[a-f0-9]{64}$/i', $token)) {

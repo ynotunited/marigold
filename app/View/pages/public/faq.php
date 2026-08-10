@@ -1,54 +1,62 @@
-<!-- FAQ Hero -->
-<section class="pt-32 pb-16 px-6 lg:px-20 border-b border-[var(--border)]">
-    <div class="max-w-[1280px] mx-auto text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">How can we help?</h1>
-        <p class="text-[var(--text-secondary)] text-lg mb-8 max-w-2xl mx-auto">Find answers to commonly asked questions about our products, ordering process, customization, and shipping.</p>
-        
-        <div class="max-w-xl mx-auto relative">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] w-5 h-5"></i>
-            <input type="text" placeholder="Search FAQs..." class="input-field pl-12">
+<div style="background: var(--ivory); color: var(--ink);">
+
+    <section class="page-hero">
+        <div class="container">
+            <div class="crumbs"><a href="/">Home</a><span>/</span><span>FAQ</span></div>
+            <span class="eyebrow center reveal">Support</span>
+            <h1 class="display h1 reveal">How can we help?</h1>
+            <p class="lead reveal">Find answers to commonly asked questions about our products, ordering process, customization, and shipping.</p>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- FAQ Accordion List -->
-<section class="py-20 px-6 lg:px-20">
-    <div class="max-w-3xl mx-auto" x-data="{ active: null }">
-        <?php foreach ($faqs as $index => $faq): ?>
-            <div class="border-b border-[var(--border)]">
-                <button @click="active = active === <?= $index ?> ? null : <?= $index ?>" 
-                        class="w-full py-6 flex items-center justify-between text-left focus:outline-none group">
-                    <h3 class="text-xl font-semibold group-hover:text-[var(--gold)] transition-colors pr-8">
-                        <?= htmlspecialchars($faq['question']) ?>
-                    </h3>
-                    <div class="relative w-6 h-6 flex-shrink-0 flex items-center justify-center text-[var(--gold)]">
-                        <i data-lucide="plus" class="absolute transition-transform duration-300" 
-                           :class="{'rotate-90 opacity-0': active === <?= $index ?>}"></i>
-                        <i data-lucide="minus" class="absolute transition-transform duration-300 opacity-0" 
-                           :class="{'opacity-100': active === <?= $index ?>}"></i>
-                    </div>
-                </button>
-                <div x-show="active === <?= $index ?>" 
-                     x-collapse 
-                     class="overflow-hidden"
-                     style="display: none;">
-                    <div class="pb-6 text-[var(--text-secondary)] leading-relaxed">
-                        <span class="inline-block px-3 py-1 bg-[var(--surface)] border border-[var(--border)] rounded-full text-xs text-[var(--gold)] mb-3">
-                            <?= htmlspecialchars($faq['category']) ?>
-                        </span>
-                        <p><?= nl2br(htmlspecialchars($faq['answer'])) ?></p>
-                    </div>
+    <section class="section" style="padding-top: 0;">
+        <div class="container">
+            <div x-data="{ q: '', active: null }">
+
+                <div class="faq-search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" x-model="q" placeholder="Search FAQs..." class="field">
                 </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</section>
 
-<!-- CTA -->
-<section class="py-20 px-6 lg:px-20 bg-[var(--surface)] text-center">
-    <div class="max-w-[1280px] mx-auto">
-        <h2 class="text-3xl font-bold mb-4">Still have questions?</h2>
-        <p class="text-[var(--text-secondary)] mb-8 max-w-xl mx-auto">Can't find the answer you're looking for? Our dedicated corporate sales team is here to help you.</p>
-        <a href="/contact" class="btn btn-primary px-8 h-[52px]">Contact Support</a>
-    </div>
-</section>
+                <div class="faq-list" x-ref="faqList">
+                    <?php foreach ($faqs as $index => $faq): ?>
+                    <?php $haystack = strtolower(($faq['question'] ?? '') . ' ' . ($faq['answer'] ?? '')); ?>
+                    <div class="faq-item" x-ref="item-<?= $index ?>"
+                         :class="{ 'open': active === <?= $index ?>, 'is-hidden': q.trim() !== '' && !'<?= addslashes(htmlspecialchars($haystack, ENT_QUOTES)) ?>'.includes(q.trim().toLowerCase()) }">
+                        <button type="button" @click="active = active === <?= $index ?> ? null : <?= $index ?>" class="faq-q" :aria-expanded="active === <?= $index ?> ? 'true' : 'false'">
+                            <h3><?= htmlspecialchars($faq['question']) ?></h3>
+                            <span class="faq-ico">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            </span>
+                        </button>
+                        <div class="faq-a">
+                            <div class="faq-a-inner">
+                                <div class="faq-a-body">
+                                    <span class="faq-tag"><?= htmlspecialchars($faq['category']) ?></span>
+                                    <p><?= nl2br(htmlspecialchars($faq['answer'])) ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <p class="faq-none" x-show="q.trim() !== '' && $refs.faqList.querySelectorAll('.faq-item:not(.is-hidden)').length === 0">
+                    No questions match your search. Try a different keyword or <a href="/contact">contact our team</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section dark cta">
+        <div class="container">
+            <span class="eyebrow reveal" style="justify-content: center;">Still have questions?</span>
+            <h2 class="display h2 reveal">Can't find the answer you're looking for?</h2>
+            <p class="lead reveal">Our dedicated corporate sales team is here to help you.</p>
+            <div class="cta-actions reveal">
+                <a href="/contact" class="btn btn-gold btn-lg">Contact support <span class="arr">&rarr;</span></a>
+            </div>
+        </div>
+    </section>
+
+</div>

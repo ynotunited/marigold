@@ -251,7 +251,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Canonical URL</label>
-                        <input type="url" name="canonical_url" placeholder="https://marigoldsignature.com/shop/product-name" class="input-field w-full text-sm">
+                        <input type="url" name="canonical_url" placeholder="https://marigoldsignatureng.com/shop/product-name" class="input-field w-full text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Open Graph Image</label>
@@ -265,7 +265,7 @@
                 <div class="mt-8 p-4 bg-white rounded-[10px]">
                     <p class="text-[10px] text-gray-400 mb-2 font-mono">Search Result Preview</p>
                     <p class="text-blue-700 text-sm font-medium truncate">Executive Leather Notebook | Marigold Signature</p>
-                    <p class="text-green-700 text-xs">marigoldsignature.com › shop › executive-leather-notebook</p>
+                    <p class="text-green-700 text-xs">marigoldsignatureng.com › shop › executive-leather-notebook</p>
                     <p class="text-gray-600 text-xs mt-0.5 line-clamp-2">Premium corporate gifting with this executive leather set. Perfect for onboarding, client appreciation, or board meetings.</p>
                 </div>
             </div>

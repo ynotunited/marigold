@@ -6,6 +6,7 @@ use App\Core\Idempotency;
 use App\Core\Logger;
 use App\Core\Model;
 use App\Core\PaymentGateway;
+use App\Core\PaymentGatewayFactory;
 use App\Core\PaymentLedger;
 use App\Core\RowSecurity;
 use App\Service\Mailer;
@@ -26,11 +27,14 @@ use App\Service\Mailer;
  */
 class PaymentService
 {
-    private PaymentGateway $gateway;
+    private string $gatewayName;
 
-    public function __construct(?PaymentGateway $gateway = null)
+    public function __construct(string $gatewayName = 'paystack')
     {
-        $this->gateway = $gateway ?? new PaystackGateway();
+        // Canonical gateway this service routes operations to by default. The
+        // provider is stored on each intent so capture/refund/webhooks always
+        // reconcile against the gateway that actually created the intent.
+        $this->gatewayName = PaymentGatewayFactory::normalize($gatewayName);
     }
 
     /**
@@ -52,13 +56,18 @@ class PaymentService
         $currency = strtoupper((string) ($data['currency'] ?? 'NGN'));
         $email = isset($data['customer_email']) ? filter_var($data['customer_email'], FILTER_VALIDATE_EMAIL) : null;
 
+        // Which provider issues this intent? Defaults to the service's gateway,
+        // but an explicit gateway in the payload (e.g. 'flutterwave') wins.
+        $gatewayName = PaymentGatewayFactory::normalize((string) ($data['gateway'] ?? $this->gatewayName));
+        $gateway = PaymentGatewayFactory::make($gatewayName);
+
         if ($amountKobo <= 0) {
             throw new \InvalidArgumentException('amount_kobo must be a positive integer.', 422);
         }
         if (strlen($currency) !== 3 || !ctype_alpha($currency)) {
             throw new \InvalidArgumentException('currency must be a 3-letter ISO code.', 422);
         }
-        if (!$this->gateway->isSimulation() && !$email) {
+        if (!$gateway->isSimulation() && !$email) {
             throw new \InvalidArgumentException('customer_email is required.', 422);
         }
 
@@ -75,13 +84,14 @@ class PaymentService
             $stmt = $db->prepare(
                 "INSERT INTO payment_intents
                     (idempotency_key, order_id, customer_id, session_hash, gateway, amount_kobo, currency, customer_email, metadata)
-                 VALUES (:k, :o, :c, :s, 'paystack', :a, :cu, :e, :m)"
+                 VALUES (:k, :o, :c, :s, :g, :a, :cu, :e, :m)"
             );
             $stmt->execute([
                 'k' => $idempotencyKey,
                 'o' => $orderId,
                 'c' => $actor['customer_id'] ?? null,
                 's' => $actor['session_hash'] ?? null,
+                'g' => $gatewayName,
                 'a' => $amountKobo,
                 'cu' => $currency,
                 'e' => $email,
@@ -93,11 +103,14 @@ class PaymentService
             PaymentLedger::append($intentId, 'initiated', $amountKobo, 'api', self::eventId('init'));
 
             // 3. Call the gateway.
-            $gatewayResult = $this->gateway->initialize([
+            $gatewayResult = $gateway->initialize([
                 'email' => $email ?: '',
                 'amount_kobo' => $amountKobo,
                 'currency' => $currency,
                 'reference' => 'PI_' . $intentId . '_' . strtoupper(bin2hex(random_bytes(6))),
+                'redirect_url' => (string) ($data['redirect_url'] ?? ''),
+                'customer_name' => (string) ($data['customer_name'] ?? ''),
+                'customer_phone' => (string) ($data['customer_phone'] ?? ''),
             ]);
 
             // 4. Record the provider reference — a set-once metadata write,
@@ -165,7 +178,8 @@ class PaymentService
             ]);
         }
 
-        $verified = $this->gateway->verify((string) $intent['gateway_ref']);
+        $gateway = PaymentGatewayFactory::make((string) ($intent['gateway'] ?? 'paystack'));
+        $verified = $gateway->verify((string) $intent['gateway_ref']);
 
         if ($verified['status'] === 'success') {
             $appended = PaymentLedger::append(
@@ -244,7 +258,8 @@ class PaymentService
             throw new \InvalidArgumentException('Refund amount exceeds the captured amount.', 422);
         }
 
-        $gatewayRefund = $this->gateway->refund(
+        $gateway = PaymentGatewayFactory::make((string) ($intent['gateway'] ?? 'paystack'));
+        $gatewayRefund = $gateway->refund(
             (string) $intent['gateway_ref'],
             $amountKobo,
             ['intent_id' => $intentId]
@@ -282,11 +297,11 @@ class PaymentService
      * - Validates the event id is unknown before appending to the timeline.
      * - Appends a brand-new immutable ledger row (never updates an old one).
      */
-    public function handleWebhook(array $payload, string $signature, string $rawBody): array
+    public function handleWebhook(array $payload, string $signature, string $rawBody, string $provider = 'paystack'): array
     {
         $eventType = (string) ($payload['event'] ?? '');
         $eventId = self::webhookEventId($payload);
-        $provider = 'paystack';
+        $provider = PaymentGatewayFactory::normalize($provider);
 
         if ($eventType === '') {
             throw new \InvalidArgumentException('Webhook payload missing event type.', 400);
@@ -316,7 +331,8 @@ class PaymentService
         $webhookId = (int) $db->lastInsertId();
 
         // 2. Verify the signature BEFORE any trust or timeline mutation.
-        $valid = $this->gateway->verifySignature($rawBody, $signature);
+        $gateway = PaymentGatewayFactory::make($provider);
+        $valid = $gateway->verifySignature($rawBody, $signature);
         if (!$valid) {
             $this->markWebhook($webhookId, true, 'Signature verification failed.');
             Logger::warning("Rejected webhook {$provider}:{$eventId} — invalid signature", 'payment');
@@ -325,8 +341,10 @@ class PaymentService
 
         $this->markSignatureValid($webhookId);
 
-        // 3. Resolve the payment intent by provider reference.
-        $reference = $payload['data']['reference']
+        // 3. Resolve the payment intent by provider reference. Paystack uses
+        //    data.reference, Flutterwave uses data.tx_ref.
+        $reference = $payload['data']['tx_ref']
+            ?? $payload['data']['reference']
             ?? $payload['data']['transaction']['reference']
             ?? null;
         $intent = null;
@@ -344,6 +362,11 @@ class PaymentService
 
         // 4. Map to a ledger event. Unmappable events are acked, not appended.
         $ledgerType = self::mapEventType($eventType);
+        // Flutterwave sends charge.completed for both outcomes — the transaction
+        // status inside data disambiguates successful from failed payments.
+        if ($provider === 'flutterwave' && $eventType === 'charge.completed') {
+            $ledgerType = ($payload['data']['status'] ?? '') === 'successful' ? 'captured' : 'failed';
+        }
         if ($ledgerType === null) {
             $this->markWebhook($webhookId, true, "Event type '{$eventType}' requires no ledger mutation.");
             return ['received' => true, 'signature_valid' => true, 'matched' => true, 'ledger_appended' => false, 'event_id' => $eventId];
@@ -352,7 +375,12 @@ class PaymentService
         // 5. Append to the immutable timeline. Event-id validation happens here:
         //    the unique (intent_id, event_id) + provider_event_id indexes make
         //    double-appending impossible.
-        $amountKobo = (int) ($payload['data']['amount'] ?? $intent['amount_kobo']);
+        // Amounts: Paystack webhooks report kobo; Flutterwave reports major
+        // units (naira). The intent's stored amount is the authoritative fallback.
+        $rawAmount = $payload['data']['amount'] ?? null;
+        $amountKobo = $rawAmount !== null
+            ? (int) round(((float) $rawAmount) * ($provider === 'flutterwave' ? 100 : 1))
+            : (int) $intent['amount_kobo'];
         $appended = true;
         try {
             $appended = PaymentLedger::append(
@@ -416,6 +444,7 @@ class PaymentService
             if ($stmt->rowCount() > 0) {
                 $this->notifyOrderPaid($orderId, $reference);
             }
+            $this->maybeRouteShipment($orderId);
             return;
         }
 
@@ -424,6 +453,65 @@ class PaymentService
                 "UPDATE orders SET payment_status = 'failed' WHERE id = :i AND payment_status = 'pending'"
             );
             $stmt->execute(['i' => $orderId]);
+        }
+    }
+
+    /**
+     * Once an order is paid, route the ShipBubble shipment label if the order
+     * was placed with a courier selection. Best-effort: a routing failure is
+     * logged but must never break the payment acknowledgement.
+     */
+    private function maybeRouteShipment(int $orderId): void
+    {
+        try {
+            $db = Model::getDB();
+            $stmt = $db->prepare(
+                "SELECT shipbubble_request_token, shipbubble_service_code, shipbubble_courier_id,
+                        shipbubble_courier_name, shipbubble_order_id
+                   FROM orders WHERE id = :i LIMIT 1"
+            );
+            $stmt->execute(['i' => $orderId]);
+            $order = $stmt->fetch();
+
+            $token = (string) ($order['shipbubble_request_token'] ?? '');
+            $service = (string) ($order['shipbubble_service_code'] ?? '');
+            $courier = (string) ($order['shipbubble_courier_id'] ?? '');
+            $hasLabel = !empty($order['shipbubble_order_id']);
+
+            if ($token === '' || $service === '' || $courier === '' || $hasLabel) {
+                return;
+            }
+
+            $shipbubble = new ShipBubbleService();
+            $label = $shipbubble->createLabel([
+                'request_token' => $token,
+                'service_code' => $service,
+                'courier_id' => $courier,
+                'courier_name' => (string) ($order['shipbubble_courier_name'] ?? ''),
+            ]);
+
+            $sbOrderId = (string) ($label['order_id'] ?? '');
+            if ($sbOrderId === '') {
+                Logger::warning("ShipBubble label create returned no order_id for order #{$orderId}", 'shipbubble');
+                return;
+            }
+
+            $stmt = $db->prepare(
+                "UPDATE orders
+                    SET shipbubble_order_id = :o, shipbubble_status = :s,
+                        shipbubble_tracking_url = COALESCE(NULLIF(:tu, ''), shipbubble_tracking_url)
+                  WHERE id = :i AND shipbubble_order_id IS NULL"
+            );
+            $stmt->execute([
+                'o' => $sbOrderId,
+                's' => (string) ($label['status'] ?? 'pending'),
+                'tu' => (string) ($label['tracking_url'] ?? ''),
+                'i' => $orderId,
+            ]);
+
+            Logger::info("Order #{$orderId} routed to ShipBubble as {$sbOrderId}", 'shipbubble');
+        } catch (\Throwable $t) {
+            Logger::error("ShipBubble routing failed for order #{$orderId}: {$t->getMessage()}", 'shipbubble');
         }
     }
 
@@ -457,7 +545,7 @@ class PaymentService
             ]);
         }
 
-        Mailer::sendTemplate($_ENV['ADMIN_EMAIL'] ?? 'hello@marigoldsignature.com', 'New paid order: ' . $order['order_number'], 'admin_new_order', [
+        Mailer::sendTemplate($_ENV['ADMIN_EMAIL'] ?? 'hello@marigoldsignatureng.com', 'New paid order: ' . $order['order_number'], 'admin_new_order', [
             'order_id' => $order['order_number'],
             'customer_name' => $customerName ?: ($order['email'] ?: 'guest'),
             'amount' => 'NGN ' . $amount,
@@ -556,10 +644,9 @@ class PaymentService
     private static function mapEventType(string $eventType): ?string
     {
         return match ($eventType) {
-            'charge.success' => 'captured',
+            'charge.success', 'charge.completed' => 'captured',
             'charge.failed' => 'failed',
-            'charge.refunded' => 'refunded',
-            'refund.processed' => 'refunded',
+            'charge.refunded', 'refund.processed', 'refund.completed' => 'refunded',
             'charge.reversed' => 'reversed',
             default => null,
         };

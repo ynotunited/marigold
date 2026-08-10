@@ -1,17 +1,26 @@
-<section class="min-h-[80vh] flex items-center justify-center py-20 px-6">
-    <div class="max-w-[600px] w-full text-center">
-        <h1 class="text-[120px] md:text-[180px] font-bold text-[var(--gold)]/20 leading-none mb-4 select-none">404</h1>
-        <h2 class="text-3xl md:text-4xl font-bold mb-6">Page Not Found</h2>
-        <p class="text-[var(--text-secondary)] text-lg mb-8">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
-        
-        <div class="relative w-full max-w-md mx-auto mb-10">
-            <input type="text" placeholder="Search for products or articles..." class="input-field w-full pl-12">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] w-5 h-5"></i>
-        </div>
+<div style="background: var(--ivory); color: var(--ink);">
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/" class="btn btn-primary px-8 h-[52px] w-full sm:w-auto">Return to Homepage</a>
-            <a href="/shop" class="btn btn-secondary border border-[var(--border)] px-8 h-[52px] w-full sm:w-auto">Browse Shop</a>
+    <section class="section" style="min-height: 72vh; display: flex; align-items: center; padding-top: 60px; padding-bottom: 60px;">
+        <div class="container">
+            <div class="success-state" style="padding: 30px 10px;">
+                <div class="q-no" style="font-size: clamp(5.5rem, 20vw, 11rem); line-height: 1; color: var(--gold); letter-spacing: 0.02em;">404</div>
+                <span class="eyebrow center" style="justify-content: center;">Page Not Found</span>
+                <h3 style="margin: 18px 0 12px;">This page has wandered off</h3>
+                <p>The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+
+                <form action="/search" method="get" style="max-width: 460px; margin: 0 auto 32px; display: flex; gap: 10px;">
+                    <input type="text" name="q" placeholder="Search products or articles..." class="field" style="border-radius: 999px;">
+                    <button type="submit" class="btn btn-dark" aria-label="Search">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    </button>
+                </form>
+
+                <div class="cta-actions">
+                    <a href="/" class="btn btn-gold btn-lg">Return to homepage <span class="arr">&rarr;</span></a>
+                    <a href="/shop" class="btn btn-ghost btn-lg">Browse the shop</a>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+
+</div>

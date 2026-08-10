@@ -38,8 +38,8 @@
     
     <!-- Desktop Sidebar Navigation -->
     <aside class="hidden lg:flex flex-col w-[280px] h-screen fixed left-0 top-0 border-r border-[var(--border)] bg-[#111] z-40 pt-8 pb-6 px-6">
-        <a href="/" class="mb-12 flex items-center justify-center">
-            <span class="font-manrope text-2xl font-bold tracking-wider uppercase text-white">Marigold<span class="text-[var(--gold)]">.</span></span>
+        <a href="/" class="mb-12 flex items-center justify-center px-4">
+            <img src="/ms-logo.png" alt="Marigold Signature" class="h-[34px] w-auto max-w-full object-contain">
         </a>
 
         <nav class="flex-grow space-y-1">
@@ -90,7 +90,7 @@
     <!-- Mobile Top Bar -->
     <header class="lg:hidden flex items-center justify-between h-[72px] px-6 border-b border-[var(--border)] bg-[#111] sticky top-0 z-40">
         <a href="/">
-            <span class="font-manrope text-xl font-bold tracking-wider uppercase text-white">Marigold<span class="text-[var(--gold)]">.</span></span>
+            <img src="/ms-logo.png" alt="Marigold Signature" class="h-[30px] w-auto object-contain">
         </a>
         <div class="flex items-center gap-4">
             <button class="text-[var(--text-primary)] relative">

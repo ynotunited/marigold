@@ -61,7 +61,7 @@ Explains what data Marigold collects and why, with sections:
 12. Changes to This Policy
 13. Contact Us
 
-Contact emails used: `privacy@marigoldsignature.com`, `data@marigoldsignature.com`.
+Contact emails used: `privacy@marigoldsignatureng.com`, `data@marigoldsignatureng.com`.
 
 ### 3.2 Terms of Use — `/terms-and-conditions`
 
@@ -84,7 +84,7 @@ Governs use of the website and services, with sections:
 15. Changes to These Terms
 16. Contact Us
 
-Contact email: `legal@marigoldsignature.com`.
+Contact email: `legal@marigoldsignatureng.com`.
 
 ### 3.3 Data & Compliance — `/data-and-compliance`
 
@@ -104,7 +104,7 @@ applicable), with sections:
 11. Compliance & Oversight
 12. Contact & Regulatory Information
 
-Contact emails: `data@marigoldsignature.com`, `privacy@marigoldsignature.com`.
+Contact emails: `data@marigoldsignatureng.com`, `privacy@marigoldsignatureng.com`.
 
 ### 3.4 IP Infringement — `/ip-infringement`
 
@@ -120,7 +120,7 @@ Takedown procedure for copyright, trademark, and design infringement claims, wit
 8. Good Faith & Misrepresentation
 9. Contact Information
 
-Designated agent email: `ip@marigoldsignature.com`.
+Designated agent email: `ip@marigoldsignatureng.com`.
 
 ### 3.5 Shipping Policy — `/shipping-policy`
 
@@ -184,7 +184,7 @@ All legal pages share a consistent layout built from the design system tokens
 - **Review cadence:** policies should be re-reviewed at least annually or whenever laws, contact
   details, or business practices change.
 - **Contact emails** are defined inline per page. To centralise, they could later be moved to
-  `config/` (e.g. `data@`, `privacy@`, `legal@`, `ip@` @ `marigoldsignature.com`).
+  `config/` (e.g. `data@`, `privacy@`, `legal@`, `ip@` @ `marigoldsignatureng.com`).
 - When adding a new legal page: create the view under `app/View/pages/public/static/`, add a
   `PageController` method, register the route in `public/index.php`, add it to
   `SitemapController`, and add a footer link.

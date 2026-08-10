@@ -94,6 +94,10 @@ $router->get('/order-confirmation', ['App\Controller\CheckoutController', 'confi
 $router->get('/about', ['App\Controller\PageController', 'about']);
 $router->get('/solutions', ['App\Controller\PageController', 'solutions']);
 $router->get('/contact', ['App\Controller\PageController', 'contact']);
+$router->post('/contact', ['App\Controller\ContactController', 'submit']);
+
+// Newsletter subscriptions from the storefront footer / home / popup
+$router->post('/newsletter/subscribe', ['App\Controller\NewsletterController', 'subscribe']);
 
 // Blog Routes
 $router->get('/blog', ['App\Controller\BlogController', 'index']);
@@ -111,6 +115,7 @@ $router->get('/data-and-compliance', ['App\Controller\PageController', 'dataComp
 $router->get('/ip-infringement', ['App\Controller\PageController', 'ipInfringement']);
 
 // Events Pages
+$router->get('/events', ['App\Controller\PageController', 'events']);
 $router->get('/events/corporate-meeting', ['App\Controller\PageController', 'corporateMeeting']);
 $router->get('/events/conference', ['App\Controller\PageController', 'conference']);
 $router->get('/events/dinner', ['App\Controller\PageController', 'dinner']);
@@ -185,6 +190,9 @@ $router->get('/admin/popups', adminRoute(['App\Controller\Admin\AdminContentCont
 $router->get('/admin/newsletter/subscribers', adminRoute(['App\Controller\Admin\AdminNewsletterController', 'subscribers']));
 $router->get('/admin/newsletter/campaign', adminRoute(['App\Controller\Admin\AdminNewsletterController', 'campaign']));
 
+// Contact Inbox Routes
+$router->get('/admin/messages', adminRoute(['App\Controller\Admin\AdminMessagesController', 'index']));
+
 // Marketing Routes
 $router->get('/admin/marketing/coupons', adminRoute(['App\Controller\Admin\AdminMarketingController', 'coupons']));
 $router->get('/admin/marketing/reviews', adminRoute(['App\Controller\Admin\AdminMarketingController', 'reviews']));
@@ -214,6 +222,11 @@ $router->post('/api/payments/{id}/capture', ['App\Controller\Api\PaymentApiContr
 $router->post('/api/payments/{id}/refund', ['App\Controller\Api\PaymentApiController', 'refund']);
 $router->get('/api/payments/{id}/events', adminRoute(['App\Controller\Api\PaymentApiController', 'events']));
 $router->post('/api/webhooks/paystack', ['App\Controller\Api\WebhookController', 'handle']);
+$router->post('/api/webhooks/flutterwave', ['App\Controller\Api\WebhookController', 'handleFlutterwave']);
+$router->post('/api/webhooks/shipbubble', ['App\Controller\Api\ShipbubbleApiController', 'webhook']);
+
+// ShipBubble logistics — live courier delivery rates for the checkout
+$router->post('/api/shipping/rates', ['App\Controller\Api\ShipbubbleApiController', 'rates']);
 
 // Customer Portal Routes
 $router->get('/account/dashboard', customerRoute(['App\Controller\Customer\DashboardController', 'index']));

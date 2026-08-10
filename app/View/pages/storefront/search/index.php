@@ -1,158 +1,194 @@
-<div class="max-w-7xl mx-auto px-4 py-8">
-    
+<div style="background: var(--ivory); color: var(--ink);">
+
     <!-- Search Header -->
-    <div class="mb-8 border-b border-[var(--border)] pb-8">
-        <h1 class="text-3xl font-bold font-manrope mb-4">Search Results for "<?= htmlspecialchars($query) ?>"</h1>
-        
-        <!-- Interactive Search Bar -->
-        <div class="relative max-w-2xl" x-data="searchModule()">
-            <div class="relative">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]"></i>
-                <input type="text" x-model="searchQuery" @input.debounce.300ms="fetchResults" @focus="showDropdown = true" @click.away="showDropdown = false" placeholder="Search for products, categories, or articles..." class="w-full bg-[#111] border border-[var(--border)] rounded-full py-3 pl-12 pr-4 text-white focus:outline-none focus:border-[var(--gold)] transition-colors">
-                <button x-show="searchQuery.length > 0" @click="searchQuery = ''; results = null" class="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
+    <section class="page-hero">
+        <div class="container">
+            <div class="crumbs"><a href="/">Home</a><span>/</span><span>Search</span></div>
+            <div class="eyebrow center reveal">Storefront</div>
+            <h1 class="display reveal">Search <span class="gold-text">Results</span></h1>
+            <p class="lead reveal">Showing <strong><?= count($products) ?></strong> product<?= count($products) === 1 ? '' : 's' ?> for "<em><?= htmlspecialchars($query) ?></em>"</p>
 
-            <!-- AJAX Dropdown -->
-            <div x-show="showDropdown && (results || popular.length > 0)" class="absolute top-full mt-2 w-full bg-[#111] border border-[var(--border)] rounded-[16px] shadow-2xl z-50 overflow-hidden" style="display: none;">
-                
-                <!-- Loading State -->
-                <div x-show="isLoading" class="p-6 text-center text-[var(--text-muted)]"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2"></i> Searching...</div>
-
-                <!-- Empty State (No Results) -->
-                <div x-show="!isLoading && results && Object.keys(results).length === 0" class="p-6 text-center">
-                    <p class="text-[var(--text-secondary)] mb-4">No exact matches found for "<span x-text="searchQuery" class="text-white"></span>"</p>
-                    <div x-show="suggestions.length > 0">
-                        <p class="text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold mb-3">Suggestions</p>
-                        <div class="flex flex-wrap justify-center gap-2">
-                            <template x-for="s in suggestions"><button class="px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-full text-xs hover:border-[var(--gold)] transition-colors" x-text="s"></button></template>
-                        </div>
-                    </div>
+            <!-- Interactive Search Bar -->
+            <div class="search-wrap reveal" x-data="searchModule()">
+                <div class="search-box">
+                    <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" x-model="searchQuery" @input.debounce.300ms="fetchResults" @focus="showDropdown = true" @click.away="showDropdown = false" placeholder="Search for products, categories, or articles..." aria-label="Search">
+                    <button x-show="searchQuery.length > 0" @click="searchQuery = ''; results = null" class="clear" aria-label="Clear search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
                 </div>
 
-                <!-- Results State -->
-                <div x-show="!isLoading && results && Object.keys(results).length > 0" class="max-h-[60vh] overflow-y-auto p-2">
-                    <template x-for="(groupData, groupName) in results">
-                        <div class="mb-4 last:mb-0">
-                            <h3 class="px-3 py-2 text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold" x-text="groupName"></h3>
-                            <div class="space-y-1">
-                                <template x-for="item in groupData">
-                                    <a :href="item.url" class="flex items-center gap-3 p-2 hover:bg-[var(--surface)] rounded-[10px] transition-colors group/item">
-                                        <!-- Image if available (Products) -->
-                                        <template x-if="item.image">
-                                            <div class="w-10 h-10 rounded border border-[var(--border)] overflow-hidden shrink-0"><img :src="item.image" class="w-full h-full object-cover"></div>
-                                        </template>
-                                        <!-- Icon for non-products -->
-                                        <template x-if="!item.image">
-                                            <div class="w-10 h-10 rounded bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--text-muted)] group-hover/item:text-[var(--gold)] transition-colors"><i data-lucide="corner-down-right" class="w-4 h-4"></i></div>
-                                        </template>
-                                        
-                                        <div class="flex-grow min-w-0">
-                                            <p class="text-sm font-medium text-white truncate group-hover/item:text-[var(--gold)] transition-colors" x-text="item.title"></p>
-                                        </div>
-                                        <template x-if="item.price">
-                                            <div class="text-sm font-bold text-[var(--gold)] shrink-0" x-text="item.price"></div>
-                                        </template>
-                                    </a>
-                                </template>
+                <!-- AJAX Dropdown -->
+                <div x-show="showDropdown && (results || popular.length > 0)" class="search-dd" style="display: none;">
+
+                    <!-- Loading State -->
+                    <div x-show="isLoading" class="sd-loading">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        Searching...
+                    </div>
+
+                    <!-- Empty State (No Results) -->
+                    <div x-show="!isLoading && results && Object.keys(results).length === 0" class="sd-empty">
+                        <p>No exact matches found for "<strong x-text="searchQuery"></strong>"</p>
+                        <div x-show="suggestions.length > 0">
+                            <div class="sd-label">Suggestions</div>
+                            <div class="tag-list">
+                                <template x-for="s in suggestions"><button x-text="s"></button></template>
                             </div>
                         </div>
-                    </template>
-                    <div class="p-2 pt-0 mt-2 border-t border-[var(--border)]">
-                        <button @click="window.location='/search?q=' + searchQuery" class="w-full py-2 text-center text-sm text-[var(--gold)] hover:bg-[var(--surface)] rounded-[10px] transition-colors font-medium">View all results <i data-lucide="arrow-right" class="w-3.5 h-3.5 inline ml-1"></i></button>
                     </div>
-                </div>
 
-                <!-- Initial State (Popular Searches) -->
-                <div x-show="!isLoading && !results && popular.length > 0" class="p-4">
-                    <p class="text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold mb-3 px-2">Popular Searches</p>
-                    <div class="flex flex-wrap gap-2 px-2">
-                        <template x-for="p in popular">
-                            <button @click="searchQuery = p; fetchResults()" class="px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-full text-xs text-[var(--text-secondary)] hover:text-white hover:border-[var(--gold)] transition-colors" x-text="p"></button>
-                        </template>
+                    <!-- Results State -->
+                    <div x-show="!isLoading && results && Object.keys(results).length > 0">
+                        <div class="sd-groups">
+                            <template x-for="(groupData, groupName) in results">
+                                <div class="sd-group">
+                                    <h3 class="sd-label" x-text="groupName"></h3>
+                                    <template x-for="item in groupData">
+                                        <a :href="item.url" class="sd-item">
+                                            <template x-if="item.image">
+                                                <span class="sd-thumb"><img :src="item.image" :alt="item.title"></span>
+                                            </template>
+                                            <template x-if="!item.image">
+                                                <span class="sd-thumb">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                                </span>
+                                            </template>
+                                            <span class="sd-title" x-text="item.title"></span>
+                                            <span x-if="item.price" class="sd-price" x-text="item.price"></span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="search-foot">
+                            <a :href="'/search?q=' + encodeURIComponent(searchQuery)" class="btn btn-gold">View all results
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            </a>
+                        </div>
                     </div>
-                </div>
 
+                    <!-- Initial State (Popular Searches) -->
+                    <div x-show="!isLoading && !results && popular.length > 0" class="sd-empty" style="text-align: left;">
+                        <div class="sd-label">Popular Searches</div>
+                        <div class="tag-list" style="justify-content: flex-start;">
+                            <template x-for="p in popular">
+                                <button @click="searchQuery = p; fetchResults()" x-text="p"></button>
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Full Results Body -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        <!-- Filters Sidebar -->
-        <div class="lg:col-span-1 space-y-6">
-            <div>
-                <h3 class="font-bold font-manrope mb-3 text-lg">Categories</h3>
-                <ul class="space-y-2 text-sm text-[var(--text-secondary)]">
-                    <li><label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="rounded border-[var(--border)] bg-[var(--surface)] accent-[var(--gold)]" checked> Notebooks (4)</label></li>
-                    <li><label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="rounded border-[var(--border)] bg-[var(--surface)] accent-[var(--gold)]"> Gift Sets (12)</label></li>
-                    <li><label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" class="rounded border-[var(--border)] bg-[var(--surface)] accent-[var(--gold)]"> Drinkware (8)</label></li>
-                </ul>
-            </div>
-            
-            <div class="border-t border-[var(--border)] pt-6">
-                <h3 class="font-bold font-manrope mb-3 text-lg">Price Range</h3>
-                <div class="flex items-center gap-2">
-                    <input type="number" placeholder="Min" class="input-field w-full text-sm">
-                    <span class="text-[var(--text-muted)]">-</span>
-                    <input type="number" placeholder="Max" class="input-field w-full text-sm">
+    <section class="section" style="padding-top: 20px;">
+        <div class="container">
+            <div class="shop-layout">
+
+                <!-- Filters Sidebar -->
+                <aside class="shop-side reveal d1">
+                    <div class="side-card">
+                        <h3 class="side-h">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.22H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.59 9.59a2 2 0 0 0 2.82 0l4.59-4.59a2 2 0 0 0 0-2.81Z"/><path d="M7 7h.01"/></svg>
+                            Categories
+                        </h3>
+                        <div class="side-list">
+                            <a class="active" href="/search?q=<?= urlencode($query) ?>"><span>Notebooks</span> <span>4</span></a>
+                            <a href="/search?q=<?= urlencode($query) ?>"><span>Gift Sets</span> <span>12</span></a>
+                            <a href="/search?q=<?= urlencode($query) ?>"><span>Drinkware</span> <span>8</span></a>
+                        </div>
+                    </div>
+
+                    <div class="side-card">
+                        <h3 class="side-h">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                            Price Range
+                        </h3>
+                        <div class="range-row">
+                            <div class="range-input">
+                                <span>&#8358;</span>
+                                <input type="number" min="0" step="500" placeholder="Min" aria-label="Minimum price">
+                            </div>
+                            <span class="range-sep">&ndash;</span>
+                            <div class="range-input">
+                                <span>&#8358;</span>
+                                <input type="number" min="0" step="500" placeholder="Max" aria-label="Maximum price">
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Product Grid -->
+                <div class="flex-1 min-w-0">
+                    <div class="grid-head reveal">
+                        <p class="shop-count">Showing <strong><?= count($products) ?></strong> product<?= count($products) === 1 ? '' : 's' ?></p>
+                        <div class="sort-box">
+                            <select aria-label="Sort products">
+                                <option>Sort by: Relevance</option>
+                                <option>Price: Low to High</option>
+                                <option>Price: High to Low</option>
+                                <option>Newest Arrivals</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pgrid search-grid">
+                        <?php foreach ($products as $p): ?>
+                        <article class="pcard reveal">
+                            <div class="img-wrap">
+                                <a class="img-link" href="/product/<?= $p['id'] ?>" aria-label="View <?= htmlspecialchars($p['name']) ?>">
+                                    <img src="<?= $p['image'] ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy">
+                                </a>
+                                <button class="cart-fab" data-act="add" data-id="<?= $p['id'] ?>" aria-label="Add <?= htmlspecialchars($p['name']) ?> to cart">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                                </button>
+                            </div>
+                            <div class="p-body">
+                                <span class="p-cat"><?= htmlspecialchars($p['category']) ?></span>
+                                <a class="p-name" href="/product/<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?></a>
+                                <div class="p-foot">
+                                    <span class="price">&#8358;<?= number_format($p['price']) ?></span>
+                                    <a class="link-more" href="/product/<?= $p['id'] ?>">Details <span class="arr">&rarr;</span></a>
+                                </div>
+                            </div>
+                        </article>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Product Grid -->
-        <div class="lg:col-span-3">
-            <div class="flex items-center justify-between mb-6">
-                <p class="text-[var(--text-secondary)] text-sm">Showing <strong><?= count($products) ?></strong> products</p>
-                <select class="input-field h-9 text-sm bg-transparent border-none py-0 pl-0 pr-6 text-white focus:ring-0 cursor-pointer"><option>Sort by: Relevance</option><option>Price: Low to High</option><option>Price: High to Low</option><option>Newest Arrivals</option></select>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <?php foreach ($products as $p): ?>
-                <div class="group cursor-pointer">
-                    <div class="relative aspect-square bg-[var(--surface)] rounded-[12px] border border-[var(--border)] overflow-hidden mb-3">
-                        <img src="<?= $p['image'] ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                        <div class="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--gold)]"><i data-lucide="heart" class="w-4 h-4"></i></div>
-                    </div>
-                    <div>
-                        <p class="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider font-bold"><?= $p['category'] ?></p>
-                        <h3 class="font-bold text-sm text-white group-hover:text-[var(--gold)] transition-colors mb-1 truncate"><?= htmlspecialchars($p['name']) ?></h3>
-                        <p class="text-[var(--gold)] font-bold text-sm">₦<?= number_format($p['price']) ?></p>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
+    </section>
 
 </div>
 
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('searchModule', () => ({
-        searchQuery: '<?= htmlspecialchars(addslashes($query)) ?>',
+        searchQuery: '<?= htmlspecialchars($query, ENT_QUOTES) ?>',
         showDropdown: false,
         isLoading: false,
         results: null,
         suggestions: [],
         popular: [],
-        
+
         init() {
             // Fetch popular on init if query is empty
-            if(!this.searchQuery) this.fetchResults();
+            if (!this.searchQuery) this.fetchResults();
         },
 
         async fetchResults() {
             if (this.searchQuery.length > 0 && this.searchQuery.length < 2) return;
-            
+
             this.isLoading = true;
             this.showDropdown = true;
-            
+
             try {
-                // Mock AJAX call
                 const response = await fetch('/api/search?q=' + encodeURIComponent(this.searchQuery));
                 const data = await response.json();
-                
+
                 this.results = data.results || null;
                 this.suggestions = data.suggestions || [];
                 this.popular = data.popular || [];
@@ -160,7 +196,6 @@ document.addEventListener('alpine:init', () => {
                 console.error("Search failed:", error);
             } finally {
                 this.isLoading = false;
-                lucide.createIcons(); // re-init icons for new DOM
             }
         }
     }));

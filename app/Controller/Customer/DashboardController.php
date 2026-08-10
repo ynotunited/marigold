@@ -99,8 +99,8 @@ class DashboardController extends Controller
             SELECT name, price, sale_price, is_new, is_best_seller, image
             FROM products
             LEFT JOIN product_images ON product_images.product_id = products.id AND product_images.is_featured = 1
-            WHERE deleted_at IS NULL AND status = 'active'
-            ORDER BY is_featured DESC, created_at DESC
+            WHERE products.deleted_at IS NULL AND products.status = 'published'
+            ORDER BY products.is_featured DESC, products.created_at DESC
             LIMIT 4
         ");
         $recommended_products = array_map(fn($p) => [

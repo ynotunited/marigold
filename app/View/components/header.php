@@ -1,215 +1,81 @@
 <?php
 // app/View/components/header.php
+
+// Compute the current path relative to the app base (mirrors public/index.php)
+$__path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$__base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+if ($__base === '/' || $__base === '.') {
+    $__base = '';
+}
+if ($__base !== '' && $__base !== '/') {
+    if (stripos($__path, $__base) === 0) {
+        $__path = substr($__path, strlen($__base)) ?: '/';
+    }
+}
+$__path = rtrim($__path, '/');
+if ($__path === '') {
+    $__path = '/';
+}
+
+// Return true when the current path matches any given pattern (exact or nested)
+$__isActive = function (string ...$patterns) use ($__path): bool {
+    foreach ($patterns as $p) {
+        $p = rtrim($p, '/');
+        if ($p === '') {
+            $p = '/';
+        }
+        if ($__path === $p) {
+            return true;
+        }
+        if ($p !== '/' && strpos($__path, $p . '/') === 0) {
+            return true;
+        }
+    }
+    return false;
+};
+$__url = function (string $path) use ($__base): string {
+    return $__base . '/' . ltrim($path, '/');
+};
 ?>
-<header 
-    x-data="{ scrolled: false, mobileMenuOpen: false, searchOpen: false, cartOpen: false, announcementOpen: true }" 
-    @scroll.window="scrolled = (window.pageYOffset > 50)"
-    :class="{ 'bg-[var(--bg-primary)]/95 backdrop-blur-md shadow-md py-4 border-[var(--border)]': scrolled, 'bg-transparent py-5 border-transparent': !scrolled }"
-    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b"
-    :style="scrolled ? 'border-bottom-color: var(--border)' : ''"
->
-    <!-- Announcement Bar -->
-    <div x-show="announcementOpen"
-         class="bg-[var(--gold)] text-black text-xs font-semibold py-2 px-4 text-center absolute top-0 w-full transition-transform duration-300 origin-top flex items-center justify-center"
-         :class="{ 'scale-y-0': scrolled, 'scale-y-100': !scrolled }"
-         style="height: 40px; line-height: 24px;">
-        <span class="flex-grow">Complimentary shipping on corporate orders over ₦500,000</span>
-        <button @click="announcementOpen = false" class="absolute right-4 hover:opacity-70 transition-opacity" aria-label="Close Announcement">
-            <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+<!-- top bar -->
+<div class="topbar">
+    <div class="marquee">
+        <span>The right gift, at the right moment, changes how you're remembered &nbsp;✦&nbsp; 15+ years of gifting excellence &nbsp;✦&nbsp; Bespoke curation &amp; an in-house branding studio &nbsp;✦&nbsp; Strategic event support, delivered nationwide &nbsp;✦&nbsp; Every piece designed to make your brand unforgettable &nbsp;✦&nbsp;</span>
+        <span>The right gift, at the right moment, changes how you're remembered &nbsp;✦&nbsp; 15+ years of gifting excellence &nbsp;✦&nbsp; Bespoke curation &amp; an in-house branding studio &nbsp;✦&nbsp; Strategic event support, delivered nationwide &nbsp;✦&nbsp; Every piece designed to make your brand unforgettable &nbsp;✦&nbsp;</span>
     </div>
+</div>
 
-    <!-- Main Header -->
-    <div class="container mx-auto px-4 sm:px-8 max-w-[1440px] flex items-center justify-between gap-6 transition-all duration-300"
-         :class="{ 'mt-0': scrolled || !announcementOpen, 'mt-[40px]': !scrolled && announcementOpen }">
-         
-        <!-- Mobile Left: Hamburger -->
-        <button @click="mobileMenuOpen = true" class="lg:hidden text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
-            <i data-lucide="menu"></i>
-        </button>
-
-        <!-- Logo -->
-        <a href="/" class="flex items-center gap-3 shrink-0">
-            <img src="/ms-logo-removebg-preview.png" alt="Marigold Signature" style="height: 46px; width: auto; max-width: 160px; object-fit: contain;">
+<!-- nav -->
+<nav class="nav">
+    <div class="container nav-inner">
+        <a class="brand" href="<?= $__url('/') ?>" aria-label="Marigold Signature — Home">
+            <img src="<?= $__url('/ms-logo.png') ?>" alt="Marigold Signature">
         </a>
-
-        <!-- Desktop Navigation -->
-        <nav class="hidden lg:flex items-center gap-8 font-medium text-[15px] text-[var(--text-secondary)]">
-            <a href="/shop" class="hover:text-white transition-colors">Sales</a>
-            
-            <!-- Events Dropdown -->
-            <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
-                <button class="flex items-center gap-1 hover:text-[var(--gold)] transition-colors py-2">
-                    Events <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
-                </button>
-                <div x-show="open"
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0 translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in duration-100"
-                     x-transition:leave-start="opacity-100 translate-y-0"
-                     x-transition:leave-end="opacity-0 translate-y-1"
-                     class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden py-3">
-                    <a href="/events/corporate-meeting" class="flex items-center gap-3 px-5 py-3 text-[13px] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--card)] transition-colors">
-                        <i data-lucide="users" class="w-[18px] h-[18px] text-[var(--gold)] shrink-0"></i> Corporate Meeting
-                    </a>
-                    <a href="/events/conference" class="flex items-center gap-3 px-5 py-3 text-[13px] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--card)] transition-colors">
-                        <i data-lucide="presentation" class="w-[18px] h-[18px] text-[var(--gold)] shrink-0"></i> Conference
-                    </a>
-                    <a href="/events/dinner" class="flex items-center gap-3 px-5 py-3 text-[13px] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--card)] transition-colors">
-                        <i data-lucide="utensils" class="w-[18px] h-[18px] text-[var(--gold)] shrink-0"></i> Dinner
-                    </a>
+        <div class="nav-links" id="navLinks">
+            <a href="<?= $__url('/') ?>" data-nav="home" class="<?= $__isActive('/') ? 'active' : '' ?>">Home</a>
+            <a href="<?= $__url('/shop') ?>" data-nav="shop" class="<?= $__isActive('/shop', '/product', '/cart', '/checkout', '/quote-request', '/order-confirmation') ? 'active' : '' ?>">Shop</a>
+            <div class="nav-dd">
+                <a class="dd-parent <?= $__isActive('/events') ? 'active' : '' ?>" href="<?= $__url('/events') ?>" data-nav="events">Events <svg class="dd-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a>
+                <div class="dd-menu">
+                    <a href="<?= $__url('/events/corporate-meeting') ?>">Corporate Meeting</a>
+                    <a href="<?= $__url('/events/conference') ?>">Conference</a>
+                    <a href="<?= $__url('/events/dinner') ?>">Dinner</a>
                 </div>
             </div>
-
-            <a href="/about" class="hover:text-[var(--gold)] transition-colors">About</a>
-            <a href="/blog" class="hover:text-[var(--gold)] transition-colors">Blog</a>
-            <a href="/contact" class="hover:text-[var(--gold)] transition-colors">Contact</a>
-        </nav>
-
-        <!-- Right Icons -->
-        <div class="flex items-center gap-4 sm:gap-5">
-            <a href="/login" class="hidden xl:flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-white transition-colors text-sm">
-                <i data-lucide="user-round" class="w-4 h-4"></i>
-                <span>Login / Register</span>
+            <a href="<?= $__url('/blog') ?>" data-nav="blog" class="<?= $__isActive('/blog') ? 'active' : '' ?>">Blog</a>
+            <a href="<?= $__url('/about') ?>" data-nav="about" class="<?= $__isActive('/about') ? 'active' : '' ?>">About</a>
+            <a href="<?= $__url('/contact') ?>" data-nav="contact" class="<?= $__isActive('/contact') ? 'active' : '' ?>">Contact</a>
+        </div>
+        <div class="nav-cta">
+            <a class="btn btn-dark" href="<?= $__url('/shop') ?>">Browse Gifts</a>
+            <a class="cart-btn" href="<?= $__url('/login') ?>" aria-label="Sign in" title="Sign in / Register">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </a>
-            <button @click="searchOpen = true" class="text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
-                <i data-lucide="search" class="w-5 h-5"></i>
+            <button class="cart-btn" id="cartOpen" aria-label="Open cart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span class="cart-count" id="cartCount">0</span>
             </button>
-            <a href="/wishlist" class="hidden lg:block relative text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
-                <i data-lucide="heart" class="w-5 h-5"></i>
-                <span class="absolute -top-2 -right-2 bg-[var(--gold)] text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
-            </a>
-            <button @click="cartOpen = true" class="relative text-[var(--text-primary)] hover:text-[var(--gold)] transition-colors">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span class="absolute -top-2 -right-2 bg-[var(--gold)] text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
-            </button>
+            <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
         </div>
     </div>
-
-    <!-- Mobile Menu Drawer -->
-    <template x-teleport="body">
-        <div x-show="mobileMenuOpen" class="fixed inset-0 z-[100] lg:hidden">
-            <div x-show="mobileMenuOpen" x-transition.opacity class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="mobileMenuOpen = false"></div>
-            <div x-show="mobileMenuOpen" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="-translate-x-full"
-                 x-transition:enter-end="translate-x-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="translate-x-0"
-                 x-transition:leave-end="-translate-x-full"
-                 class="absolute inset-y-0 left-0 w-[300px] bg-[var(--surface)] border-r border-[var(--border)] p-6 flex flex-col">
-                
-                <div class="flex items-center justify-between mb-8">
-                    <a href="/">
-                        <img src="/ms-logo-removebg-preview.png" alt="Marigold Signature" class="h-9 w-auto object-contain">
-                    </a>
-                    <button @click="mobileMenuOpen = false" class="text-[var(--text-muted)] hover:text-white transition-colors">
-                        <i data-lucide="x"></i>
-                    </button>
-                </div>
-
-                <nav class="flex flex-col gap-1 text-lg font-['Manrope'] flex-grow overflow-y-auto">
-                    <a href="/shop" class="px-2 py-3 hover:text-[var(--gold)] transition-colors">Sales</a>
-
-                    <!-- Events accordion -->
-                    <div x-data="{ open: false }">
-                        <button @click="open = !open" class="w-full flex items-center justify-between px-2 py-3 hover:text-[var(--gold)] transition-colors">
-                            <span>Events</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
-                        </button>
-                        <div x-show="open" x-transition class="pl-4 flex flex-col gap-1 border-l border-[var(--border)] ml-2 mb-2">
-                            <a href="/events/corporate-meeting" class="py-2 text-base text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors flex items-center gap-2">
-                                <i data-lucide="users" class="w-4 h-4 text-[var(--gold)]"></i> Corporate Meeting
-                            </a>
-                            <a href="/events/conference" class="py-2 text-base text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors flex items-center gap-2">
-                                <i data-lucide="presentation" class="w-4 h-4 text-[var(--gold)]"></i> Conference
-                            </a>
-                            <a href="/events/dinner" class="py-2 text-base text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors flex items-center gap-2">
-                                <i data-lucide="utensils" class="w-4 h-4 text-[var(--gold)]"></i> Dinner
-                            </a>
-                        </div>
-                    </div>
-
-                    <a href="/about" class="px-2 py-3 hover:text-[var(--gold)] transition-colors">About</a>
-                    <a href="/blog" class="px-2 py-3 hover:text-[var(--gold)] transition-colors">Blog</a>
-                    <a href="/contact" class="px-2 py-3 hover:text-[var(--gold)] transition-colors">Contact</a>
-                </nav>
-
-                <div class="mt-8 pt-8 border-t border-[var(--border)] flex flex-col gap-4">
-                    <a href="/account" class="flex items-center gap-3 text-[var(--text-secondary)] hover:text-white transition-colors">
-                        <i data-lucide="user" class="w-5 h-5"></i> Account
-                    </a>
-                    <a href="/wishlist" class="flex items-center gap-3 text-[var(--text-secondary)] hover:text-white transition-colors">
-                        <i data-lucide="heart" class="w-5 h-5"></i> Wishlist (2)
-                    </a>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Search Overlay -->
-    <template x-teleport="body">
-        <div x-show="searchOpen" class="fixed inset-0 z-[100]">
-            <div x-show="searchOpen" x-transition.opacity class="absolute inset-0 bg-black/90 backdrop-blur-md" @click="searchOpen = false"></div>
-            <div x-show="searchOpen"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 -translate-y-8"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 -translate-y-8"
-                 class="absolute top-0 inset-x-0 bg-[var(--surface)] border-b border-[var(--border)] p-6 md:p-12">
-                 
-                 <div class="max-w-4xl mx-auto relative">
-                     <button @click="searchOpen = false" class="absolute right-0 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-white transition-colors">
-                         <i data-lucide="x"></i>
-                     </button>
-                     <input type="text" placeholder="Search products, categories..." class="w-full bg-transparent text-3xl font-['Manrope'] text-white border-b-2 border-[var(--border)] focus:border-[var(--gold)] outline-none py-4 pr-12 transition-colors">
-                 </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Cart Mini-Drawer -->
-    <template x-teleport="body">
-        <div x-show="cartOpen" class="fixed inset-0 z-[100]">
-            <div x-show="cartOpen" x-transition.opacity class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="cartOpen = false"></div>
-            <div x-show="cartOpen" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="translate-x-full"
-                 x-transition:enter-end="translate-x-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="translate-x-0"
-                 x-transition:leave-end="translate-x-full"
-                 class="absolute inset-y-0 right-0 w-full sm:w-[400px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col shadow-2xl">
-                 
-                 <div class="p-6 border-b border-[var(--border)] flex items-center justify-between">
-                     <h2 class="font-['Manrope'] text-xl font-bold">Your Cart</h2>
-                     <button @click="cartOpen = false" class="text-[var(--text-muted)] hover:text-white transition-colors">
-                         <i data-lucide="x"></i>
-                     </button>
-                 </div>
-
-                 <div class="flex-grow p-6 flex items-center justify-center text-[var(--text-muted)]">
-                     <div class="text-center">
-                         <i data-lucide="shopping-bag" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
-                         <p>Your cart is empty.</p>
-                         <button @click="cartOpen = false" class="mt-4 text-[var(--gold)] hover:underline">Continue Shopping</button>
-                     </div>
-                 </div>
-
-                 <div class="p-6 border-t border-[var(--border)] bg-[var(--card)]">
-                     <div class="flex justify-between mb-4">
-                         <span class="text-[var(--text-secondary)]">Subtotal</span>
-                         <span class="font-bold font-['Manrope'] text-white">₦0.00</span>
-                     </div>
-                     <p class="text-xs text-[var(--text-muted)] mb-4">Shipping and taxes calculated at checkout.</p>
-                     <a href="/checkout" class="block w-full bg-[var(--gold)] text-black text-center font-bold py-4 rounded-xl hover:bg-[#D4AF37] transition-colors">
-                         Checkout
-                     </a>
-                 </div>
-            </div>
-        </div>
-    </template>
-</header>
+</nav>

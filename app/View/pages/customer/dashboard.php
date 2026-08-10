@@ -145,10 +145,10 @@
                 <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop" alt="Sarah Jenkins" class="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]">
                 <div>
                     <p class="font-medium">Sarah Jenkins</p>
-                    <p class="text-sm text-[var(--text-muted)]">sarah@marigoldsignature.com</p>
+                    <p class="text-sm text-[var(--text-muted)]">sarah@marigoldsignatureng.com</p>
                 </div>
             </div>
-            <a href="mailto:sarah@marigoldsignature.com" class="btn btn-secondary border border-[var(--border)] w-full relative z-10 bg-[var(--bg-primary)]">Contact Sarah</a>
+            <a href="mailto:sarah@marigoldsignatureng.com" class="btn btn-secondary border border-[var(--border)] w-full relative z-10 bg-[var(--bg-primary)]">Contact Sarah</a>
         </div>
 
         <!-- Mobile Carousel: Recommended Products -->

@@ -125,7 +125,7 @@
             <tr>
                 <td class="footer">
                     <p>Marigold Signature Ltd.<br>14 Adeola Odeku St, Victoria Island, Lagos</p>
-                    <p>If you have any questions, reply to this email or contact <a href="mailto:support@marigoldsignature.com">support@marigoldsignature.com</a></p>
+                    <p>If you have any questions, reply to this email or contact <a href="mailto:support@marigoldsignatureng.com">support@marigoldsignatureng.com</a></p>
                 </td>
             </tr>
         </table>

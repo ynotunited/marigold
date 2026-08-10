@@ -239,7 +239,7 @@ class QuoteRequestController extends Controller
             'date' => date('F j, Y'),
             'action_link' => $appUrl . '/quote-request/success',
         ]);
-        Mailer::sendTemplate($_ENV['ADMIN_EMAIL'] ?? 'hello@marigoldsignature.com', 'New quote request: ' . $quoteNumber, 'admin_new_quote', [
+        Mailer::sendTemplate($_ENV['ADMIN_EMAIL'] ?? 'hello@marigoldsignatureng.com', 'New quote request: ' . $quoteNumber, 'admin_new_quote', [
             'customer_name' => $customerName,
             'quote_id' => $quoteNumber,
             'date' => date('F j, Y'),

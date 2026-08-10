@@ -84,7 +84,7 @@ class SearchController extends Controller
             ['id' => 4, 'name' => 'Luxury Pen & Notebook Set', 'price' => 35000, 'category' => 'Gift Sets', 'image' => 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500'],
         ];
 
-        return View::renderTemplate('pages/storefront/search/index', 'admin', [ // using admin layout temporarily for rapid mock UI mapping
+        return View::renderTemplate('pages/storefront/search/index', 'main', [
             'title' => "Search Results for '{$query}' | Marigold Signature",
             'query' => $query,
             'products' => $products

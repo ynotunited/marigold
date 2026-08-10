@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://marigoldsignature.com/sitemap.xml
+Sitemap: https://marigoldsignatureng.com/sitemap.xml

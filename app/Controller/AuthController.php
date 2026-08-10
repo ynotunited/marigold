@@ -263,7 +263,7 @@ class AuthController extends Controller
             $mail->Password = $_ENV['SMTP_PASS'] ?? $_ENV['SMTP_PASSWORD'] ?? '';
             $mail->SMTPSecure = $_ENV['SMTP_ENCRYPTION'] ?? PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = (int)($_ENV['SMTP_PORT'] ?? 587);
-            $mail->setFrom($_ENV['SMTP_FROM_EMAIL'] ?? 'no-reply@marigoldsignature.com', $_ENV['SMTP_FROM_NAME'] ?? 'Marigold Signature');
+            $mail->setFrom($_ENV['SMTP_FROM_EMAIL'] ?? 'no-reply@marigoldsignatureng.com', $_ENV['SMTP_FROM_NAME'] ?? 'Marigold Signature');
             $mail->addAddress($email);
             $mail->Subject = $subject;
             $mail->Body = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));

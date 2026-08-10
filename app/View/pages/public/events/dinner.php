@@ -1,100 +1,74 @@
 <?php // app/View/pages/public/events/dinner.php ?>
 
-<div class="pb-0 bg-[var(--bg-primary)]">
+<div style="background: var(--ivory); color: var(--ink);">
 
-    <!-- Hero -->
-    <section class="relative min-h-[75vh] overflow-hidden">
-        <div class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1920&auto=format&fit=crop" class="w-full h-full object-cover" alt="Corporate Dinner">
-            <div class="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)] via-black/70 to-transparent"></div>
-        </div>
-        <div style="height: 120px;"></div>
-        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px] relative z-10 py-16">
-            <div class="max-w-2xl">
-                <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Events — Dinner</span>
-                <h1 class="font-['Manrope'] text-5xl sm:text-6xl font-extrabold leading-tight mb-6 text-white">
-                    Corporate Dinners,<br><span class="text-[var(--gold)]">Elegantly Delivered</span>
-                </h1>
-                <p class="text-[var(--text-secondary)] text-lg leading-relaxed max-w-xl">
-                    We provide premium promotional merchandise and brand solutions that add sophistication and lasting value to corporate dinner events.
-                </p>
-                <div class="flex flex-wrap gap-4 mt-10">
-                    <a href="/quote-request" class="inline-flex items-center gap-2 bg-[var(--gold)] text-black font-bold px-8 py-4 rounded-xl hover:brightness-110 transition-all">
-                        Get a Quote <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                    <a href="/contact" class="inline-flex items-center gap-2 border border-[var(--border)] text-white font-semibold px-8 py-4 rounded-xl hover:border-[var(--gold)] transition-all">
-                        Talk to Us
-                    </a>
-                </div>
+    <section class="page-hero">
+        <div class="container">
+            <div class="crumbs"><a href="/">Home</a><span>/</span><a href="/events">Events</a><span>/</span><span>Dinner</span></div>
+            <span class="eyebrow reveal">Events — Corporate Dinner</span>
+            <h1 class="display h1 reveal">Corporate Dinners, <span class="gold-text">Elegantly Delivered</span></h1>
+            <p class="lead reveal">We provide premium promotional merchandise and brand solutions that add sophistication and lasting value to corporate dinner events.</p>
+            <div class="cta-actions reveal" style="margin-top:30px">
+                <a href="/quote-request" class="btn btn-gold btn-lg">Get a Quote <span class="arr">&rarr;</span></a>
+                <a href="/contact" class="btn btn-ghost btn-lg">Talk to Us</a>
             </div>
         </div>
     </section>
 
-    <!-- Intro -->
-    <section class="py-20 sm:py-28 bg-[var(--surface)] border-y border-[var(--border)]">
-        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
-            <div class="flex flex-col lg:flex-row gap-16 items-start">
-                <div class="w-full lg:w-1/2">
-                    <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">What We Do</span>
-                    <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-8 leading-tight text-white">Memorable Occasions, Delivered with Excellence</h2>
-                    <div class="space-y-5 text-[var(--text-secondary)] leading-relaxed text-base">
-                        <p>Corporate dinners offer a valuable opportunity to celebrate achievements, strengthen relationships, recognise excellence, and create memorable experiences for employees, clients, partners, and stakeholders. At Marigold Signature Nigeria Limited, we provide premium promotional merchandise and brand solutions that add sophistication and lasting value to corporate dinner events.</p>
-                        <p>Whether it is an executive dinner, gala night, awards ceremony, client appreciation event, end-of-year celebration, fundraising dinner, or leadership gathering, we help organisations create memorable occasions through carefully curated branded products and event solutions.</p>
-                        <p>We understand that corporate dinners are more than social gatherings — they are opportunities to reinforce relationships, communicate appreciation, and leave a lasting impression on guests.</p>
-                        <p>From intimate executive dinners to large-scale gala events, Marigold Signature delivers premium merchandise and branding solutions that elevate the guest experience and showcase your brand with excellence.</p>
-                    </div>
-                </div>
-                <div class="w-full lg:w-1/2">
-                    <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?q=80&w=1200&auto=format&fit=crop" alt="Corporate Dinner" class="w-full h-[480px] object-cover rounded-3xl border border-[var(--border)]">
-                </div>
+    <section class="section">
+        <div class="container split">
+            <div class="reveal">
+                <span class="eyebrow">What We Do</span>
+                <h2 class="display h2" style="margin:18px 0 20px">Memorable Occasions, Delivered with Excellence</h2>
+                <p class="lead" style="margin-bottom:18px">Corporate dinners offer a valuable opportunity to celebrate achievements, strengthen relationships, recognise excellence, and create memorable experiences for employees, clients, partners, and stakeholders. At Marigold Signature Nigeria Limited, we provide premium promotional merchandise and brand solutions that add sophistication and lasting value to corporate dinner events.</p>
+                <p class="lead" style="margin-bottom:18px">Whether it is an executive dinner, gala night, awards ceremony, client appreciation event, end-of-year celebration, fundraising dinner, or leadership gathering, we help organisations create memorable occasions through carefully curated branded products and event solutions.</p>
+                <p class="lead" style="margin-bottom:18px">We understand that corporate dinners are more than social gatherings — they are opportunities to reinforce relationships, communicate appreciation, and leave a lasting impression on guests.</p>
+                <p class="lead">From intimate executive dinners to large-scale gala events, Marigold Signature delivers premium merchandise and branding solutions that elevate the guest experience and showcase your brand with excellence.</p>
+            </div>
+            <div class="visual reveal d1">
+                <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80&auto=format&fit=crop" alt="Elegant corporate dinner table setting">
+                <div class="tick"><span><em>Prestige-level</em> dinner solutions</span></div>
             </div>
         </div>
     </section>
 
-    <!-- Solutions -->
-    <section class="py-20 sm:py-28">
-        <div class="container mx-auto px-4 sm:px-8 max-w-[1440px]">
-            <div class="text-center max-w-2xl mx-auto mb-16">
-                <span class="text-[var(--gold)] text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Our Offerings</span>
-                <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold text-white">Corporate Dinner Solutions</h2>
+    <section class="section" style="padding-top:0">
+        <div class="container">
+            <div class="section-head center">
+                <span class="eyebrow reveal">Our Offerings</span>
+                <h2 class="display h2 reveal">Corporate Dinner Solutions</h2>
             </div>
-
-            <?php
-            $items = [
-                ['icon' => 'gift',        'title' => 'Executive Gift Sets',              'desc' => 'Curated luxury gift sets that reflect the prestige of the occasion and your brand.'],
-                ['icon' => 'coffee',      'title' => 'Premium Drinkware & Glassware',    'desc' => 'Elegant branded drinkware that elevates the table experience for every guest.'],
-                ['icon' => 'tag',         'title' => 'Customised Souvenirs',             'desc' => 'Personalised keepsakes that guests cherish long after the evening ends.'],
-                ['icon' => 'award',       'title' => 'Awards & Recognition Gifts',       'desc' => 'Distinguished awards and gifts that honour achievement and inspire excellence.'],
-                ['icon' => 'star',        'title' => 'Table Gifts & Guest Favors',       'desc' => 'Thoughtful place gifts that delight guests and set the tone for a memorable evening.'],
-                ['icon' => 'package',     'title' => 'Branded Gift Boxes',              'desc' => 'Beautifully packaged branded boxes that make a lasting first impression.'],
-                ['icon' => 'shopping-bag','title' => 'Personalised Event Merchandise',  'desc' => 'Bespoke merchandise designed specifically around your dinner theme and brand.'],
-                ['icon' => 'box',         'title' => 'Luxury Packaging Solutions',      'desc' => 'Premium packaging that communicates quality before a single gift is unwrapped.'],
-                ['icon' => 'crown',       'title' => 'VIP & Speaker Appreciation Gifts','desc' => 'Exclusive gifts that honour VIPs and speakers with the recognition they deserve.'],
-                ['icon' => 'layout',      'title' => 'Event Branding Materials',        'desc' => 'Comprehensive branding collateral for a sophisticated, cohesive event atmosphere.'],
-            ];
-            ?>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                <?php foreach ($items as $item): ?>
-                <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--gold)] transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--gold)] transition-colors">
-                        <i data-lucide="<?= $item['icon'] ?>" class="w-5 h-5 text-[var(--gold)] group-hover:text-black transition-colors"></i>
-                    </div>
-                    <h3 class="font-['Manrope'] font-bold text-white mb-2"><?= $item['title'] ?></h3>
-                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed"><?= $item['desc'] ?></p>
-                </div>
+            <div class="offer-grid">
+                <?php
+                $offerings = [
+                    ['01', 'Executive Gift Sets', 'Curated luxury gift sets that reflect the prestige of the occasion and your brand.'],
+                    ['02', 'Premium Drinkware & Glassware', 'Elegant branded drinkware that elevates the table experience for every guest.'],
+                    ['03', 'Customised Souvenirs', 'Personalised keepsakes that guests cherish long after the evening ends.'],
+                    ['04', 'Awards & Recognition Gifts', 'Distinguished awards and gifts that honour achievement and inspire excellence.'],
+                    ['05', 'Table Gifts & Guest Favors', 'Thoughtful place gifts that delight guests and set the tone for a memorable evening.'],
+                    ['06', 'Branded Gift Boxes', 'Beautifully packaged branded boxes that make a lasting first impression.'],
+                    ['07', 'Personalised Event Merchandise', 'Bespoke merchandise designed specifically around your dinner theme and brand.'],
+                    ['08', 'Luxury Packaging Solutions', 'Premium packaging that communicates quality before a single gift is unwrapped.'],
+                    ['09', 'VIP & Speaker Appreciation Gifts', 'Exclusive gifts that honour VIPs and speakers with the recognition they deserve.'],
+                    ['10', 'Event Branding Materials', 'Comprehensive branding collateral for a sophisticated, cohesive event atmosphere.'],
+                ];
+                ?>
+                <?php foreach ($offerings as $i => $o): ?>
+                    <div class="offer-card reveal<?= $i % 3 === 1 ? ' d1' : ($i % 3 === 2 ? ' d2' : '') ?>"><span class="oc-num"><?= $o[0] ?></span><h3><?= $o[1] ?></h3><p><?= $o[2] ?></p></div>
                 <?php endforeach; ?>
             </div>
         </div>
     </section>
 
-    <!-- CTA -->
-    <section class="py-24 bg-[var(--gold)] text-black text-center">
-        <div class="container mx-auto px-4 max-w-3xl">
-            <h2 class="font-['Manrope'] text-4xl sm:text-5xl font-extrabold mb-6">Create a dinner experience worthy of your brand</h2>
-            <p class="text-black/80 text-lg mb-10">Elegant, memorable, and precisely delivered — from concept to the last guest favour.</p>
-            <a href="/quote-request" class="inline-flex items-center gap-2 bg-black text-white font-bold px-10 py-5 rounded-xl hover:bg-gray-900 transition-all hover:-translate-y-1">
-                Request a Quote <i data-lucide="arrow-right" class="w-5 h-5"></i>
-            </a>
+    <section class="section dark cta">
+        <div class="container">
+            <span class="eyebrow reveal">Ready When You Are</span>
+            <h2 class="display h2 reveal">Let's deliver your next corporate dinner</h2>
+            <p class="lead reveal">From an intimate executive dinner to a full gala — the Marigold team is ready.</p>
+            <div class="cta-actions reveal">
+                <a href="/quote-request" class="btn btn-gold btn-lg">Get a Quote <span class="arr">&rarr;</span></a>
+                <a href="/contact" class="btn btn-ghost-light btn-lg">Talk to Us</a>
+            </div>
         </div>
     </section>
 

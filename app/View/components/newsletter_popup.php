@@ -11,6 +11,7 @@
 
     <!-- Backdrop -->
     <div x-show="open"
+         x-cloak
          x-transition.opacity.duration.200ms
          class="fixed inset-0 bg-black/80 backdrop-blur-sm"
          style="z-index: 9998;"
@@ -18,6 +19,7 @@
 
     <!-- Modal -->
     <div x-show="open"
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 scale-95 -translate-y-8"
          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -54,7 +56,7 @@
                 </p>
 
                 <!-- Form -->
-                <form @submit.prevent="sessionStorage.setItem('newsletter_popup_seen', 'true'); open = false; window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'You\'re subscribed! Welcome to Marigold Signature.', type: 'success' }}));" class="space-y-3">
+                <form @submit.prevent="if (email) { window.Marigold && window.Marigold.subscribe(email, 'Popup'); } sessionStorage.setItem('newsletter_popup_seen', 'true'); open = false;" class="space-y-3">
                     <input x-model="email" type="email" name="email" required autocomplete="email"
                            placeholder="Your email address"
                            class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-5 py-4 text-sm text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)] transition-all">

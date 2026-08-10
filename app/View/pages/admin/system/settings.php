@@ -21,7 +21,7 @@
             <h2 class="font-bold font-manrope text-lg mb-4 pb-2 border-b border-[var(--border)]">Store Identity</h2>
             <div class="grid grid-cols-2 gap-5">
                 <div><label class="form-label">Store Name</label><input type="text" value="Marigold Signature" class="input-field w-full mt-1 text-sm"></div>
-                <div><label class="form-label">Support Email</label><input type="email" value="support@marigoldsignature.com" class="input-field w-full mt-1 text-sm"></div>
+                <div><label class="form-label">Support Email</label><input type="email" value="support@marigoldsignatureng.com" class="input-field w-full mt-1 text-sm"></div>
                 <div><label class="form-label">Phone Number</label><input type="text" value="+234 800 MARIGOLD" class="input-field w-full mt-1 text-sm"></div>
                 <div><label class="form-label">Currency Symbol</label><input type="text" value="₦" class="input-field w-full mt-1 text-sm"></div>
                 <div class="col-span-2"><label class="form-label">Physical Address</label><textarea rows="2" class="input-field w-full mt-1 text-sm resize-none">14 Adeola Odeku St, Victoria Island, Lagos</textarea></div>
@@ -41,6 +41,11 @@
             <div class="grid grid-cols-1 gap-5">
                 <div><label class="form-label">Public Key</label><input type="text" value="" placeholder="pk_test_..." class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
                 <div><label class="form-label">Secret Key</label><input type="password" value="" placeholder="sk_test_..." autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+            </div>
+            <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Flutterwave Integration</h2>
+            <div class="grid grid-cols-1 gap-5">
+                <div><label class="form-label">Secret Key</label><input type="password" value="" placeholder="FLWSECK_TEST-..." autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+                <div><label class="form-label">Webhook Secret Hash</label><input type="password" value="" placeholder="verif-hash secret" autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
             </div>
             <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Tax Settings</h2>
             <div class="grid grid-cols-2 gap-5">

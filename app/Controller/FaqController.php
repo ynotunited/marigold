@@ -36,7 +36,7 @@ class FaqController extends Controller
             [
                 'category' => 'Payment',
                 'question' => 'What payment methods do you accept?',
-                'answer' => 'We accept bank transfers, major credit cards via Paystack, and can arrange invoice payment terms for established corporate accounts subject to credit approval.'
+                'answer' => 'We accept bank transfers, and major credit cards or bank transfers online via Paystack and Flutterwave. We can also arrange invoice payment terms for established corporate accounts subject to credit approval.'
             ]
         ];
 

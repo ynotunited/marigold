@@ -124,8 +124,10 @@ class Idempotency
     {
         $db = Model::getDB();
         $stmt = $db->prepare(
-            "UPDATE idempotency_keys SET state = 'failed', completed_at = NOW() WHERE `key` = :k"
+            "UPDATE idempotency_keys
+                SET state = 'failed', response_json = :r, completed_at = NOW()
+              WHERE `key` = :k"
         );
-        $stmt->execute(['k' => $key, 'r' => $reason]);
+        $stmt->execute(['r' => json_encode(['error' => $reason]), 'k' => $key]);
     }
 }

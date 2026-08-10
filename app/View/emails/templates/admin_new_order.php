@@ -16,4 +16,4 @@
     </tr>
 </table>
 
-<center><a href="https://marigoldsignature.com/admin/orders/<?= htmlspecialchars($order_id) ?>" class="btn">Process Order</a></center>
+<center><a href="https://marigoldsignatureng.com/admin/orders/<?= htmlspecialchars($order_id) ?>" class="btn">Process Order</a></center>
