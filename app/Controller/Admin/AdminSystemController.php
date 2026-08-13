@@ -2,43 +2,130 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\Model;
 use App\Core\View;
 
 class AdminSystemController extends Controller
 {
     public function settings()
     {
-        return View::renderTemplate('pages/admin/system/settings', 'admin', ['title' => 'Global Settings | Admin']);
+        $smtp = [
+            'host'       => (string) ($_ENV['SMTP_HOST'] ?? ''),
+            'port'       => (string) ($_ENV['SMTP_PORT'] ?? ''),
+            'encryption' => (string) ($_ENV['SMTP_ENCRYPTION'] ?? 'tls'),
+            'username'   => (string) ($_ENV['SMTP_USER'] ?? ''),
+            'password'   => (string) ($_ENV['SMTP_PASS'] ?? ($_ENV['SMTP_PASSWORD'] ?? '')),
+            'from_name'  => (string) ($_ENV['SMTP_FROM_NAME'] ?? ''),
+            'from_email' => (string) ($_ENV['SMTP_FROM_EMAIL'] ?? ''),
+        ];
+
+        $shipping = [
+            'api_key'           => (string) ($_ENV['SHIPBUBBLE_API_KEY'] ?? ''),
+            'webhook_secret'    => (string) ($_ENV['SHIPBUBBLE_WEBHOOK_SECRET'] ?? ''),
+            'sender_code'       => (string) ($_ENV['SHIPBUBBLE_SENDER_ADDRESS_CODE'] ?? ''),
+            'category_id'       => (string) ($_ENV['SHIPBUBBLE_DEFAULT_CATEGORY_ID'] ?? ''),
+            'package_length'    => (string) ($_ENV['SHIPBUBBLE_PACKAGE_LENGTH'] ?? ''),
+            'package_width'     => (string) ($_ENV['SHIPBUBBLE_PACKAGE_WIDTH'] ?? ''),
+            'package_height'    => (string) ($_ENV['SHIPBUBBLE_PACKAGE_HEIGHT'] ?? ''),
+            'sender_address'    => (string) ($_ENV['SHIPBUBBLE_SENDER_ADDRESS'] ?? ''),
+        ];
+
+        return View::renderTemplate('pages/admin/system/settings', 'admin', [
+            'title' => 'Global Settings | Admin',
+            'smtp' => $smtp,
+            'shipping' => $shipping,
+        ]);
     }
 
     public function users()
     {
-        $users = [
-            ['id' => 1, 'name' => 'Sarah Jenkins', 'email' => 'sarah@marigold.ng', 'role' => 'Super Admin', 'status' => 'Active', 'last_login' => '10 mins ago'],
-            ['id' => 2, 'name' => 'Mike Olatunji', 'email' => 'mike@marigold.ng', 'role' => 'Sales Manager', 'status' => 'Active', 'last_login' => '2 hours ago'],
-            ['id' => 3, 'name' => 'David Adeleke', 'email' => 'david@marigold.ng', 'role' => 'Content Editor', 'status' => 'Inactive', 'last_login' => '3 weeks ago'],
-        ];
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.status,
+                u.last_login_at,
+                r.name AS role_name
+            FROM users u
+            LEFT JOIN user_roles ur ON ur.user_id = u.id
+            LEFT JOIN roles r ON r.id = ur.role_id
+            WHERE u.deleted_at IS NULL
+            ORDER BY u.created_at DESC
+        ")->fetchAll();
+
+        $users = [];
+        foreach ($rows as $u) {
+            $users[] = [
+                'id'         => $u['id'],
+                'name'       => trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) ?: $u['email'],
+                'email'      => $u['email'],
+                'role'       => $u['role_name'] ?: '—',
+                'status'     => ucfirst($u['status']),
+                'last_login' => $u['last_login_at'] ? date('M j, Y g:i A', strtotime($u['last_login_at'])) : 'Never',
+            ];
+        }
+
         return View::renderTemplate('pages/admin/system/users', 'admin', ['title' => 'Admin Users | Admin', 'users' => $users]);
     }
 
     public function roles()
     {
-        $roles = [
-            ['id' => 1, 'name' => 'Super Admin', 'users' => 1, 'description' => 'Full access to all modules and system settings.'],
-            ['id' => 2, 'name' => 'Sales Manager', 'users' => 4, 'description' => 'Can manage products, orders, quotes, and customers.'],
-            ['id' => 3, 'name' => 'Content Editor', 'users' => 2, 'description' => 'Can manage blog posts, CMS pages, and media library.'],
-        ];
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT r.id, r.name, r.description,
+                   (SELECT COUNT(*) FROM user_roles ur WHERE ur.role_id = r.id) AS user_count
+            FROM roles r
+            ORDER BY r.id ASC
+        ")->fetchAll();
+
+        $roles = [];
+        foreach ($rows as $r) {
+            $roles[] = [
+                'id'          => $r['id'],
+                'name'        => $r['name'],
+                'users'       => (int)$r['user_count'],
+                'description' => $r['description'] ?: '',
+            ];
+        }
+
         return View::renderTemplate('pages/admin/system/roles', 'admin', ['title' => 'Roles & Permissions | Admin', 'roles' => $roles]);
     }
 
     public function audit()
     {
-        $logs = [
-            ['id' => 4092, 'user' => 'Sarah Jenkins', 'action' => 'Updated Settings', 'module' => 'System', 'record' => 'Payment Gateway', 'date' => '10 mins ago'],
-            ['id' => 4091, 'user' => 'Mike Olatunji', 'action' => 'Approved Quote', 'module' => 'Quotes', 'record' => 'QT-1045', 'date' => '1 hour ago'],
-            ['id' => 4090, 'user' => 'System', 'action' => 'Automated Backup', 'module' => 'Database', 'record' => 'db_backup_20260709.sql', 'date' => '5 hours ago'],
-            ['id' => 4089, 'user' => 'David Adeleke', 'action' => 'Published Post', 'module' => 'Blog', 'record' => 'Top 10 Corporate Gifts', 'date' => '2 days ago'],
-        ];
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT id, level, message, context_json, created_at
+            FROM logs
+            ORDER BY created_at DESC
+            LIMIT 100
+        ")->fetchAll();
+
+        $logs = [];
+        foreach ($rows as $l) {
+            $ctx = json_decode($l['context_json'], true) ?: [];
+            $module = 'System';
+            if (stripos($l['message'], 'order') !== false) $module = 'Orders';
+            elseif (stripos($l['message'], 'quote') !== false) $module = 'Quotes';
+            elseif (stripos($l['message'], 'payment') !== false) $module = 'Payments';
+            elseif (stripos($l['message'], 'user') !== false || stripos($l['message'], 'login') !== false) $module = 'Auth';
+
+            $logs[] = [
+                'id'     => $l['id'],
+                'user'   => 'System',
+                'action' => ucfirst($l['level']) . ' — ' . $l['message'],
+                'module' => $module,
+                'record' => $ctx['ref'] ?? $ctx['order_number'] ?? $ctx['email'] ?? '—',
+                'date'   => date('M j, Y g:i A', strtotime($l['created_at'])),
+            ];
+        }
+
         return View::renderTemplate('pages/admin/system/audit', 'admin', ['title' => 'Audit Logs | Admin', 'logs' => $logs]);
     }
 }

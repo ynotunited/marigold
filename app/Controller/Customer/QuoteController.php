@@ -26,6 +26,7 @@ class QuoteController extends Controller
             'id' => $quote['id'],
             'date' => $quote['date'],
             'status' => ucwords(str_replace('_', ' ', $quote['status'])),
+            'status_key' => $quote['status'],
             'items' => (int)$quote['items'],
         ], $stmt->fetchAll());
 

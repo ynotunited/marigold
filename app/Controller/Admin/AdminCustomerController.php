@@ -2,49 +2,306 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\CSRF;
+use App\Core\Model;
+use App\Core\Session;
 use App\Core\View;
 
 class AdminCustomerController extends Controller
 {
-    private function getMockCustomers(): array
-    {
-        return [
-            ['id' => 1042, 'name' => 'David Okon', 'email' => 'david@techsol.ng', 'company' => 'TechSolutions Inc', 'type' => 'Corporate', 'status' => 'Active', 'orders' => 12, 'spent' => 2450000, 'registered' => '2024-03-12'],
-            ['id' => 1045, 'name' => 'Adaeze Williams', 'email' => 'adaeze@company.ng', 'company' => 'Apex Group', 'type' => 'Corporate', 'status' => 'Active', 'orders' => 4, 'spent' => 820000, 'registered' => '2024-11-05'],
-            ['id' => 1089, 'name' => 'Seun Adeyemi', 'email' => 'seun@adeyemi.ng', 'company' => null, 'type' => 'Individual', 'status' => 'Active', 'orders' => 1, 'spent' => 1200000, 'registered' => '2025-01-20'],
-            ['id' => 1102, 'name' => 'Blessing Nwosu', 'email' => 'blessing@nw.ng', 'company' => null, 'type' => 'Individual', 'status' => 'Inactive', 'orders' => 0, 'spent' => 0, 'registered' => '2025-05-14'],
-            ['id' => 1120, 'name' => 'TechCorp Nigeria', 'email' => 'procurement@techcorp.ng', 'company' => 'TechCorp', 'type' => 'Corporate', 'status' => 'Active', 'orders' => 25, 'spent' => 15400000, 'registered' => '2023-08-01'],
-        ];
-    }
-
     public function index()
     {
+        $db = Model::getDB();
+
+        // Registered customers only (users with the 'customer' role — staff excluded).
+        $rows = $db->query("
+            SELECT
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.phone,
+                u.status AS user_status,
+                u.created_at,
+                c.company_name,
+                c.status AS corp_status
+            FROM users u
+            LEFT JOIN customers c ON c.user_id = u.id
+            WHERE u.deleted_at IS NULL
+              AND EXISTS (
+                  SELECT 1
+                  FROM user_roles ur
+                  JOIN roles r ON r.id = ur.role_id
+                  WHERE ur.user_id = u.id AND r.slug = 'customer'
+              )
+            ORDER BY u.created_at DESC
+        ")->fetchAll();
+
+        // Order aggregates per customer (email match against order_addresses).
+        $aggRows = $db->query("
+            SELECT
+                a.email,
+                COUNT(o.id) AS orders_count,
+                COALESCE(SUM(o.grand_total), 0) AS total_spent
+            FROM order_addresses a
+            JOIN orders o ON o.id = a.order_id AND o.status != 'cancelled'
+            WHERE a.type = 'shipping' AND a.email IS NOT NULL AND a.email != ''
+            GROUP BY a.email
+        ")->fetchAll();
+        $agg = [];
+        foreach ($aggRows as $r) {
+            $agg[strtolower($r['email'])] = ['orders' => (int)$r['orders_count'], 'spent' => (float)$r['total_spent']];
+        }
+
+        $customers = [];
+        foreach ($rows as $r) {
+            $email = strtolower($r['email'] ?? '');
+            $orders = $agg[$email]['orders'] ?? 0;
+            $spent  = $agg[$email]['spent'] ?? 0.0;
+            $customers[] = [
+                'id'         => $r['id'],
+                'name'       => trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')) ?: $r['email'],
+                'email'      => $r['email'],
+                'company'    => $r['company_name'] ?: '',
+                'type'       => $r['company_name'] ? 'Corporate' : 'Individual',
+                'status'     => ucfirst($r['corp_status'] ?: $r['user_status']),
+                'orders'     => $orders,
+                'spent'      => $spent,
+                'registered' => date('Y-m-d', strtotime($r['created_at'])),
+            ];
+        }
+
         return View::renderTemplate('pages/admin/customers/index', 'admin', [
             'title' => 'Customers | Admin',
-            'customers' => $this->getMockCustomers(),
+            'customers' => $customers,
         ]);
     }
 
     public function show($id)
     {
+        $db = Model::getDB();
+
+        $stmt = $db->prepare("
+            SELECT
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.phone,
+                u.status AS user_status,
+                u.last_login_at,
+                u.created_at,
+                c.company_name,
+                c.industry,
+                c.notes AS internal_notes,
+                c.status AS corp_status,
+                c.account_manager_id
+            FROM users u
+            LEFT JOIN customers c ON c.user_id = u.id
+            WHERE u.id = :id
+              AND u.deleted_at IS NULL
+              AND EXISTS (
+                  SELECT 1
+                  FROM user_roles ur
+                  JOIN roles r ON r.id = ur.role_id
+                  WHERE ur.user_id = u.id AND r.slug = 'customer'
+              )
+            LIMIT 1
+        ");
+        $stmt->execute(['id' => $id]);
+        $u = $stmt->fetch();
+
+        if (!$u) {
+            http_response_code(404);
+            return View::renderTemplate('pages/public/errors/404', 'main', ['title' => 'Customer not found']);
+        }
+
+        $email = strtolower($u['email']);
+        $customerName = trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) ?: $u['email'];
+
+        // Order stats
+        $stmt2 = $db->prepare("
+            SELECT COUNT(*) AS cnt, COALESCE(SUM(grand_total), 0) AS total
+            FROM orders o
+            JOIN order_addresses a ON a.order_id = o.id AND a.type = 'shipping'
+            WHERE o.status != 'cancelled' AND LOWER(a.email) = :email
+        ");
+        $stmt2->execute(['email' => $email]);
+        $stats = $stmt2->fetch();
+        $totalOrders = (int)$stats['cnt'];
+        $lifetime = (float)$stats['total'];
+
+        // Recent orders
+        $ordStmt = $db->prepare("
+            SELECT o.order_number, o.grand_total, o.status, o.created_at,
+                   a.email
+            FROM orders o
+            LEFT JOIN order_addresses a ON a.order_id = o.id AND a.type = 'shipping'
+            WHERE LOWER(COALESCE(a.email, '')) = :email
+            ORDER BY o.created_at DESC LIMIT 6
+        ");
+        $ordStmt->execute(['email' => $email]);
+        $ordRows = $ordStmt->fetchAll();
+        $recent_orders = [];
+        foreach ($ordRows as $o) {
+            $recent_orders[] = [
+                'id'     => $o['order_number'],
+                'date'   => date('M j, Y', strtotime($o['created_at'])),
+                'status' => ucfirst($o['status']),
+                'total'  => (float)$o['grand_total'],
+            ];
+        }
+
+        // Quotes (by customer email or user id)
+        $qStmt = $db->prepare("
+            SELECT q.quote_number, q.status, q.created_at,
+                   (SELECT COUNT(*) FROM quote_items qi WHERE qi.quote_id = q.id) AS items
+            FROM quotes q
+            LEFT JOIN users us ON us.id = q.customer_id
+            WHERE q.customer_id = :uid
+               OR LOWER(us.email) = :email
+            ORDER BY q.created_at DESC LIMIT 6
+        ");
+        $qStmt->execute(['uid' => $id, 'email' => $email]);
+        $qRows = $qStmt->fetchAll();
+        $recent_quotes = [];
+        foreach ($qRows as $q) {
+            $recent_quotes[] = [
+                'id'     => $q['quote_number'],
+                'date'   => date('M j, Y', strtotime($q['created_at'])),
+                'items'  => (int)$q['items'],
+                'status' => ucfirst($q['status']),
+            ];
+        }
+
+        // Addresses
+        $addrStmt = $db->prepare("
+            SELECT a.type, a.address_line1, a.address_line2, a.city, a.state
+            FROM order_addresses a
+            JOIN orders o ON o.id = a.order_id
+            WHERE LOWER(COALESCE(a.email, '')) = :email
+            GROUP BY a.type, a.address_line1, a.address_line2, a.city, a.state
+            ORDER BY MAX(o.created_at) DESC LIMIT 4
+        ");
+        $addrStmt->execute(['email' => $email]);
+        $addrRows = $addrStmt->fetchAll();
+        $addresses = [];
+        foreach ($addrRows as $i => $a) {
+            $addresses[] = [
+                'label'  => ($a['type'] === 'shipping' ? 'Shipping' : 'Billing') . ($i === 0 ? ' (Default)' : ''),
+                'street' => trim(($a['address_line1'] ?? '') . ' ' . ($a['address_line2'] ?? '')),
+                'city'   => $a['city'] ?? '',
+                'state'  => $a['state'] ?? '',
+            ];
+        }
+
         $customer = [
-            'id' => $id, 'name' => 'David Okon', 'email' => 'david@techsol.ng', 'phone' => '+234 801 234 5678', 'company' => 'TechSolutions Inc',
-            'type' => 'Corporate', 'status' => 'Active', 'registered' => 'Mar 12, 2024', 'last_login' => '2 hours ago',
-            'lifetime_value' => 2450000, 'total_orders' => 12, 'avg_order_value' => 204166,
-            'addresses' => [
-                ['label' => 'HQ (Default)', 'street' => '14 Adeola Odeku St', 'city' => 'Victoria Island', 'state' => 'Lagos'],
-                ['label' => 'Branch Office', 'street' => '22 Allen Ave', 'city' => 'Ikeja', 'state' => 'Lagos'],
-            ],
-            'recent_orders' => [
-                ['id' => 'ORD-9823', 'date' => '2 days ago', 'total' => 450000, 'status' => 'Processing'],
-                ['id' => 'ORD-9810', 'date' => '15 days ago', 'total' => 1200000, 'status' => 'Completed'],
-            ],
-            'recent_quotes' => [
-                ['id' => 'QT-1045', 'date' => '1 day ago', 'items' => 2, 'status' => 'Pending'],
-                ['id' => 'QT-1022', 'date' => '1 month ago', 'items' => 20, 'status' => 'Converted'],
-            ],
-            'internal_notes' => 'Key account. Always requires custom branding on moleskine notebooks. Prefers delivery on Thursdays.',
+            'id'              => $u['id'],
+            'name'            => $customerName,
+            'email'           => $u['email'],
+            'phone'           => $u['phone'] ?: '—',
+            'company'         => $u['company_name'] ?: '—',
+            'type'            => $u['company_name'] ? 'Corporate' : 'Individual',
+            'status'          => ucfirst($u['corp_status'] ?: $u['user_status']),
+            'registered'      => date('M j, Y', strtotime($u['created_at'])),
+            'last_login'      => $u['last_login_at'] ? date('M j, Y', strtotime($u['last_login_at'])) : 'Never',
+            'lifetime_value'  => $lifetime,
+            'total_orders'    => $totalOrders,
+            'avg_order_value' => $totalOrders > 0 ? round($lifetime / $totalOrders) : 0,
+            'addresses'       => $addresses,
+            'recent_orders'   => $recent_orders,
+            'recent_quotes'   => $recent_quotes,
+            'internal_notes'  => $u['internal_notes'] ?: '',
+            'account_manager' => $this->accountManagerInfo($u['account_manager_id']),
         ];
-        return View::renderTemplate('pages/admin/customers/show', 'admin', ['title' => "Customer $id | Admin", 'customer' => $customer]);
+
+        $managers = $this->accountManagers();
+
+        return View::renderTemplate('pages/admin/customers/show', 'admin', [
+            'title' => "Customer {$customer['name']} | Admin",
+            'customer' => $customer,
+            'managers' => $managers,
+        ]);
+    }
+
+    public function updateAccountManager($id)
+    {
+        if (!CSRF::verify($_POST['csrf_token'] ?? '')) {
+            throw new \Exception('Invalid CSRF token', 403);
+        }
+
+        $managerId = (int)($_POST['account_manager_id'] ?? 0);
+
+        $db = Model::getDB();
+
+        // The target row must be a real customer.
+        $check = $db->prepare("
+            SELECT c.id FROM customers c
+            JOIN users u ON u.id = c.user_id
+            WHERE u.id = :id AND u.deleted_at IS NULL
+            LIMIT 1
+        ");
+        $check->execute(['id' => $id]);
+        $customerRow = $check->fetch();
+
+        if (!$customerRow) {
+            throw new \Exception('Customer not found', 404);
+        }
+
+        if ($managerId !== 0) {
+            $man = $db->prepare("
+                SELECT u.id FROM users u
+                JOIN user_roles ur ON ur.user_id = u.id
+                JOIN roles r ON r.id = ur.role_id
+                WHERE u.id = :id AND r.slug = 'account-manager' AND u.status = 'active'
+                LIMIT 1
+            ");
+            $man->execute(['id' => $managerId]);
+            if (!$man->fetch()) {
+                throw new \Exception('Invalid account manager', 422);
+            }
+        }
+
+        $upd = $db->prepare("UPDATE customers SET account_manager_id = :manager_id WHERE id = :customer_id");
+        $upd->execute(['manager_id' => $managerId ?: null, 'customer_id' => $customerRow['id']]);
+
+        Session::set('success', $managerId ? 'Account manager assigned.' : 'Account manager removed.');
+        $this->redirect('/admin/customers/' . $id);
+    }
+
+    private function accountManagerInfo($userId)
+    {
+        if (!$userId) {
+            return null;
+        }
+        $stmt = Model::getDB()->prepare("SELECT first_name, last_name, email FROM users WHERE id = :id AND deleted_at IS NULL LIMIT 1");
+        $stmt->execute(['id' => $userId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+        return [
+            'id'    => (int)$userId,
+            'name'  => trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')),
+            'email' => $row['email'] ?? '',
+        ];
+    }
+
+    private function accountManagers()
+    {
+        $rows = Model::getDB()->query("
+            SELECT u.id, u.first_name, u.last_name, u.email, u.status
+            FROM users u
+            JOIN user_roles ur ON ur.user_id = u.id
+            JOIN roles r ON r.id = ur.role_id
+            WHERE r.slug = 'account-manager' AND u.deleted_at IS NULL
+            ORDER BY u.first_name, u.last_name
+        ")->fetchAll();
+        return array_map(fn($m) => [
+            'id'     => (int)$m['id'],
+            'name'   => trim(($m['first_name'] ?? '') . ' ' . ($m['last_name'] ?? '')),
+            'email'  => $m['email'] ?? '',
+            'status' => $m['status'] ?? 'active',
+        ], $rows);
     }
 }

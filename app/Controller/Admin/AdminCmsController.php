@@ -2,42 +2,77 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\Model;
 use App\Core\View;
 
 class AdminCmsController extends Controller
 {
-    private function getMockPages(): array
-    {
-        return [
-            ['id' => 1, 'title' => 'Homepage', 'slug' => '/', 'status' => 'Published', 'updated' => '2 days ago', 'sections' => 8],
-            ['id' => 2, 'title' => 'About Us', 'slug' => '/about', 'status' => 'Published', 'updated' => '1 month ago', 'sections' => 4],
-            ['id' => 3, 'title' => 'Corporate Solutions', 'slug' => '/corporate-solutions', 'status' => 'Published', 'updated' => '1 week ago', 'sections' => 6],
-            ['id' => 4, 'title' => 'Summer Campaign 2026', 'slug' => '/campaigns/summer-26', 'status' => 'Draft', 'updated' => '2 hrs ago', 'sections' => 3],
-        ];
-    }
-
     public function index()
     {
+        $db = Model::getDB();
+
+        $pages = $db->query("
+            SELECT
+                p.id,
+                p.title,
+                p.slug,
+                p.status,
+                p.updated_at,
+                (SELECT COUNT(*) FROM page_sections s WHERE s.page_id = p.id AND s.status = 'active') AS section_count
+            FROM pages p
+            ORDER BY p.updated_at DESC
+        ")->fetchAll();
+
+        $rows = [];
+        foreach ($pages as $p) {
+            $rows[] = [
+                'id'       => $p['id'],
+                'title'    => $p['title'],
+                'slug'     => '/' . ltrim($p['slug'], '/'),
+                'status'   => ucfirst($p['status']),
+                'updated'  => date('M j, Y', strtotime($p['updated_at'])),
+                'sections' => (int)$p['section_count'],
+            ];
+        }
+
         return View::renderTemplate('pages/admin/cms/index', 'admin', [
             'title' => 'Pages (CMS) | Admin',
-            'pages' => $this->getMockPages(),
+            'pages' => $rows,
         ]);
     }
 
     public function builder($id)
     {
-        $page = ['id' => $id, 'title' => 'Homepage', 'slug' => '/', 'status' => 'Published'];
-        
-        // Mock sections for the builder
-        $sections = [
-            ['id' => 's1', 'type' => 'Hero Banner', 'title' => 'Main Hero', 'hidden' => false],
-            ['id' => 's2', 'type' => 'Logo Cloud', 'title' => 'Trusted By', 'hidden' => false],
-            ['id' => 's3', 'type' => 'Product Carousel', 'title' => 'Featured Products', 'hidden' => false],
-            ['id' => 's4', 'type' => 'Image+Text', 'title' => 'About Marigold', 'hidden' => false],
-            ['id' => 's5', 'type' => 'Testimonials', 'title' => 'Client Reviews', 'hidden' => true],
-            ['id' => 's6', 'type' => 'Latest Blog Posts', 'title' => 'Insights', 'hidden' => false],
-            ['id' => 's7', 'type' => 'Newsletter', 'title' => 'Footer CTA', 'hidden' => false],
-        ];
+        $db = Model::getDB();
+        $stmt = $db->prepare("SELECT id, title, slug, status FROM pages WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        $page = $stmt->fetch();
+
+        if (!$page) {
+            http_response_code(404);
+            return View::renderTemplate('pages/public/errors/404', 'main', ['title' => 'Page not found']);
+        }
+
+        $secStmt = $db->prepare("
+            SELECT id, section_type, sort_order, status, configuration_json
+            FROM page_sections
+            WHERE page_id = :page_id
+            ORDER BY sort_order ASC
+        ");
+        $secStmt->execute(['page_id' => $page['id']]);
+
+        $sections = [];
+        foreach ($secStmt->fetchAll() as $s) {
+            $cfg = $s['configuration_json'] ? json_decode($s['configuration_json'], true) : [];
+            $sections[] = [
+                'id'     => $s['id'],
+                'type'   => ucwords(str_replace(['-', '_'], ' ', $s['section_type'])),
+                'title'  => $cfg['title'] ?? 'Section',
+                'hidden' => $s['status'] !== 'active',
+            ];
+        }
+
+        $page['status'] = ucfirst($page['status']);
 
         return View::renderTemplate('pages/admin/cms/builder', 'admin', [
             'title' => 'Page Builder | Admin',

@@ -2,29 +2,60 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\Model;
 use App\Core\View;
 
 class AdminNavigationController extends Controller
 {
     public function index()
     {
+        $db = Model::getDB();
+
+        // Header menu built from real published pages + active categories.
+        $pageRows = $db->query("
+            SELECT id, title, slug
+            FROM pages
+            WHERE status = 'published'
+            ORDER BY title ASC
+        ")->fetchAll();
+
+        $categoryRows = $db->query("
+            SELECT id, name, slug
+            FROM categories
+            WHERE status = 'active'
+            ORDER BY name ASC
+        ")->fetchAll();
+
+        $header = [];
+        $n = 0;
+        foreach ($pageRows as $p) {
+            $n++;
+            $header[] = [
+                'id'       => $n,
+                'title'    => $p['title'],
+                'url'      => '/' . ltrim($p['slug'], '/'),
+                'type'     => 'Page',
+                'status'   => 'Active',
+                'children' => [],
+            ];
+        }
+        $childOffset = $n + 1;
+        $n = 0;
+        foreach ($categoryRows as $c) {
+            $n++;
+            $header[] = [
+                'id'       => $childOffset + $n,
+                'title'    => $c['name'],
+                'url'      => '/category/' . $c['slug'],
+                'type'     => 'Category',
+                'status'   => 'Active',
+                'children' => [],
+            ];
+        }
+
         $menus = [
-            'Header' => [
-                ['id' => 1, 'title' => 'Home', 'url' => '/', 'type' => 'Page', 'status' => 'Active', 'children' => []],
-                ['id' => 2, 'title' => 'Shop', 'url' => '/shop', 'type' => 'Custom', 'status' => 'Active', 'children' => [
-                    ['id' => 21, 'title' => 'All Products', 'url' => '/shop', 'type' => 'Custom', 'status' => 'Active'],
-                    ['id' => 22, 'title' => 'Notebooks', 'url' => '/category/notebooks', 'type' => 'Category', 'status' => 'Active'],
-                    ['id' => 23, 'title' => 'Tech Accessories', 'url' => '/category/tech', 'type' => 'Category', 'status' => 'Active'],
-                ]],
-                ['id' => 3, 'title' => 'Corporate Solutions', 'url' => '/corporate-solutions', 'type' => 'Page', 'status' => 'Active', 'badge' => 'New', 'children' => []],
-                ['id' => 4, 'title' => 'About Us', 'url' => '/about', 'type' => 'Page', 'status' => 'Active', 'children' => []],
-                ['id' => 5, 'title' => 'Contact', 'url' => '/contact', 'type' => 'Page', 'status' => 'Active', 'children' => []],
-            ],
-            'Footer' => [
-                ['id' => 6, 'title' => 'Privacy Policy', 'url' => '/privacy', 'type' => 'Page', 'status' => 'Active', 'children' => []],
-                ['id' => 7, 'title' => 'Terms of Service', 'url' => '/terms', 'type' => 'Page', 'status' => 'Active', 'children' => []],
-                ['id' => 8, 'title' => 'FAQ', 'url' => '/faq', 'type' => 'Page', 'status' => 'Active', 'children' => []],
-            ]
+            'Header' => $header,
+            'Footer' => [],
         ];
 
         return View::renderTemplate('pages/admin/navigation/index', 'admin', [

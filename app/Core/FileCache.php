@@ -29,21 +29,22 @@ class FileCache
      */
     public static function get(string $key)
     {
+        clearstatcache();
         $file = self::$cacheDir . md5($key) . '.cache';
         
         if (!file_exists($file)) {
             return null;
         }
 
-        $content = file_get_contents($file);
+        $content = @file_get_contents($file);
         if (!$content) {
             return null;
         }
 
-        $data = unserialize($content);
+        $data = @unserialize($content);
         
-        if (time() > $data['expires']) {
-            unlink($file);
+        if (time() > ($data['expires'] ?? 0)) {
+            @unlink($file);
             return null;
         }
 
@@ -55,9 +56,11 @@ class FileCache
      */
     public static function forget(string $key): void
     {
+        clearstatcache();
         $file = self::$cacheDir . md5($key) . '.cache';
         if (file_exists($file)) {
-            unlink($file);
+            @unlink($file);
+            clearstatcache(true, $file);
         }
     }
 

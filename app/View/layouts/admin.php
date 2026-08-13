@@ -9,8 +9,8 @@
     <title><?= htmlspecialchars($title ?? 'Admin | Marigold Signature', ENT_QUOTES, 'UTF-8') ?></title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/ms-logo-icon.png">
-    <link rel="apple-touch-icon" href="/ms-logo-icon.png">
+    <link rel="icon" type="image/png" href="<?= app_url('/ms-logo-icon.png') ?>">
+    <link rel="apple-touch-icon" href="<?= app_url('/ms-logo-icon.png') ?>">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 
     <!-- CSS -->
-    <link href="/assets/css/app.css" rel="stylesheet">
+    <link href="<?= app_url('/assets/css/app.css') ?>" rel="stylesheet">
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -34,6 +34,9 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Alpine.js: hide tab panels until ready */
+        [x-cloak] { display: none !important; }
+
         /* Sidebar transition */
         .sidebar-collapsed { width: 72px; }
         .sidebar-collapsed .nav-label { display: none; }
@@ -41,7 +44,9 @@
         .sidebar-collapsed .logo-text { display: none; }
         .sidebar-collapsed .logo-dot { display: none; }
         .sidebar-collapsed .sidebar-logo { display: none; }
+        .sidebar-collapsed .sidebar-logo-icon { display: block; }
         .sidebar-collapsed .sidebar-footer-text { display: none; }
+        .sidebar-logo-icon { display: none; }
     </style>
 </head>
 <body class="bg-[#080808] text-[var(--text-primary)] antialiased" x-data="adminLayout()">
@@ -52,7 +57,8 @@
 
         <!-- Logo -->
         <div class="flex items-center px-5 h-[64px] border-b border-[var(--border)] shrink-0 overflow-hidden">
-            <img src="/ms-logo.png" alt="Marigold Signature" class="sidebar-logo h-[30px] w-auto max-w-full object-contain shrink-0">
+            <img src="<?= app_url('/ms-logo.png') ?>" alt="Marigold Signature" class="sidebar-logo h-[30px] w-auto max-w-full object-contain shrink-0">
+            <img src="<?= app_url('/ms-logo-icon.png') ?>" alt="Marigold Signature" class="sidebar-logo-icon h-[30px] w-auto max-w-full object-contain mx-auto">
         </div>
 
         <!-- Collapse Toggle -->
@@ -113,8 +119,14 @@
                 <div class="w-8 h-8 rounded-full bg-[var(--gold)]/20 border border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold text-sm shrink-0">SA</div>
                 <div class="sidebar-footer-text min-w-0">
                     <p class="text-sm font-medium truncate">Super Admin</p>
-                    <p class="text-xs text-[var(--text-muted)] truncate">admin@marigold.ng</p>
+                    <p class="text-xs text-[var(--text-muted)] truncate">admin@marigoldsignatureng.com</p>
                 </div>
+                <form action="<?= app_url('/logout') ?>" method="POST" class="ml-auto shrink-0">
+                    <?= \App\Core\CSRF::field() ?>
+                    <button type="submit" title="Sign Out" class="w-8 h-8 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </aside>
@@ -134,7 +146,7 @@
            class="lg:hidden fixed left-0 top-0 h-screen w-[280px] bg-[#0f0f0f] border-r border-[var(--border)] z-40 flex flex-col overflow-y-auto"
            style="display:none">
         <div class="flex items-center justify-between px-5 h-[64px] border-b border-[var(--border)] shrink-0">
-            <img src="/ms-logo.png" alt="Marigold Signature" class="h-[30px] w-auto object-contain">
+            <img src="<?= app_url('/ms-logo.png') ?>" alt="Marigold Signature" class="h-[30px] w-auto object-contain">
             <button @click="mobileMenuOpen = false" class="text-[var(--text-secondary)] hover:text-white">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -161,6 +173,15 @@
             </a>
             <?php endforeach; ?>
         </nav>
+        <div class="border-t border-[var(--border)] p-3">
+            <form action="<?= app_url('/logout') ?>" method="POST">
+                <?= \App\Core\CSRF::field() ?>
+                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-sm font-medium">Sign Out</span>
+                </button>
+            </form>
+        </div>
     </aside>
 
     <!-- ===================== TOPBAR ===================== -->
@@ -184,7 +205,7 @@
 
         <!-- Quick Actions -->
         <div class="hidden md:flex items-center gap-2">
-            <a href="/admin/products/create" class="btn btn-primary h-9 px-4 text-sm">
+            <a href="<?= app_url('/admin/products/create') ?>" class="btn btn-primary h-9 px-4 text-sm">
                 <i data-lucide="plus" class="w-4 h-4 mr-1.5"></i> Add Product
             </a>
         </div>
@@ -214,6 +235,14 @@
     </main>
 
     <script>
+        // App base URL so root-relative paths work from a subdirectory (e.g. /ms).
+        window.APP_BASE = "<?= htmlspecialchars(app_base(), ENT_QUOTES, 'UTF-8') ?>";
+        window.appUrl = function (path) {
+            path = String(path || '').replace(/^\/+/, '');
+            return (window.APP_BASE || '') + '/' + path;
+        };
+    </script>
+    <script>
         function adminLayout() {
             return {
                 sidebarOpen: window.innerWidth >= 1280,
@@ -223,7 +252,19 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+
+            <?php if ($error = \App\Core\Session::get('error')): ?>
+                window.dispatchEvent(new CustomEvent('toast', { detail: { message: '<?= addslashes($error) ?>', type: 'error' }}));
+                <?php \App\Core\Session::remove('error'); ?>
+            <?php endif; ?>
+
+            <?php if ($success = \App\Core\Session::get('success')): ?>
+                window.dispatchEvent(new CustomEvent('toast', { detail: { message: '<?= addslashes($success) ?>', type: 'success' }}));
+                <?php \App\Core\Session::remove('success'); ?>
+            <?php endif; ?>
         });
     </script>
+
+    <?php \App\Core\View::render('components/toast') ?>
 </body>
 </html>

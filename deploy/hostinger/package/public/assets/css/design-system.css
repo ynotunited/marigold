@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Colors */
+    --bg-primary: #050505;
+    --surface: #111111;
+    --card: #191919;
+    --border: #2B2B2B;
+    --gold: #C9A227;
+    --gold-accent: #D4AF37;
+    --text-primary: #F8F8F8;
+    --text-secondary: #A7A7A7;
+    --text-muted: #6B7280;
+
+    /* Semantic Colors */
+    --success: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --info: #3B82F6;
+  }
+
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Manrope', sans-serif;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center font-medium rounded-[12px] transition-colors duration-200 cursor-pointer;
+  }
+  .btn-primary {
+    @apply bg-black border border-[var(--gold)] text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black;
+  }
+  .btn-secondary {
+    @apply bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--card)];
+  }
+  .btn-ghost {
+    @apply text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5;
+  }
+  
+  /* Inputs */
+  .input-field {
+    @apply w-full h-[52px] bg-[var(--surface)] border border-[var(--border)] rounded-[12px] px-4 text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold)] transition-colors text-[16px];
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-[var(--card)] border border-[var(--border)] rounded-[16px] overflow-hidden;
+  }
+  .product-card {
+    @apply card rounded-[20px] transition-transform duration-300 hover:-translate-y-[6px] hover:scale-[1.02] cursor-pointer;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-new { @apply bg-[var(--gold)]/10 text-[var(--gold)]; }
+  .badge-sale { @apply bg-[var(--danger)]/10 text-[var(--danger)]; }
+  .badge-preorder { @apply bg-[var(--info)]/10 text-[var(--info)]; }
+  .badge-instock { @apply bg-[var(--success)]/10 text-[var(--success)]; }
+  .badge-out { @apply bg-[var(--border)] text-[var(--text-secondary)]; }
+}
+
+@layer utilities {
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  .fluid-blur {
+    @apply backdrop-blur-md bg-black/40;
+  }
+}

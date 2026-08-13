@@ -14,12 +14,23 @@ use App\Core\PaymentLedger;
 use App\Service\PaymentService;
 use App\Service\RateLimiter;
 use App\Service\AuthService;
+use App\Service\Settings;
+use App\Service\NotificationService;
 
 class CheckoutController extends Controller
 {
-    private const VAT_RATE = 0.075;   // 7.5% VAT
+    private const DEFAULT_VAT_RATE = 0.075;   // 7.5% VAT
     private const FLAT_SHIPPING = 15000.00;
     private const MAX_ITEMS = 50;
+
+    /**
+     * Current VAT rate (fraction) — configurable via the settings table.
+     */
+    private function vatRate(): float
+    {
+        $percent = Settings::getFloat('tax_rate', self::DEFAULT_VAT_RATE * 100);
+        return round($percent / 100, 6);
+    }
 
     public function index()
     {
@@ -32,6 +43,7 @@ class CheckoutController extends Controller
             // Public key only — the secret key must NEVER reach the browser.
             'paystack_public_key' => $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '',
             'products' => $products,
+            'tax_rate' => $this->vatRate(),
             'csrf_token' => CSRF::field(),
         ]);
     }
@@ -236,7 +248,7 @@ class CheckoutController extends Controller
             ];
         }
 
-        $tax = round($subtotal * self::VAT_RATE, 2);
+        $tax = round($subtotal * $this->vatRate(), 2);
         // Shipping is priced authoritatively from the persisted ShipBubble quote
         // (or 0.00 for pickup / legacy WhatsApp-coordinated delivery).
         $grandTotal = round($subtotal + $tax + $shipping, 2);
@@ -390,6 +402,18 @@ class CheckoutController extends Controller
 
         Logger::info("Order {$orderNumber} placed (total {$grandTotal} NGN, {$paymentMethod}, {$deliveryMethod})", 'order');
 
+        if ($customerId) {
+            $userId = NotificationService::userIdForOrder($customerId);
+            if ($userId) {
+                NotificationService::notify($userId, 'order', [
+                    'icon' => 'package',
+                    'title' => 'Order ' . $orderNumber . ' received',
+                    'message' => 'Your order has been placed and is being processed. We will keep you updated on its status.',
+                    'link' => '/account/orders/' . $orderNumber,
+                ]);
+            }
+        }
+
         $this->json([
             'order_number' => $orderNumber,
             'order_id' => $orderId,
@@ -450,7 +474,7 @@ class CheckoutController extends Controller
                         $payments->capture(
                             (int) $intent['id'],
                             [],
-                            'checkout_return_' . hash('sha256', (string) $intent['gateway_ref']),
+                            self::uuidFromSeed('checkout_return_' . (string) $intent['gateway_ref']),
                             $this->requestMeta(),
                             RowSecurity::actor()
                         );
@@ -580,6 +604,19 @@ class CheckoutController extends Controller
     private static function uuidV4(): string
     {
         $b = random_bytes(16);
+        $b[6] = chr((ord($b[6]) & 0x0f) | 0x40);
+        $b[8] = chr((ord($b[8]) & 0x3f) | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4));
+    }
+
+    /**
+     * Deterministic UUID v4 derived from a seed string. Guarantees the same
+     * reference always maps to the same idempotency key so re-visits to the
+     * confirmation page replay the original capture instead of re-verifying.
+     */
+    private static function uuidFromSeed(string $seed): string
+    {
+        $b = hex2bin(hash('sha256', $seed));
         $b[6] = chr((ord($b[6]) & 0x0f) | 0x40);
         $b[8] = chr((ord($b[8]) & 0x3f) | 0x80);
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4));

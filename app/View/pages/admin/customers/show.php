@@ -1,5 +1,5 @@
 <div class="flex items-center gap-4 mb-6">
-    <a href="/admin/customers" class="text-[var(--text-secondary)] hover:text-white transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+    <a href="<?= app_url('/admin/customers') ?>" class="text-[var(--text-secondary)] hover:text-white transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
     <div class="flex-grow">
         <h1 class="text-2xl font-bold font-manrope">Customer Profile</h1>
     </div>
@@ -28,6 +28,42 @@
                 <div><p class="text-xs text-[var(--text-muted)] mb-0.5">Registered</p><p class="text-sm font-medium"><?= $customer['registered'] ?></p></div>
                 <div><p class="text-xs text-[var(--text-muted)] mb-0.5">Last Login</p><p class="text-sm font-medium"><?= $customer['last_login'] ?></p></div>
             </div>
+        </div>
+
+        <!-- Account Manager -->
+        <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
+            <h3 class="font-bold font-manrope mb-4">Account Manager</h3>
+
+            <?php if ($customer['account_manager']): ?>
+            <div class="flex items-center gap-3 mb-4 bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3">
+                <div class="w-11 h-11 rounded-full bg-[var(--gold)]/20 border-2 border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold">
+                    <?= strtoupper(substr($customer['account_manager']['name'], 0, 1)) ?>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold"><?= htmlspecialchars($customer['account_manager']['name']) ?></p>
+                    <p class="text-xs text-[var(--text-muted)]"><?= htmlspecialchars($customer['account_manager']['email']) ?></p>
+                </div>
+            </div>
+            <?php else: ?>
+            <p class="text-sm text-[var(--text-muted)] mb-4">No account manager assigned to this customer yet.</p>
+            <?php endif; ?>
+
+            <form method="post" action="<?= app_url('/admin/customers/' . $customer['id'] . '/account-manager') ?>" class="space-y-3">
+                <?= \App\Core\CSRF::field() ?>
+                <select name="account_manager_id" class="input-field w-full text-sm">
+                    <option value="0">— Unassigned —</option>
+                    <?php foreach ($managers as $m): ?>
+                    <option value="<?= $m['id'] ?>" <?= $customer['account_manager'] && $customer['account_manager']['id'] === $m['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($m['name']) ?> (<?= htmlspecialchars($m['email']) ?>)
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+                <button class="btn btn-secondary border border-[var(--border)] w-full h-9 text-sm bg-[var(--surface)]">Assign Manager</button>
+            </form>
+
+            <?php if (empty($managers)): ?>
+            <p class="text-xs text-amber-400/80 mt-3">No account managers exist yet. Create a user with the Account Manager role to assign one.</p>
+            <?php endif; ?>
         </div>
 
         <!-- Internal Notes -->
@@ -72,7 +108,7 @@
 
         <!-- Order History -->
         <div class="bg-[#111] border border-[var(--border)] rounded-[16px] overflow-hidden">
-            <div class="p-5 border-b border-[var(--border)] flex items-center justify-between"><h2 class="font-bold font-manrope">Recent Orders</h2><a href="/admin/orders" class="text-sm text-[var(--gold)]">View All</a></div>
+            <div class="p-5 border-b border-[var(--border)] flex items-center justify-between"><h2 class="font-bold font-manrope">Recent Orders</h2><a href="<?= app_url('/admin/orders') ?>" class="text-sm text-[var(--gold)]">View All</a></div>
             <table class="w-full text-left">
                 <thead><tr class="bg-[var(--surface)] text-xs uppercase text-[var(--text-muted)]">
                     <th class="px-5 py-3">Order ID</th><th class="px-5 py-3">Date</th><th class="px-5 py-3">Status</th><th class="px-5 py-3 text-right">Total</th>
@@ -92,7 +128,7 @@
 
         <!-- Quote History -->
         <div class="bg-[#111] border border-[var(--border)] rounded-[16px] overflow-hidden">
-            <div class="p-5 border-b border-[var(--border)] flex items-center justify-between"><h2 class="font-bold font-manrope">Recent Quotes</h2><a href="/admin/quotes" class="text-sm text-[var(--gold)]">View All</a></div>
+            <div class="p-5 border-b border-[var(--border)] flex items-center justify-between"><h2 class="font-bold font-manrope">Recent Quotes</h2><a href="<?= app_url('/admin/quotes') ?>" class="text-sm text-[var(--gold)]">View All</a></div>
             <table class="w-full text-left">
                 <thead><tr class="bg-[var(--surface)] text-xs uppercase text-[var(--text-muted)]">
                     <th class="px-5 py-3">Quote ID</th><th class="px-5 py-3">Date</th><th class="px-5 py-3">Items</th><th class="px-5 py-3">Status</th>

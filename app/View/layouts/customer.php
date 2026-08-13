@@ -2,6 +2,18 @@
 // app/View/layouts/customer.php
 ?>
 <?php $csrfToken = \App\Core\CSRF::field(); ?>
+<?php
+$unreadNotifCount = 0;
+if (\App\Core\Session::get('user_id')) {
+    try {
+        $stmt = \App\Core\Model::getDB()->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = :u AND read_at IS NULL");
+        $stmt->execute(['u' => \App\Core\Session::get('user_id')]);
+        $unreadNotifCount = (int)$stmt->fetchColumn();
+    } catch (\Throwable $e) {
+        $unreadNotifCount = 0;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,8 +22,8 @@
     <title><?= htmlspecialchars($title ?? 'Customer Portal | Marigold Signature', ENT_QUOTES, 'UTF-8') ?></title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/ms-logo-icon.png">
-    <link rel="apple-touch-icon" href="/ms-logo-icon.png">
+    <link rel="icon" type="image/png" href="<?= app_url('/ms-logo-icon.png') ?>">
+    <link rel="apple-touch-icon" href="<?= app_url('/ms-logo-icon.png') ?>">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +31,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS (Compiled) -->
-    <link href="/assets/css/app.css" rel="stylesheet">
+    <link href="<?= app_url('/assets/css/app.css') ?>" rel="stylesheet">
     
     <!-- GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
@@ -38,21 +50,21 @@
     
     <!-- Desktop Sidebar Navigation -->
     <aside class="hidden lg:flex flex-col w-[280px] h-screen fixed left-0 top-0 border-r border-[var(--border)] bg-[#111] z-40 pt-8 pb-6 px-6">
-        <a href="/" class="mb-12 flex items-center justify-center px-4">
-            <img src="/ms-logo.png" alt="Marigold Signature" class="h-[34px] w-auto max-w-full object-contain">
+        <a href="<?= app_url('/') ?>" class="mb-12 flex items-center justify-center px-4">
+            <img src="<?= app_url('/ms-logo.png') ?>" alt="Marigold Signature" class="h-[34px] w-auto max-w-full object-contain">
         </a>
 
         <nav class="flex-grow space-y-1">
-            <a href="/account/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/account/dashboard') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/dashboard') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/account/dashboard') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <i data-lucide="layout-dashboard" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/account/dashboard') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Dashboard
             </a>
-            <a href="/account/orders" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/orders') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/orders') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/orders') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <i data-lucide="package" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/orders') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Orders
             </a>
-            <a href="/account/quotes" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/quotes') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/quotes') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/quotes') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <i data-lucide="file-text" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/quotes') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Quotes
             </a>
-            <a href="/account/wishlist" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/wishlist') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/wishlist') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/wishlist') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <i data-lucide="heart" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/wishlist') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Wishlist
             </a>
             
@@ -60,25 +72,25 @@
                 <p class="text-[9px] uppercase tracking-[0.15em] text-[var(--text-muted)] px-4 font-bold">Account</p>
             </div>
             
-            <a href="/account/addresses" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/addresses') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/addresses') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/addresses') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <i data-lucide="map-pin" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/addresses') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Address Book
             </a>
-            <a href="/account/downloads" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/downloads') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/downloads') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/downloads') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <i data-lucide="download" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/downloads') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Downloads
             </a>
-            <a href="/account/notifications" class="flex items-center justify-between gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/notifications') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
+            <a href="<?= app_url('/account/notifications') ?>" class="flex items-center justify-between gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors <?= strpos($_SERVER['REQUEST_URI'], '/notifications') !== false ? 'bg-[var(--surface)] text-white border border-[var(--gold)]/30' : '' ?>">
                 <span class="flex items-center gap-3">
                     <i data-lucide="bell" class="w-5 h-5 <?= strpos($_SERVER['REQUEST_URI'], '/notifications') !== false ? 'text-[var(--gold)]' : '' ?>"></i> Notifications
                 </span>
-                <span class="text-[10px] font-bold bg-[var(--gold)] text-[#111] rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                <span class="text-[10px] font-bold bg-[var(--gold)] text-[#111] rounded-full w-5 h-5 flex items-center justify-center"><?= $unreadNotifCount ?></span>
             </a>
         </nav>
 
         <div class="mt-auto pt-6 border-t border-[var(--border)]">
-            <a href="/account/settings" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors mb-2">
+            <a href="<?= app_url('/account/settings') ?>" class="flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-white transition-colors mb-2">
                 <i data-lucide="settings" class="w-5 h-5"></i> Account Settings
             </a>
-            <form action="/logout" method="POST">
+            <form action="<?= app_url('/logout') ?>" method="POST">
                 <?= $csrfToken ?>
                 <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors">
                     <i data-lucide="log-out" class="w-5 h-5"></i> Sign Out
@@ -89,8 +101,8 @@
 
     <!-- Mobile Top Bar -->
     <header class="lg:hidden flex items-center justify-between h-[72px] px-6 border-b border-[var(--border)] bg-[#111] sticky top-0 z-40">
-        <a href="/">
-            <img src="/ms-logo.png" alt="Marigold Signature" class="h-[30px] w-auto object-contain">
+        <a href="<?= app_url('/') ?>">
+            <img src="<?= app_url('/ms-logo.png') ?>" alt="Marigold Signature" class="h-[30px] w-auto object-contain">
         </a>
         <div class="flex items-center gap-4">
             <button class="text-[var(--text-primary)] relative">
@@ -107,19 +119,19 @@
 
     <!-- Mobile Bottom Navigation -->
     <nav class="lg:hidden fixed bottom-0 left-0 w-full h-[72px] bg-[#111] border-t border-[var(--border)] z-50 flex items-center justify-around px-2 pb-safe">
-        <a href="/account/dashboard" class="flex flex-col items-center justify-center w-full h-full text-[var(--gold)]">
+        <a href="<?= app_url('/account/dashboard') ?>" class="flex flex-col items-center justify-center w-full h-full text-[var(--gold)]">
             <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
             <span class="text-[10px] font-medium">Home</span>
         </a>
-        <a href="/account/orders" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-white transition-colors">
+        <a href="<?= app_url('/account/orders') ?>" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-white transition-colors">
             <i data-lucide="package" class="w-6 h-6 mb-1"></i>
             <span class="text-[10px] font-medium">Orders</span>
         </a>
-        <a href="/account/quotes" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-white transition-colors">
+        <a href="<?= app_url('/account/quotes') ?>" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-white transition-colors">
             <i data-lucide="file-text" class="w-6 h-6 mb-1"></i>
             <span class="text-[10px] font-medium">Quotes</span>
         </a>
-        <a href="/account/settings" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-white transition-colors">
+        <a href="<?= app_url('/account/settings') ?>" class="flex flex-col items-center justify-center w-full h-full text-[var(--text-secondary)] hover:text-white transition-colors">
             <i data-lucide="user" class="w-6 h-6 mb-1"></i>
             <span class="text-[10px] font-medium">Account</span>
         </a>

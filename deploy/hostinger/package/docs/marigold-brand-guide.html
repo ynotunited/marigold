@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marigold Signature — Brand Identity Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1611;
+    --stone:#6E675E;
+    --stone-light:#A39C90;
+    --paper:#FBF9F4;
+    --paper-alt:#F4EFE4;
+    --gold:#B9944C;
+    --gold-deep:#8A6B2F;
+    --gold-light:#E4C888;
+    --hairline:#E3DACB;
+    --shadow-gold: rgba(185,148,76,0.18);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Manrope',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces',serif; font-weight:500; letter-spacing:-0.01em; }
+
+  .eyebrow{
+    font-family:'Manrope',sans-serif;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--gold-deep);
+  }
+
+  /* ---------- signature divider: echoes the logo's hairline + facet mark ---------- */
+  .facet-rule{
+    display:flex; align-items:center; gap:14px; margin:18px 0 34px;
+  }
+  .facet-rule::before, .facet-rule::after{
+    content:""; flex:1; height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold) 40%, var(--gold) 60%, transparent);
+    opacity:0.55;
+  }
+  .facet-mark{
+    width:9px; height:9px; border:1.4px solid var(--gold-deep);
+    transform:rotate(45deg); flex-shrink:0;
+  }
+
+  /* ---------- layout shell ---------- */
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 48px; }
+  section{ padding:110px 0; border-bottom:1px solid var(--hairline); }
+  section:last-of-type{ border-bottom:none; }
+  .section-head{ max-width:640px; margin-bottom:64px; }
+  .section-head .num{ font-family:'Fraunces',serif; font-size:14px; color:var(--stone-light); font-weight:400; }
+  .section-head h2{ font-size:40px; margin:10px 0 18px; }
+  .section-head p{ color:var(--stone); font-size:16px; max-width:560px; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+    position:relative; overflow:hidden; border-bottom:1px solid var(--hairline);
+    background:
+      radial-gradient(ellipse 900px 500px at 85% -10%, var(--shadow-gold), transparent 60%),
+      var(--paper);
+  }
+  .hero .wrap{ position:relative; z-index:2; }
+  .hero-shield{
+    position:absolute; right:-90px; top:50%; transform:translateY(-50%);
+    width:520px; height:520px; opacity:0.06; z-index:1;
+  }
+  .hero-eyebrow{ display:flex; align-items:center; gap:10px; margin-bottom:36px; }
+  .hero-eyebrow img{ height:34px; width:auto; }
+  .hero h1{
+    font-size:clamp(48px, 6.4vw, 92px);
+    line-height:0.98;
+    max-width:920px;
+    font-weight:400;
+  }
+  .hero h1 em{ font-style:italic; color:var(--gold-deep); font-weight:400; }
+  .hero .sub{
+    margin-top:28px; max-width:520px; color:var(--stone); font-size:17px;
+  }
+  .hero-meta{
+    display:flex; gap:64px; margin-top:80px; flex-wrap:wrap;
+  }
+  .hero-meta div{ font-size:13px; color:var(--stone); }
+  .hero-meta strong{ display:block; font-family:'Fraunces',serif; font-size:15px; color:var(--ink); font-weight:500; margin-bottom:4px; }
+
+  /* ---------- logo section ---------- */
+  .logo-stage{
+    background:var(--paper-alt);
+    border:1px solid var(--hairline);
+    padding:100px 40px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:28px;
+  }
+  .logo-stage img{ height:150px; width:auto; }
+  .logo-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .logo-grid .logo-stage{ padding:70px 30px; }
+  .logo-grid .logo-stage img{ height:100px; }
+  .dark-stage{ background:var(--ink); }
+  .caption{
+    display:flex; justify-content:space-between; font-size:12px; color:var(--stone); padding:14px 4px 0;
+  }
+  .clearspace-note{
+    margin-top:28px; font-size:14px; color:var(--stone); max-width:560px;
+  }
+  .dont-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:20px; }
+  .dont-card{
+    border:1px solid var(--hairline); padding:34px 22px; text-align:center; background:#fff;
+  }
+  .dont-card .x-mark{
+    width:26px; height:26px; margin:0 auto 18px; position:relative; opacity:0.5;
+  }
+  .dont-card .x-mark::before, .dont-card .x-mark::after{
+    content:""; position:absolute; top:50%; left:0; width:100%; height:1.5px; background:#B5453D;
+  }
+  .dont-card .x-mark::before{ transform:rotate(45deg); }
+  .dont-card .x-mark::after{ transform:rotate(-45deg); }
+  .dont-card p{ font-size:13px; color:var(--stone); }
+  .dont-card .mini-logo{ height:36px; opacity:0.4; margin-bottom:14px; filter:grayscale(1); }
+
+  /* ---------- color ---------- */
+  .swatch-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:0; border:1px solid var(--hairline); }
+  .swatch{ position:relative; }
+  .swatch .fill{ height:190px; }
+  .swatch .info{ padding:16px 18px; background:#fff; border-top:1px solid var(--hairline); }
+  .swatch .info .name{ font-family:'Fraunces',serif; font-size:15px; margin-bottom:6px; }
+  .swatch .info .hex{ font-size:12px; color:var(--stone); letter-spacing:0.02em; }
+  .swatch:not(:last-child){ border-right:1px solid var(--hairline); }
+
+  /* ---------- type ---------- */
+  .type-row{ display:grid; grid-template-columns:180px 1fr; gap:40px; padding:44px 0; border-top:1px solid var(--hairline); align-items:baseline; }
+  .type-row:last-child{ border-bottom:1px solid var(--hairline); }
+  .type-row .role{ font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--stone); }
+  .type-row .sample-display{ font-family:'Fraunces',serif; font-size:52px; font-weight:400; }
+  .type-row .sample-body{ font-family:'Manrope',sans-serif; font-size:20px; color:var(--ink); max-width:640px; }
+  .type-row .meta{ font-size:12px; color:var(--stone-light); margin-top:10px; }
+  .scale-strip{ display:flex; align-items:baseline; gap:28px; flex-wrap:wrap; margin-top:14px; }
+  .scale-strip span{ font-family:'Fraunces',serif; color:var(--ink); }
+
+  /* ---------- voice ---------- */
+  .voice-grid{ display:grid; grid-template-columns:1fr 1fr; gap:60px; }
+  .voice-col h3{ font-size:20px; margin-bottom:20px; }
+  .voice-item{ padding:20px 0; border-top:1px solid var(--hairline); }
+  .voice-item .label{ font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:8px; font-weight:700; }
+  .voice-item p{ font-size:15px; color:var(--ink); }
+  .voice-item .no{ color:var(--stone-light); text-decoration:line-through; font-size:14px; margin-bottom:6px; }
+
+  /* ---------- ui patterns ---------- */
+  .pattern-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; }
+  .pattern-card{ background:#fff; border:1px solid var(--hairline); padding:38px 30px; }
+  .pattern-card .label{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--stone); margin-bottom:22px; }
+  .btn-gold{
+    display:inline-block; padding:14px 30px; background:linear-gradient(135deg, var(--gold-light), var(--gold) 55%, var(--gold-deep));
+    color:#fff; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; border:none; cursor:pointer;
+  }
+  .btn-outline{
+    display:inline-block; padding:13px 29px; background:transparent; border:1px solid var(--ink);
+    color:var(--ink); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700;
+  }
+  .btn-ghost{
+    display:inline-block; padding:13px 0; background:transparent; border:none; border-bottom:1px solid var(--gold-deep);
+    color:var(--gold-deep); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700;
+  }
+  .price-tag{ font-family:'Fraunces',serif; font-size:28px; margin-top:16px; }
+  .price-tag .was{ font-size:15px; color:var(--stone-light); text-decoration:line-through; font-weight:400; margin-left:10px; }
+  .badge{
+    display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border:1px solid var(--gold);
+    font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-deep); font-weight:700;
+  }
+  .badge .dot{ width:5px; height:5px; background:var(--gold); border-radius:50%; }
+
+  /* ---------- footer ---------- */
+  footer{ padding:60px 0; }
+  footer .wrap{ display:flex; justify-content:space-between; align-items:center; }
+  footer .fmark{ display:flex; align-items:center; gap:12px; }
+  footer .fmark img{ height:26px; }
+  footer .fnote{ font-size:12px; color:var(--stone-light); letter-spacing:0.04em; }
+
+  @media (max-width:860px){
+    .wrap{ padding:0 24px; }
+    section{ padding:70px 0; }
+    .logo-grid, .dont-grid, .pattern-grid, .voice-grid{ grid-template-columns:1fr; }
+    .swatch-grid{ grid-template-columns:repeat(3,1fr); }
+    .swatch:nth-child(3){ border-right:none; }
+    .swatch{ border-bottom:1px solid var(--hairline); }
+    .type-row{ grid-template-columns:1fr; gap:14px; }
+    .hero-shield{ display:none; }
+    .hero-meta{ gap:32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <svg class="hero-shield" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 10 L180 45 V110 L100 190 L20 110 V45 Z" stroke="#8A6B2F" stroke-width="1.2"/>
+    <path d="M100 40 L70 95 L100 130 L130 95 Z" stroke="#8A6B2F" stroke-width="1.2"/>
+  </svg>
+  <div class="wrap">
+    <div class="hero-eyebrow">
+      <span class="eyebrow">Brand Identity Guide — Vol. 01</span>
+    </div>
+    <h1>Quiet gold.<br>Considered <em>luxury.</em></h1>
+    <p class="sub">Marigold Signature Nigeria Limited is a premium e-commerce house. This guide translates the mark into a working system for a bright, white-led digital storefront — restrained, warm, and unmistakably gold at the edges.</p>
+    <div class="hero-meta">
+      <div><strong>Marigold Signature</strong>Nigeria Limited</div>
+      <div><strong>Category</strong>Premium e-commerce</div>
+      <div><strong>Palette mode</strong>Light-first, gold accent</div>
+      <div><strong>Issued</strong>2026</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- LOGO -->
+  <section id="logo">
+    <div class="section-head">
+      <div class="num">01</div>
+      <h2>The Mark</h2>
+      <p>The shield-and-M monogram stands for protection of quality and craft. It always leads; the wordmark follows underneath, never beside it, separated by the signature hairline.</p>
+    </div>
+
+    <div class="logo-stage">
+      <img src="ms-logo-removebg-preview.png" alt="Marigold Signature primary logo">
+    </div>
+    <div class="caption"><span>Primary lockup — full colour</span><span>Min. width 140px</span></div>
+
+    <div class="facet-rule"><span class="facet-mark"></span></div>
+
+    <div class="logo-grid">
+      <div>
+        <div class="logo-stage">
+          <img src="ms-logo-removebg-preview.png" alt="Marigold Signature on light">
+        </div>
+        <div class="caption"><span>On warm white / paper surfaces</span><span>Default use</span></div>
+      </div>
+      <div>
+        <div class="logo-stage dark-stage">
+          <img src="ms-logo-removebg-preview.png" alt="Marigold Signature on dark">
+        </div>
+        <div class="caption" style="color:#8A8074"><span>On ink surfaces — sparingly</span><span>Footer, packaging only</span></div>
+      </div>
+    </div>
+
+    <p class="clearspace-note">Clear space on all sides equals the height of the shield mark. Never let type, imagery, or UI chrome enter that margin.</p>
+
+    <div class="facet-rule"><span class="facet-mark"></span></div>
+
+    <div class="section-head" style="margin-bottom:24px;">
+      <h3 style="font-size:22px;">Don't</h3>
+    </div>
+    <div class="dont-grid">
+      <div class="dont-card">
+        <div class="x-mark"></div>
+        <p>Recolour the mark. Gold is not optional — no black, no brand-colour swaps.</p>
+      </div>
+      <div class="dont-card">
+        <div class="x-mark"></div>
+        <p>Place on busy photography or low-contrast backgrounds without a paper card behind it.</p>
+      </div>
+      <div class="dont-card">
+        <div class="x-mark"></div>
+        <p>Stretch, rotate, or separate the shield from the wordmark in primary contexts.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOR -->
+  <section id="color">
+    <div class="section-head">
+      <div class="num">02</div>
+      <h2>Palette</h2>
+      <p>The site is white-led by design. Gold is a finish, not a fill — used on lines, type, icons and CTAs, rarely as a large block. Ink replaces black for all text.</p>
+    </div>
+
+    <div class="swatch-grid">
+      <div class="swatch">
+        <div class="fill" style="background:#FBF9F4;"></div>
+        <div class="info"><div class="name">Paper</div><div class="hex">#FBF9F4</div></div>
+      </div>
+      <div class="swatch">
+        <div class="fill" style="background:#F4EFE4;"></div>
+        <div class="info"><div class="name">Paper Alt</div><div class="hex">#F4EFE4</div></div>
+      </div>
+      <div class="swatch">
+        <div class="fill" style="background:linear-gradient(135deg,#E4C888,#B9944C 55%,#8A6B2F);"></div>
+        <div class="info"><div class="name">Signature Gold</div><div class="hex">#B9944C</div></div>
+      </div>
+      <div class="swatch">
+        <div class="fill" style="background:#8A6B2F;"></div>
+        <div class="info"><div class="name">Gold Deep</div><div class="hex">#8A6B2F</div></div>
+      </div>
+      <div class="swatch">
+        <div class="fill" style="background:#6E675E;"></div>
+        <div class="info"><div class="name">Stone</div><div class="hex">#6E675E</div></div>
+      </div>
+      <div class="swatch">
+        <div class="fill" style="background:#1A1611;"></div>
+        <div class="info"><div class="name">Ink</div><div class="hex">#1A1611</div></div>
+      </div>
+    </div>
+
+    <p class="clearspace-note">Rule of thumb: 70% Paper, 20% Ink &amp; Stone (type), 10% Gold (accents, CTAs, hairlines). If gold exceeds 10% of a screen, pull it back.</p>
+  </section>
+
+  <!-- TYPE -->
+  <section id="type">
+    <div class="section-head">
+      <div class="num">03</div>
+      <h2>Typography</h2>
+      <p>Fraunces carries the same handcrafted, slightly jewelled quality as the wordmark's lettering. Manrope keeps commerce — prices, specs, checkout — clean and fast to read.</p>
+    </div>
+
+    <div class="type-row">
+      <div class="role">Display<br>Fraunces</div>
+      <div>
+        <div class="sample-display">The Marigold Edit</div>
+        <div class="scale-strip">
+          <span style="font-size:44px;">Aa</span>
+          <span style="font-size:32px;">Aa</span>
+          <span style="font-size:24px;">Aa</span>
+          <span style="font-size:18px; font-style:italic;">Aa italic</span>
+        </div>
+        <div class="meta">Weight 400–500 · used for headlines, collection titles, prices — never body copy</div>
+      </div>
+    </div>
+
+    <div class="type-row">
+      <div class="role">Body<br>Manrope</div>
+      <div>
+        <div class="sample-body">Every piece is inspected by hand before it ships. Free returns within 14 days, nationwide delivery in 2–5 business days.</div>
+        <div class="meta">Weight 400 body / 600–700 for labels, nav, and buttons</div>
+      </div>
+    </div>
+
+    <div class="type-row">
+      <div class="role">Eyebrow / Label</div>
+      <div>
+        <div class="eyebrow" style="font-size:13px;">New This Week</div>
+        <div class="meta" style="margin-top:12px;">Manrope 700, tracked +0.24em, uppercase — mirrors "Nigeria Limited" treatment in the wordmark</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VOICE -->
+  <section id="voice">
+    <div class="section-head">
+      <div class="num">04</div>
+      <h2>Voice</h2>
+      <p>Marigold Signature speaks the way the store looks: unhurried, precise, never shouting about a sale. Confidence over exclamation points.</p>
+    </div>
+
+    <div class="voice-grid">
+      <div class="voice-col">
+        <h3>We are</h3>
+        <div class="voice-item"><div class="label">Understated</div><p>"Restocked in three finishes." Not "HUGE RESTOCK — DON'T MISS OUT!!"</p></div>
+        <div class="voice-item"><div class="label">Specific</div><p>"Hand-finished brass hardware." Not "premium quality materials."</p></div>
+        <div class="voice-item"><div class="label">Warm, not familiar</div><p>"Your order is on its way." Not "heyyy your stuff's coming!"</p></div>
+      </div>
+      <div class="voice-col">
+        <h3>We are not</h3>
+        <div class="voice-item"><div class="no">FLASH SALE 70% OFF TODAY ONLY</div><p>Discount language reads as mass-market. Frame value as craft and scarcity, not markdown percentages.</p></div>
+        <div class="voice-item"><div class="no">😍🔥 obsessed with this drop</div><p>No emoji as functional UI or in brand copy. Tone stays composed even in promotions.</p></div>
+        <div class="voice-item"><div class="no">Buy now before it's gone!!!</div><p>Urgency is shown through real inventory counts, not exclamation marks.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PATTERNS -->
+  <section id="patterns">
+    <div class="section-head">
+      <div class="num">05</div>
+      <h2>Interface Patterns</h2>
+      <p>Core commerce components on the light background: one gold surface per view, hairline borders instead of shadows, ink-black text throughout.</p>
+    </div>
+
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="label">Buttons</div>
+        <div style="display:flex; flex-direction:column; gap:16px; align-items:flex-start;">
+          <button class="btn-gold">Add to Bag</button>
+          <button class="btn-outline">View Details</button>
+          <button class="btn-ghost">Save for Later</button>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="label">Product Price</div>
+        <div class="price-tag">₦148,000 <span class="was">₦185,000</span></div>
+        <div class="meta" style="margin-top:14px; font-size:12px; color:var(--stone);">Strike-through in Stone, never red. Currency stays in Fraunces.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="label">Status &amp; Badges</div>
+        <div style="display:flex; flex-direction:column; gap:14px; align-items:flex-start;">
+          <span class="badge"><span class="dot"></span>Only 3 left</span>
+          <span class="badge"><span class="dot"></span>Signature Edition</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="facet-rule"><span class="facet-mark"></span></div>
+    <p class="clearspace-note">Use the facet-mark divider (a single rotated square, echoing the shield's inner cut) wherever the wordmark's hairline rule would sit in the logo — between hero and content, or separating footer columns. It is the one recurring signature motif; do not repeat it more than once per screen.</p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="fmark">
+      <img src="ms-logo-removebg-preview.png" alt="Marigold Signature">
+    </div>
+    <div class="fnote">Brand Identity Guide · Marigold Signature Nigeria Limited · v1.0</div>
+  </div>
+</footer>
+
+</body>
+</html>

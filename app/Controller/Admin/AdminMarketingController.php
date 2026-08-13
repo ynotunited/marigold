@@ -2,29 +2,82 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\Model;
 use App\Core\View;
 
 class AdminMarketingController extends Controller
 {
     public function coupons()
     {
-        $coupons = [
-            ['id' => 1, 'code' => 'WELCOME26', 'type' => 'Percentage', 'value' => '10%', 'min_spend' => '₦0', 'usage' => '142 / ∞', 'expiry' => 'Never', 'status' => 'Active'],
-            ['id' => 2, 'code' => 'CORP500K', 'type' => 'Fixed', 'value' => '₦50,000', 'min_spend' => '₦500,000', 'usage' => '12 / 50', 'expiry' => '2026-12-31', 'status' => 'Active'],
-            ['id' => 3, 'code' => 'BLACKFRIDAY', 'type' => 'Percentage', 'value' => '20%', 'min_spend' => '₦10,000', 'usage' => '0 / ∞', 'expiry' => '2026-11-30', 'status' => 'Scheduled'],
-            ['id' => 4, 'code' => 'XMAS25', 'type' => 'Fixed', 'value' => '₦10,000', 'min_spend' => '₦100,000', 'usage' => '45 / 100', 'expiry' => '2025-12-25', 'status' => 'Expired'],
-        ];
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT id, code, type, value, minimum_spend, expiry, usage_limit, status, created_at
+            FROM coupons
+            ORDER BY created_at DESC
+        ")->fetchAll();
+
+        $coupons = [];
+        foreach ($rows as $c) {
+            $now = time();
+            $rawStatus = $c['status'];
+            if ($rawStatus === 'active' && $c['expiry'] && strtotime($c['expiry']) < $now) {
+                $status = 'Expired';
+            } elseif ($rawStatus === 'active') {
+                $status = 'Active';
+            } else {
+                $status = ucfirst($rawStatus);
+            }
+
+            $coupons[] = [
+                'id'        => $c['id'],
+                'code'      => $c['code'],
+                'type'      => ucfirst($c['type']),
+                'value'     => $c['type'] === 'percentage' ? ($c['value'] . '%') : ('₦' . number_format((float)$c['value'])),
+                'min_spend' => $c['minimum_spend'] ? ('₦' . number_format((float)$c['minimum_spend'])) : '₦0',
+                'usage'     => ($c['usage_limit'] ?: '∞'),
+                'expiry'    => $c['expiry'] ? date('Y-m-d', strtotime($c['expiry'])) : 'Never',
+                'status'    => $status,
+            ];
+        }
+
         return View::renderTemplate('pages/admin/marketing/coupons', 'admin', ['title' => 'Coupons | Admin', 'coupons' => $coupons]);
     }
 
     public function reviews()
     {
-        $reviews = [
-            ['id' => 1, 'product' => 'Executive Leather Folio', 'customer' => 'David Okon', 'rating' => 5, 'comment' => 'Excellent quality and the embossed logo looks fantastic on the leather.', 'date' => '2 hrs ago', 'status' => 'Pending'],
-            ['id' => 2, 'product' => 'Premium Metal Pen Set', 'customer' => 'Adaeze Williams', 'rating' => 4, 'comment' => 'Good pens, but the delivery took a bit longer than expected.', 'date' => '1 day ago', 'status' => 'Approved'],
-            ['id' => 3, 'product' => 'Eco Notebook', 'customer' => 'Spam Bot', 'rating' => 1, 'comment' => 'Buy cheap pills here http://spam.com', 'date' => '2 days ago', 'status' => 'Rejected'],
-            ['id' => 4, 'product' => 'Vacuum Flask', 'customer' => 'Seun Adeyemi', 'rating' => 5, 'comment' => 'Keeps water cold for a very long time. Highly recommend for corporate gifts.', 'date' => '1 week ago', 'status' => 'Approved'],
-        ];
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT
+                r.id,
+                r.rating,
+                r.review,
+                r.status,
+                r.created_at,
+                p.name AS product_name,
+                u.first_name,
+                u.last_name,
+                u.email
+            FROM reviews r
+            LEFT JOIN products p ON p.id = r.product_id
+            LEFT JOIN users u ON u.id = r.customer_id
+            ORDER BY r.created_at DESC
+        ")->fetchAll();
+
+        $reviews = [];
+        foreach ($rows as $r) {
+            $reviews[] = [
+                'id'       => $r['id'],
+                'product'  => $r['product_name'] ?: 'Product',
+                'customer' => trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')) ?: ($r['email'] ?: 'Customer'),
+                'rating'   => (int)$r['rating'],
+                'comment'  => $r['review'] ?: '',
+                'date'     => date('M j, Y', strtotime($r['created_at'])),
+                'status'   => ucfirst($r['status']),
+            ];
+        }
+
         return View::renderTemplate('pages/admin/marketing/reviews', 'admin', ['title' => 'Product Reviews | Admin', 'reviews' => $reviews]);
     }
 }

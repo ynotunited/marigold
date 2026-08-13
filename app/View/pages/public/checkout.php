@@ -24,7 +24,7 @@ $csrfToken = \App\Core\CSRF::generate();
 
     <section class="page-hero">
         <div class="container">
-            <div class="crumbs"><a href="/">Home</a><span>/</span><a href="/cart">Cart</a><span>/</span><span>Checkout</span></div>
+            <div class="crumbs"><a href="<?= app_url('/') ?>">Home</a><span>/</span><a href="<?= app_url('/cart') ?>">Cart</a><span>/</span><span>Checkout</span></div>
             <div class="eyebrow center reveal">Almost There</div>
             <h1 class="display reveal">Secure <span class="gold-text">Checkout</span></h1>
             <p class="lead reveal">Fill in your details below — we'll confirm your order by email and WhatsApp.</p>
@@ -47,7 +47,7 @@ $csrfToken = \App\Core\CSRF::generate();
                                     <span class="step-no">1</span>
                                     Contact Information
                                 </h2>
-                                <a href="/login" class="lnk">Log in</a>
+                                <a href="<?= app_url('/login') ?>" class="lnk">Log in</a>
                             </div>
                             <div class="form-grid">
                                 <div class="form-row">
@@ -371,7 +371,7 @@ $csrfToken = \App\Core\CSRF::generate();
                                 <span x-text="'&#8358;' + formatNaira(shipping())"></span>
                             </div>
                             <div class="row">
-                                <span>Taxes (VAT 7.5%)</span>
+                                <span>Taxes (VAT <?= round(((float)($tax_rate ?? 0.075)) * 100, 2) ?>%)</span>
                                 <span x-text="'&#8358;' + formatNaira(tax())"></span>
                             </div>
                             <div class="row total">
@@ -391,7 +391,7 @@ $csrfToken = \App\Core\CSRF::generate();
                             </button>
 
                             <p x-show="errorMessage" class="form-error" style="margin-top: 14px;" x-text="errorMessage"></p>
-                            <p class="cstep-sub" style="text-align: center; margin-top: 14px;">By placing your order you agree to our <a href="/terms-and-conditions" style="color: var(--gold-deep); text-decoration: underline;">Terms of Service</a> and <a href="/privacy-policy" style="color: var(--gold-deep); text-decoration: underline;">Privacy Policy</a>.</p>
+                            <p class="cstep-sub" style="text-align: center; margin-top: 14px;">By placing your order you agree to our <a href="<?= app_url('/terms-and-conditions') ?>" style="color: var(--gold-deep); text-decoration: underline;">Terms of Service</a> and <a href="<?= app_url('/privacy-policy') ?>" style="color: var(--gold-deep); text-decoration: underline;">Privacy Policy</a>.</p>
                         </div>
                     </aside>
 
@@ -407,6 +407,7 @@ function checkoutPage() {
     return {
         products: <?= json_encode($jsProducts, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) ?>,
         csrfToken: <?= json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) ?>,
+        taxRate: <?= json_encode((float) ($tax_rate ?? 0.075), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) ?>,
         qty: {},
         form: {
             email: '', phone: '', first_name: '', last_name: '', company: '',
@@ -452,7 +453,7 @@ function checkoutPage() {
             return 0;
         },
         tax() {
-            return this.subtotal() * 0.075;
+            return this.subtotal() * this.taxRate;
         },
         total() {
             return this.subtotal() + this.shipping() + this.tax();

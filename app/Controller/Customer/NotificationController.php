@@ -6,6 +6,7 @@ use App\Core\Controller;
 use App\Core\View;
 use App\Core\Model;
 use App\Core\Session;
+use App\Service\NotificationService;
 
 class NotificationController extends Controller
 {
@@ -39,5 +40,18 @@ class NotificationController extends Controller
             'notifications' => $notifications,
             'unread_count' => count(array_filter($notifications, fn($n) => !$n['is_read']))
         ]);
+    }
+
+    public function markAllRead()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/account/notifications');
+        }
+        if (!\App\Core\CSRF::verify($_POST['csrf_token'] ?? '')) {
+            throw new \Exception('Invalid CSRF token', 403);
+        }
+
+        NotificationService::markAllRead((int)Session::get('user_id'));
+        $this->redirect('/account/notifications');
     }
 }

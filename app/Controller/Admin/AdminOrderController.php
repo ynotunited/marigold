@@ -2,50 +2,209 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\Model;
 use App\Core\View;
 
 class AdminOrderController extends Controller
 {
-    private function getMockOrders(): array
-    {
-        return [
-            ['id' => 'ORD-9824', 'customer' => 'Adaeze Williams', 'email' => 'adaeze@company.ng', 'total' => 385000, 'payment' => 'Paid',   'status' => 'Pending',    'date' => date('Y-m-d', strtotime('-1 hour'))],
-            ['id' => 'ORD-9823', 'customer' => 'David Okon',      'email' => 'david@techsol.ng',  'total' => 450000, 'payment' => 'Paid',   'status' => 'Processing', 'date' => date('Y-m-d', strtotime('-2 days'))],
-            ['id' => 'ORD-9820', 'customer' => 'Seun Adeyemi',    'email' => 'seun@adeyemi.ng',   'total' => 1200000,'payment' => 'Paid',   'status' => 'Shipped',    'date' => date('Y-m-d', strtotime('-4 days'))],
-            ['id' => 'ORD-9815', 'customer' => 'Tunde Bakare',    'email' => 'tunde@bak.ng',      'total' => 72000,  'payment' => 'Paid',   'status' => 'Completed',  'date' => date('Y-m-d', strtotime('-5 days'))],
-            ['id' => 'ORD-9810', 'customer' => 'David Okon',      'email' => 'david@techsol.ng',  'total' => 1200000,'payment' => 'Paid',   'status' => 'Completed',  'date' => date('Y-m-d', strtotime('-15 days'))],
-            ['id' => 'ORD-9800', 'customer' => 'Blessing Nwosu',  'email' => 'blessing@nw.ng',    'total' => 95000,  'payment' => 'Pending','status' => 'Cancelled',  'date' => date('Y-m-d', strtotime('-20 days'))],
-        ];
-    }
-
     public function index()
     {
+        $db = Model::getDB();
+
+        $orders = $db->query("
+            SELECT
+                o.id,
+                o.order_number,
+                o.status,
+                o.payment_status,
+                o.grand_total,
+                o.payment_method,
+                o.created_at,
+                a.first_name,
+                a.last_name,
+                a.email,
+                a.phone
+            FROM orders o
+            LEFT JOIN order_addresses a ON a.order_id = o.id AND a.type = 'shipping'
+            ORDER BY o.created_at DESC
+        ")->fetchAll();
+
+        $rows = [];
+        foreach ($orders as $o) {
+            $rows[] = [
+                'id'       => $o['order_number'],
+                'customer' => trim(($o['first_name'] ?? '') . ' ' . ($o['last_name'] ?? '')) ?: 'Guest',
+                'email'    => $o['email'] ?? '—',
+                'phone'    => $o['phone'] ?? '',
+                'date'     => $o['created_at'],
+                'payment'  => ucfirst($o['payment_status'] ?? 'pending'),
+                'status'   => ucfirst($o['status'] ?? 'pending'),
+                'total'    => (float)($o['grand_total'] ?? 0),
+            ];
+        }
+
         return View::renderTemplate('pages/admin/orders/index', 'admin', [
-            'title' => 'Orders | Admin',
-            'orders' => $this->getMockOrders(),
+            'title'  => 'Orders | Admin',
+            'orders' => $rows,
         ]);
     }
 
     public function show($id)
     {
-        $order = [
-            'id' => $id, 'date' => date('Y-m-d H:i:s', strtotime('-2 days')),
-            'status' => 'Processing', 'payment_status' => 'Paid', 'payment_method' => 'Bank Transfer',
-            'total' => 450000, 'subtotal' => 420000, 'shipping' => 30000,
-            'customer' => ['name' => 'David Okon', 'email' => 'david@techsol.ng', 'phone' => '+234 801 234 5678', 'company' => 'TechSolutions Inc'],
-            'shipping_address' => ['street' => '14 Adeola Odeku St', 'city' => 'Victoria Island', 'state' => 'Lagos', 'country' => 'Nigeria'],
-            'items' => [
-                ['name' => 'Executive Leather Folio', 'sku' => 'MS-EXEC-001', 'qty' => 10, 'price' => 45000, 'total' => 450000, 'image' => 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=80&auto=format&fit=crop'],
-            ],
-            'notes' => [],
-            'timeline' => [
-                ['event' => 'Order placed',       'time' => date('M j, Y g:i A', strtotime('-2 days')),       'done' => true],
-                ['event' => 'Payment confirmed',   'time' => date('M j, Y g:i A', strtotime('-2 days +1 hour')),'done' => true],
-                ['event' => 'Processing',          'time' => 'In progress',                                     'done' => true, 'current' => true],
-                ['event' => 'Shipped',             'time' => 'Pending',                                         'done' => false],
-                ['event' => 'Delivered',           'time' => 'Pending',                                         'done' => false],
-            ],
+        $db = Model::getDB();
+
+        $stmt = $db->prepare("
+            SELECT
+                o.id,
+                o.order_number,
+                o.status,
+                o.payment_status,
+                o.shipping_status,
+                o.delivery_method,
+                o.subtotal,
+                o.discount,
+                o.tax,
+                o.shipping,
+                o.grand_total,
+                o.payment_method,
+                o.transaction_reference,
+                o.whatsapp,
+                o.notes,
+                o.created_at
+            FROM orders o
+            WHERE o.order_number = :id OR o.id = :id
+            LIMIT 1
+        ");
+        $stmt->execute(['id' => $id]);
+        $o = $stmt->fetch();
+
+        if (!$o) {
+            http_response_code(404);
+            return View::renderTemplate('pages/public/errors/404', 'main', ['title' => 'Order not found']);
+        }
+
+        // Customer + shipping info from the address tables
+        $addrStmt = $db->prepare("
+            SELECT type, first_name, last_name, email, phone, company,
+                   address_line1, address_line2, city, state, postal_code, country
+            FROM order_addresses
+            WHERE order_id = :order_id
+        ");
+        $addrStmt->execute(['order_id' => $o['id']]);
+        $addresses = $addrStmt->fetchAll();
+
+        $shipping = null;
+        $billing  = null;
+        foreach ($addresses as $a) {
+            if ($a['type'] === 'shipping') {
+                $shipping = $a;
+            } else {
+                $billing = $a;
+            }
+        }
+        $contact = $shipping ?: $billing;
+
+        // Order items
+        $itemStmt = $db->prepare("
+            SELECT oi.product_id, oi.name, oi.variant_id, oi.quantity, oi.price, oi.subtotal,
+                   p.sku
+            FROM order_items oi
+            LEFT JOIN products p ON p.id = oi.product_id
+            WHERE oi.order_id = :order_id
+        ");
+        $itemStmt->execute(['order_id' => $o['id']]);
+        $itemRows = $itemStmt->fetchAll();
+
+        // Product images (first featured image per product)
+        $images = [];
+        $productIds = array_filter(array_unique(array_column($itemRows, 'product_id')));
+        if ($productIds) {
+            $in = implode(',', array_fill(0, count($productIds), '?'));
+            $imgStmt = $db->prepare("
+                SELECT product_id, image
+                FROM product_images
+                WHERE product_id IN ($in)
+                ORDER BY is_featured DESC, sort_order ASC
+            ");
+            $imgStmt->execute(array_values($productIds));
+            foreach ($imgStmt->fetchAll() as $im) {
+                if (!isset($images[$im['product_id']])) {
+                    $images[$im['product_id']] = $im['image'];
+                }
+            }
+        }
+
+        $items = [];
+        foreach ($itemRows as $row) {
+            $items[] = [
+                'name'  => $row['name'],
+                'sku'   => $row['sku'] ?: ('MS-ITEM-' . str_pad((string)$row['product_id'], 4, '0', STR_PAD_LEFT)),
+                'qty'   => (int)$row['quantity'],
+                'price' => (float)$row['price'],
+                'total' => (float)$row['subtotal'],
+                'image' => !empty($row['product_id']) && isset($images[$row['product_id']])
+                    ? $images[$row['product_id']]
+                    : app_url('/ms-logo-icon.png'),
+            ];
+        }
+
+        $customerName = $contact
+            ? trim(($contact['first_name'] ?? '') . ' ' . ($contact['last_name'] ?? ''))
+            : 'Guest';
+        $customerEmail = $contact['email'] ?? '';
+        $customerPhone = $contact['phone'] ?? ($o['whatsapp'] ?? '');
+
+        $customer = [
+            'name'    => $customerName ?: 'Guest',
+            'email'   => $customerEmail,
+            'phone'   => $customerPhone,
+            'company' => $contact['company'] ?? '',
         ];
-        return View::renderTemplate('pages/admin/orders/show', 'admin', ['title' => "Order $id | Admin", 'order' => $order]);
+
+        $shippingAddress = null;
+        if ($shipping) {
+            $shippingAddress = [
+                'street'  => trim(($shipping['address_line1'] ?? '') . ' ' . ($shipping['address_line2'] ?? '')),
+                'city'    => $shipping['city'] ?? '',
+                'state'   => $shipping['state'] ?? '',
+                'country' => $shipping['country'] ?? '',
+            ];
+        }
+
+        // Timeline derived from status
+        $statusOrder = ['pending', 'processing', 'completed', 'cancelled', 'refunded'];
+        $statusIndex = array_search(strtolower($o['status']), $statusOrder);
+        $timeline = [
+            ['event' => 'Order placed',     'time' => date('M j, Y g:i A', strtotime($o['created_at'])), 'done' => true],
+            ['event' => 'Payment confirmed', 'time' => $o['payment_status'] === 'paid' ? date('M j, Y g:i A', strtotime($o['created_at'])) : 'Pending', 'done' => $o['payment_status'] === 'paid'],
+        ];
+        if ($statusIndex !== false && $statusIndex > 0) {
+            $timeline[] = ['event' => 'Processing', 'time' => 'In progress', 'done' => true, 'current' => true];
+        }
+        $timeline[] = ['event' => 'Shipped',   'time' => 'Pending', 'done' => false];
+        $timeline[] = ['event' => 'Delivered', 'time' => 'Pending', 'done' => false];
+
+        $order = [
+            'id'              => $o['order_number'],
+            'date'            => $o['created_at'],
+            'status'          => ucfirst($o['status']),
+            'payment_status'  => ucfirst($o['payment_status']),
+            'payment_method'  => $o['payment_method'] ?: '—',
+            'delivery_method' => $o['delivery_method'],
+            'total'           => (float)$o['grand_total'],
+            'subtotal'        => (float)$o['subtotal'],
+            'tax'             => (float)$o['tax'],
+            'shipping'        => (float)$o['shipping'],
+            'customer'        => $customer,
+            'shipping_address'=> $shippingAddress,
+            'items'           => $items,
+            'notes'           => $o['notes'] ? explode("\n", $o['notes']) : [],
+            'timeline'        => $timeline,
+        ];
+
+        return View::renderTemplate('pages/admin/orders/show', 'admin', [
+            'title' => "Order {$o['order_number']} | Admin",
+            'order' => $order,
+        ]);
     }
 }

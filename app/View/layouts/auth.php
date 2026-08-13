@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS (Compiled) -->
-    <link href="/assets/css/app.css" rel="stylesheet">
+    <link href="<?= app_url('/assets/css/app.css') ?>" rel="stylesheet">
     
     <!-- GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
@@ -24,7 +24,7 @@
     <script src="https://unpkg.com/lucide@latest" defer></script>
     
     <!-- Custom Animations JS -->
-    <script src="/assets/js/animations.js" defer></script>
+    <script src="<?= app_url('/assets/js/animations.js') ?>" defer></script>
 </head>
 <body class="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen flex flex-col antialiased">
     
@@ -32,10 +32,7 @@
         <div class="w-full max-w-md w-full">
             
             <div class="text-center mb-8">
-                <!-- Placeholder for Logo -->
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--surface)] border border-[var(--gold)] mb-4 shadow-lg shadow-[var(--gold)]/20">
-                    <span class="text-2xl font-bold font-['Manrope'] text-[var(--gold)]">M</span>
-                </div>
+                <img src="<?= app_url('/ms-logo-icon.png') ?>" alt="Marigold Signature" class="w-16 h-16 mx-auto mb-4 object-contain">
                 <h1 class="text-3xl font-bold font-['Manrope'] tracking-tight">Marigold Signature</h1>
                 <p class="text-[var(--text-secondary)] mt-2">Premium Corporate Merchandise</p>
             </div>

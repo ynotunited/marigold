@@ -12,10 +12,22 @@
   /* ------------------------------- helpers -------------------------------- */
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
-  function imgSrc(id, w) { return "https://images.unsplash.com/photo-" + id + "?w=" + (w || 800) + "&q=80&auto=format&fit=crop"; }
+  function imgSrc(id, w) {
+    if (!id) return "";
+    if (/^(https?:|data:|blob:|\/)/i.test(id)) return id;
+    return "https://images.unsplash.com/photo-" + id + "?w=" + (w || 800) + "&q=80&auto=format&fit=crop";
+  }
   function slugCat(id) {
     const c = CATEGORIES.find((x) => x.id === id);
     return c ? c.label : id;
+  }
+  function clampText(s, n) {
+    s = String(s || "").trim();
+    if (s.length <= n) return s;
+    const cut = s.slice(0, n);
+    const sp = cut.lastIndexOf(" ");
+    const end = sp > n * 0.6 ? sp : n;
+    return cut.slice(0, end).replace(/[\s.,;:!?]+$/, "") + "…";
   }
 
   /* ------------------------------- cart store ------------------------------ */
@@ -70,7 +82,7 @@
   }
 
   function subscribe(email, source) {
-    return fetch("/newsletter/subscribe", {
+    return fetch(appUrl("/newsletter/subscribe"), {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken() },
       body: JSON.stringify({ email: email, source: source || "Footer", consent: true }),
@@ -107,7 +119,7 @@
         '<div class="cd-empty">' +
         '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>' +
         "<p>Your cart is empty.</p>" +
-        '<a href="/shop" class="btn btn-dark btn-sm">Browse the catalogue</a>' +
+        '<a href="' + appUrl('/shop') + '" class="btn btn-dark btn-sm">Browse the catalogue</a>' +
         "</div>";
       return;
     }
@@ -297,7 +309,7 @@
     if (hint) hint.style.display = "none";
 
     const csrf = $('input[name="csrf_token"]');
-    fetch("/api/shipping/rates", {
+    fetch(appUrl("/api/shipping/rates"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -395,7 +407,7 @@
       ? '<a class="btn btn-gold btn-block btn-lg" style="margin-bottom:10px" href="' + res.whatsapp_link + '" target="_blank" rel="noopener">Confirm delivery on WhatsApp</a>'
       : "";
     const acctNote = res.account_created
-      ? '<p style="margin-top:-16px">Your account was created — <a href="/account/dashboard" style="color:var(--gold-2);font-weight:700">go to your dashboard</a> to track this order.</p>'
+      ? '<p style="margin-top:-16px">Your account was created — <a href="' + appUrl('/account/dashboard') + '" style="color:var(--gold-2);font-weight:700">go to your dashboard</a> to track this order.</p>'
       : "";
     modal.querySelector(".modal-body").innerHTML =
       '<div class="success-state">' +
@@ -409,7 +421,7 @@
       "</p>" +
       whatsappBtn +
       acctNote +
-      '<a class="btn btn-dark btn-block" href="/shop">Continue browsing</a>' +
+      '<a class="btn btn-dark btn-block" href="' + appUrl('/shop') + '">Continue browsing</a>' +
       "</div>";
     Cart.clear();
     toast("Order " + res.order_number + " received — we'll be in touch.");
@@ -444,7 +456,7 @@
     return (
       '<article class="pcard reveal">' +
       '<div class="img-wrap">' +
-      '<a class="img-link" href="/product/' + p.id + '" aria-label="View ' + p.name + '">' +
+      '<a class="img-link" href="' + appUrl('/product/') + p.id + '" aria-label="View ' + p.name + '">' +
       (p.badge ? '<span class="badge ' + (p.badge === "Premium" || p.badge === "New" ? "b-gold" : "") + '">' + p.badge + "</span>" : "") +
       '<img src="' + imgSrc(p.img, 700) + '" alt="' + p.name + '" loading="lazy">' +
       "</a>" +
@@ -453,11 +465,11 @@
       "</div>" +
       '<div class="p-body">' +
       '<span class="p-cat">' + slugCat(p.cat) + "</span>" +
-      '<a class="p-name" href="/product/' + p.id + '">' + p.name + "</a>" +
+      '<a class="p-name" href="' + appUrl('/product/') + p.id + '">' + clampText(p.name, 34) + "</a>" +
       '<p class="p-desc">' + p.short + "</p>" +
       '<div class="p-foot">' +
       '<span class="price">' + naira(p.price) + "</span>" +
-      '<a class="link-more" href="/product/' + p.id + '">Details <span class="arr">→</span></a>' +
+      '<a class="link-more" href="' + appUrl('/product/') + p.id + '">Details <span class="arr">→</span></a>' +
       "</div>" +
       "</div>" +
       "</article>"
@@ -608,7 +620,7 @@
         placeBtn.disabled = true;
         placeBtn.textContent = "Placing order…";
 
-        fetch("/checkout", {
+        fetch(appUrl("/checkout"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -3,9 +3,24 @@
         <h1 class="text-3xl font-bold mb-2">Notifications</h1>
         <p class="text-[var(--text-secondary)]">Stay up to date with your orders, quotes, and news.</p>
     </div>
-    <button class="text-sm text-[var(--gold)] hover:text-white transition-colors font-medium">Mark all as read</button>
+    <?php if ($unread_count > 0): ?>
+    <form action="<?= app_url('/account/notifications/read-all') ?>" method="POST">
+        <?= \App\Core\CSRF::field() ?>
+        <button type="submit" class="text-sm text-[var(--gold)] hover:text-white transition-colors font-medium">Mark all as read</button>
+    </form>
+    <?php endif; ?>
 </div>
 
+<?php if (count($notifications) === 0): ?>
+<div class="bg-[var(--card)] border border-[var(--border)] rounded-[16px] p-12 text-center">
+    <div class="w-16 h-16 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-5">
+        <i data-lucide="bell" class="w-7 h-7 text-[var(--text-muted)]"></i>
+    </div>
+    <h3 class="text-lg font-bold mb-1">No notifications yet</h3>
+    <p class="text-[var(--text-secondary)] text-sm mb-6">When your orders or quotes are updated, you'll see them here.</p>
+    <a href="<?= app_url('/account/orders') ?>" class="btn btn-secondary border border-[var(--border)] px-5 h-10 text-sm inline-flex items-center">View your orders</a>
+</div>
+<?php else: ?>
 <div class="space-y-3">
     <?php foreach($notifications as $n): ?>
     <a href="<?= $n['link'] ?>" class="flex items-start gap-5 p-5 rounded-[16px] border transition-colors group
@@ -36,3 +51,4 @@
     </a>
     <?php endforeach; ?>
 </div>
+<?php endif; ?>

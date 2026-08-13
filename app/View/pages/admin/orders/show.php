@@ -1,5 +1,5 @@
 <div class="flex items-center gap-4 mb-6">
-    <a href="/admin/orders" class="text-[var(--text-secondary)] hover:text-white transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+    <a href="<?= app_url('/admin/orders') ?>" class="text-[var(--text-secondary)] hover:text-white transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
     <div class="flex-grow">
         <h1 class="text-2xl font-bold font-manrope">Order <?= $order['id'] ?></h1>
         <p class="text-sm text-[var(--text-secondary)]">Placed on <?= date('F j, Y g:i A', strtotime($order['date'])) ?></p>
@@ -46,6 +46,7 @@
             <div class="p-5 bg-[var(--surface)] border-t border-[var(--border)]">
                 <div class="space-y-2 max-w-xs ml-auto text-sm">
                     <div class="flex justify-between text-[var(--text-secondary)]"><span>Subtotal</span><span>₦<?= number_format($order['subtotal']) ?></span></div>
+                    <div class="flex justify-between text-[var(--text-secondary)]"><span>VAT (<?= round(($order['tax'] > 0 ? $order['tax'] / max($order['subtotal'], 1) : 0) * 100, 2) ?>%)</span><span>₦<?= number_format($order['tax']) ?></span></div>
                     <div class="flex justify-between text-[var(--text-secondary)]"><span>Shipping</span><span>₦<?= number_format($order['shipping']) ?></span></div>
                     <div class="flex justify-between font-bold text-base pt-2 border-t border-[var(--border)]"><span>Total</span><span class="text-[var(--gold)]">₦<?= number_format($order['total']) ?></span></div>
                 </div>
@@ -97,7 +98,7 @@
                 <p><?= htmlspecialchars($order['customer']['company']) ?></p>
                 <p><?= htmlspecialchars($order['customer']['phone']) ?></p>
             </div>
-            <a href="/admin/customers/1" class="mt-4 text-xs text-[var(--gold)] hover:text-white transition-colors flex items-center gap-1">View customer profile <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
+            <a href="<?= app_url('/admin/customers/1') ?>" class="mt-4 text-xs text-[var(--gold)] hover:text-white transition-colors flex items-center gap-1">View customer profile <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
         </div>
 
         <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">

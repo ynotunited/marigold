@@ -1,5 +1,5 @@
 <div class="mb-6">
-    <a href="/account/orders" class="inline-flex items-center text-sm text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors mb-4">
+    <a href="<?= app_url('/account/orders') ?>" class="inline-flex items-center text-sm text-[var(--text-secondary)] hover:text-[var(--gold)] transition-colors mb-4">
         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Orders
     </a>
     
@@ -113,6 +113,10 @@
                     <div class="flex justify-between text-[var(--text-secondary)]">
                         <span>Subtotal</span>
                         <span><?= $order['subtotal'] ?></span>
+                    </div>
+                    <div class="flex justify-between text-[var(--text-secondary)]">
+                        <span>VAT</span>
+                        <span><?= $order['tax'] ?></span>
                     </div>
                     <div class="flex justify-between text-[var(--text-secondary)]">
                         <span>Shipping</span>

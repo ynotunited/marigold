@@ -94,9 +94,9 @@ class DashboardController extends Controller
             'items'        => (int)$q['items'],
         ], $quoteStmt->fetchAll());
 
-        // Featured product recommendations (public catalogue data)
+        // Recommended products (unchanged)
         $recStmt = $db->query("
-            SELECT name, price, sale_price, is_new, is_best_seller, image
+            SELECT products.name, products.price, products.sale_price, products.is_new, products.is_best_seller, products.image
             FROM products
             LEFT JOIN product_images ON product_images.product_id = products.id AND product_images.is_featured = 1
             WHERE products.deleted_at IS NULL AND products.status = 'published'
@@ -110,6 +110,27 @@ class DashboardController extends Controller
             'badge' => $p['is_best_seller'] ? 'Bestseller' : ($p['is_new'] ? 'New' : ''),
         ], $recStmt->fetchAll());
 
+        // Assigned account manager (real user with the account-manager role)
+        $manager = null;
+        $mgStmt = $db->prepare("
+            SELECT u.first_name, u.last_name, u.email, u.avatar
+            FROM customers c
+            JOIN users u ON u.id = c.account_manager_id
+            WHERE c.id = :customer_id
+              AND u.deleted_at IS NULL
+              AND u.status = 'active'
+            LIMIT 1
+        ");
+        $mgStmt->execute(['customer_id' => $customerId]);
+        $mgRow = $mgStmt->fetch();
+        if ($mgRow) {
+            $manager = [
+                'name'   => trim(($mgRow['first_name'] ?? '') . ' ' . ($mgRow['last_name'] ?? '')),
+                'email'  => $mgRow['email'] ?? '',
+                'avatar' => $mgRow['avatar'] ?? '',
+            ];
+        }
+
         return View::renderTemplate('pages/customer/dashboard', 'customer', [
             'title' => 'Dashboard | Marigold Signature',
             'user' => $user,
@@ -118,6 +139,7 @@ class DashboardController extends Controller
             'recent_orders' => $recent_orders,
             'pending_quotes' => $pending_quotes,
             'recommended_products' => $recommended_products,
+            'account_manager' => $manager,
         ]);
     }
 

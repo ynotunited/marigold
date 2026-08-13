@@ -7,7 +7,25 @@
  */
 
 define('APP_START', microtime(true));
-define('BASE_PATH', dirname(__DIR__));
+// Resolve the app root: walk up from the entry point until a directory
+// containing both app/ and vendor/ is found. Handles the project layout
+// (public/ -> project root), a localhost subfolder, and any shared-hosting
+// subfolder (e.g. public_html/ms/ with the app code alongside the entry file).
+function resolveBasePath(string $start): string
+{
+    $dir = str_replace('\\', '/', $start);
+    while (true) {
+        if (is_dir($dir . '/app') && is_dir($dir . '/vendor')) {
+            return $dir;
+        }
+        $parent = dirname($dir);
+        if ($parent === $dir || $parent === '.' || $parent === '/') {
+            return $dir;
+        }
+        $dir = $parent;
+    }
+}
+define('BASE_PATH', resolveBasePath(__DIR__));
 
 // Autoloader will go here
 if (file_exists(BASE_PATH . '/vendor/autoload.php')) {
@@ -54,6 +72,26 @@ function customerRoute($handler): callable
 // Load Environment variables
 Env::load(BASE_PATH . '/.env');
 
+// Global URL helpers — compute the app base path once so every root-relative
+// link/asset works whether the app is served from the domain root (base === '')
+// or from a subdirectory such as /ms on shared hosting.
+function app_base(): string
+{
+    static $base = null;
+    if ($base === null) {
+        $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+        if ($base === '/' || $base === '.') {
+            $base = '';
+        }
+    }
+    return $base;
+}
+
+function app_url(string $path = ''): string
+{
+    return app_base() . '/' . ltrim($path, '/');
+}
+
 // Check Maintenance Mode
 if (file_exists(BASE_PATH . '/.maintenance') || ($_ENV['APP_MAINTENANCE'] ?? 'false') === 'true') {
     http_response_code(503);
@@ -67,6 +105,16 @@ set_error_handler(['App\Core\ExceptionHandler', 'errorHandler']);
 
 // Start Session
 Session::start();
+
+// HTML pages are never cached by the browser: the storefront embeds the live
+// DB-backed catalogue (window.MS_CATALOG) directly in the page, so serving a
+// cached copy would hide newly published products. API routes set their own
+// (JSON) headers below.
+if (stripos($_SERVER['REQUEST_URI'] ?? '', '/api') !== 0 && !headers_sent()) {
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
 
 // Initialize Router
 $router = new Router();
@@ -135,6 +183,7 @@ $router->get('/sitemap.xml', ['App\Controller\SitemapController', 'index']);
 // Quote Request System
 $router->get('/quote-request', ['App\Controller\QuoteRequestController', 'index']);
 $router->post('/quote-request', ['App\Controller\QuoteRequestController', 'submit']);
+$router->get('/quotes/new', ['App\Controller\QuoteRequestController', 'index']);
 $router->get('/quote-request/success', function() {
     \App\Core\View::renderTemplate('pages/public/quote_success', 'main', [
         'title' => 'Quote Submitted | Marigold Signature',
@@ -149,10 +198,19 @@ $router->get('/admin/products/{id}/edit', adminRoute(['App\Controller\Admin\Prod
 $router->post('/admin/products', adminRoute(['App\Controller\Admin\ProductController', 'store']));
 $router->post('/admin/products/{id}', adminRoute(['App\Controller\Admin\ProductController', 'update']));
 $router->put('/admin/products/{id}', adminRoute(['App\Controller\Admin\ProductController', 'update']));
+$router->post('/admin/products/{id}/delete', adminRoute(['App\Controller\Admin\ProductController', 'destroy']));
 
 // Catalogue Routes
 $router->get('/admin/categories', adminRoute(['App\Controller\Admin\CatalogueController', 'categories']));
+$router->post('/admin/categories', adminRoute(['App\Controller\Admin\CatalogueController', 'store']));
+$router->post('/admin/categories/{id}/delete', adminRoute(['App\Controller\Admin\CatalogueController', 'destroy']));
+$router->post('/admin/categories/{id}', adminRoute(['App\Controller\Admin\CatalogueController', 'update']));
+$router->put('/admin/categories/{id}', adminRoute(['App\Controller\Admin\CatalogueController', 'update']));
 $router->get('/admin/brands', adminRoute(['App\Controller\Admin\CatalogueController', 'brands']));
+$router->post('/admin/brands', adminRoute(['App\Controller\Admin\CatalogueController', 'storeBrand']));
+$router->post('/admin/brands/{id}/delete', adminRoute(['App\Controller\Admin\CatalogueController', 'destroyBrand']));
+$router->post('/admin/brands/{id}', adminRoute(['App\Controller\Admin\CatalogueController', 'updateBrand']));
+$router->put('/admin/brands/{id}', adminRoute(['App\Controller\Admin\CatalogueController', 'updateBrand']));
 $router->get('/admin/collections', adminRoute(['App\Controller\Admin\CatalogueController', 'collections']));
 $router->get('/admin/solutions', adminRoute(['App\Controller\Admin\CatalogueController', 'solutions']));
 
@@ -167,6 +225,7 @@ $router->get('/admin/quotes/{id}', adminRoute(['App\Controller\Admin\AdminQuoteC
 // Customer & Media Routes
 $router->get('/admin/customers', adminRoute(['App\Controller\Admin\AdminCustomerController', 'index']));
 $router->get('/admin/customers/{id}', adminRoute(['App\Controller\Admin\AdminCustomerController', 'show']));
+$router->post('/admin/customers/{id}/account-manager', adminRoute(['App\Controller\Admin\AdminCustomerController', 'updateAccountManager']));
 $router->get('/admin/media', adminRoute(['App\Controller\Admin\AdminMediaController', 'index']));
 
 // Blog & CMS Routes
@@ -214,6 +273,13 @@ $router->get('/admin/email-previews/{template}', adminRoute(['App\Controller\Adm
 $router->get('/search', ['App\Controller\Storefront\SearchController', 'index']);
 $router->get('/api/search', ['App\Controller\Storefront\SearchController', 'ajaxSearch']);
 
+// Catalogue API - full product/category payload for dynamic storefronts
+$router->get('/api/catalogue', function () {
+    header('Content-Type: application/json');
+    echo json_encode(\App\Core\Catalogue::all());
+    exit;
+});
+
 // Payment Integrity API
 // Browser-initiated writes require an `Idempotency-Key` (UUID) header and an
 // `X-CSRF-Token` header. The webhook endpoint is signed by the gateway (HMAC).
@@ -238,6 +304,7 @@ $router->get('/account/wishlist', customerRoute(['App\Controller\Customer\Wishli
 $router->get('/account/addresses', customerRoute(['App\Controller\Customer\AddressController', 'index']));
 $router->get('/account/downloads', customerRoute(['App\Controller\Customer\DownloadController', 'index']));
 $router->get('/account/notifications', customerRoute(['App\Controller\Customer\NotificationController', 'index']));
+$router->post('/account/notifications/read-all', customerRoute(['App\Controller\Customer\NotificationController', 'markAllRead']));
 $router->get('/account/settings', customerRoute(['App\Controller\Customer\SettingsController', 'index']));
 
 // Dispatch

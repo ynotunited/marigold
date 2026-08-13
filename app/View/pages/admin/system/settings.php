@@ -54,6 +54,65 @@
             </div>
         </div>
 
+        <!-- SMTP Settings -->
+        <div x-show="tab === 'smtp'" class="space-y-6" style="display:none">
+            <h2 class="font-bold font-manrope text-lg mb-4 pb-2 border-b border-[var(--border)]">SMTP Server</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div><label class="form-label">Host</label><input type="text" value="<?= htmlspecialchars($smtp['host']) ?>" placeholder="smtp.gmail.com" class="input-field w-full mt-1 text-sm font-mono"></div>
+                <div><label class="form-label">Port</label><input type="number" value="<?= htmlspecialchars($smtp['port']) ?>" placeholder="587" class="input-field w-full mt-1 text-sm"></div>
+                <div><label class="form-label">Encryption</label><select class="input-field w-full mt-1 text-sm"><option value="tls" <?= $smtp['encryption'] === 'tls' ? 'selected' : '' ?>>TLS</option><option value="ssl" <?= $smtp['encryption'] === 'ssl' ? 'selected' : '' ?>>SSL</option><option value="none" <?= !in_array($smtp['encryption'], ['tls', 'ssl'], true) ? 'selected' : '' ?>>None</option></select></div>
+                <div><label class="form-label">Username</label><input type="text" value="<?= htmlspecialchars($smtp['username']) ?>" placeholder="your@email.com" autocomplete="off" class="input-field w-full mt-1 text-sm font-mono"></div>
+                <div><label class="form-label">Password / App Password</label><input type="password" value="<?= htmlspecialchars($smtp['password']) ?>" autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+            </div>
+
+            <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Sender Identity</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div><label class="form-label">From Name</label><input type="text" value="<?= htmlspecialchars($smtp['from_name']) ?>" placeholder="Marigold Signature" class="input-field w-full mt-1 text-sm"></div>
+                <div><label class="form-label">From Email</label><input type="email" value="<?= htmlspecialchars($smtp['from_email']) ?>" placeholder="no-reply@marigoldsignatureng.com" class="input-field w-full mt-1 text-sm"></div>
+            </div>
+
+            <div class="flex items-center justify-between bg-[var(--surface)] p-4 rounded-[10px] border border-[var(--border)]">
+                <div><p class="font-medium text-sm">Send Test Email</p><p class="text-xs text-[var(--text-secondary)]">Verifies the SMTP connection before saving.</p></div>
+                <button class="btn btn-secondary border border-[var(--border)] h-9 px-4 text-sm bg-[var(--surface)] flex items-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> Send Test</button>
+            </div>
+        </div>
+
+        <!-- Shipping Methods -->
+        <div x-show="tab === 'shipping'" class="space-y-6" style="display:none">
+            <h2 class="font-bold font-manrope text-lg mb-4 pb-2 border-b border-[var(--border)]">ShipBubble Logistics</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div><label class="form-label">API Key</label><input type="password" value="<?= htmlspecialchars($shipping['api_key']) ?>" autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+                <div><label class="form-label">Webhook Secret</label><input type="password" value="<?= htmlspecialchars($shipping['webhook_secret']) ?>" autocomplete="new-password" class="input-field w-full mt-1 text-sm font-mono text-[var(--text-secondary)]"></div>
+                <div><label class="form-label">Sender Address Code</label><input type="text" value="<?= htmlspecialchars($shipping['sender_code']) ?>" placeholder="e.g. 98794022" class="input-field w-full mt-1 text-sm"></div>
+                <div><label class="form-label">Default Category ID</label><input type="text" value="<?= htmlspecialchars($shipping['category_id']) ?>" placeholder="e.g. 90097994" class="input-field w-full mt-1 text-sm"></div>
+            </div>
+
+            <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Sender Address</h2>
+            <div>
+                <label class="form-label">Pickup Address</label>
+                <textarea rows="2" class="input-field w-full mt-1 text-sm resize-none" placeholder="6 Oluwole Omole Street, Opebi, Lagos, Nigeria"><?= htmlspecialchars($shipping['sender_address']) ?></textarea>
+            </div>
+
+            <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Default Package Dimensions (cm)</h2>
+            <div class="grid grid-cols-3 gap-5">
+                <div><label class="form-label">Length</label><input type="number" value="<?= htmlspecialchars($shipping['package_length']) ?>" placeholder="20" class="input-field w-full mt-1 text-sm"></div>
+                <div><label class="form-label">Width</label><input type="number" value="<?= htmlspecialchars($shipping['package_width']) ?>" placeholder="15" class="input-field w-full mt-1 text-sm"></div>
+                <div><label class="form-label">Height</label><input type="number" value="<?= htmlspecialchars($shipping['package_height']) ?>" placeholder="10" class="input-field w-full mt-1 text-sm"></div>
+            </div>
+
+            <h2 class="font-bold font-manrope text-lg mb-4 mt-8 pb-2 border-b border-[var(--border)]">Delivery Methods</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between bg-[var(--surface)] p-4 rounded-[10px] border border-[var(--border)]">
+                    <div><p class="font-medium text-sm">Delivery (Courier)</p><p class="text-xs text-[var(--text-secondary)]">Real-time courier rates via ShipBubble.</p></div>
+                    <label class="relative cursor-pointer"><input type="checkbox" checked class="sr-only peer"><div class="w-11 h-6 bg-[#111] rounded-full peer-checked:bg-[var(--gold)] transition-colors border border-[var(--border)]"></div><div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow"></div></label>
+                </div>
+                <div class="flex items-center justify-between bg-[var(--surface)] p-4 rounded-[10px] border border-[var(--border)]">
+                    <div><p class="font-medium text-sm">Store Pickup</p><p class="text-xs text-[var(--text-secondary)]">Customer collects from your Lagos atelier.</p></div>
+                    <label class="relative cursor-pointer"><input type="checkbox" checked class="sr-only peer"><div class="w-11 h-6 bg-[#111] rounded-full peer-checked:bg-[var(--gold)] transition-colors border border-[var(--border)]"></div><div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow"></div></label>
+                </div>
+            </div>
+        </div>
+
         <!-- Integrations -->
         <div x-show="tab === 'integrations'" class="space-y-6" style="display:none">
             <h2 class="font-bold font-manrope text-lg mb-4 pb-2 border-b border-[var(--border)]">Marketing & Analytics</h2>

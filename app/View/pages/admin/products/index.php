@@ -10,28 +10,28 @@
         <button class="btn btn-secondary border border-[var(--border)] h-9 px-4 text-sm bg-[var(--surface)] flex items-center gap-2">
             <i data-lucide="download" class="w-4 h-4"></i> Export CSV
         </button>
-        <a href="/admin/products/create" class="btn btn-primary h-9 px-4 text-sm flex items-center gap-2">
+        <a href="<?= app_url('/admin/products/create') ?>" class="btn btn-primary h-9 px-4 text-sm flex items-center gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i> Add Product
         </a>
     </div>
 </div>
 
 <!-- Filters Bar -->
-<div class="bg-[#111] border border-[var(--border)] rounded-[14px] p-4 mb-6 flex flex-col md:flex-row gap-3" x-data="{ bulkMode: false, selected: [] }">
-    <div class="relative flex-grow max-w-sm">
+<div class="bg-[#111] border border-[var(--border)] rounded-[14px] p-4 mb-6 flex items-center gap-3 overflow-x-auto" x-data="{ bulkMode: false, selected: [] }">
+    <div class="relative flex-grow min-w-[200px] max-w-sm shrink-0">
         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]"></i>
         <input type="text" placeholder="Search by name, SKU…" class="input-field w-full pl-10 h-9 text-sm bg-[var(--surface)]">
     </div>
-    <select class="input-field h-9 text-sm bg-[var(--surface)] pr-8 min-w-[140px]">
+    <select class="input-field h-9 text-sm bg-[var(--surface)] pr-8 min-w-[140px] shrink-0">
         <option value="">All Categories</option>
         <option>Stationery</option><option>Drinkware</option><option>Tech</option>
         <option>Apparel</option><option>Bags</option><option>Accessories</option>
     </select>
-    <select class="input-field h-9 text-sm bg-[var(--surface)] pr-8 min-w-[130px]">
+    <select class="input-field h-9 text-sm bg-[var(--surface)] pr-8 min-w-[130px] shrink-0">
         <option value="">All Statuses</option>
         <option>Published</option><option>Draft</option><option>Archived</option>
     </select>
-    <select class="input-field h-9 text-sm bg-[var(--surface)] pr-8 min-w-[130px]">
+    <select class="input-field h-9 text-sm bg-[var(--surface)] pr-8 min-w-[130px] shrink-0">
         <option value="">All Brands</option>
         <option>Moleskine</option><option>Thermos</option><option>Anker</option><option>Custom</option>
     </select>
@@ -76,7 +76,7 @@
                                 <img src="<?= $p['image'] ?>" alt="" class="w-full h-full object-cover">
                             </div>
                             <div>
-                                <a href="/admin/products/<?= $p['id'] ?>/edit" class="font-medium text-sm hover:text-[var(--gold)] transition-colors"><?= htmlspecialchars($p['name']) ?></a>
+                                <a href="<?= app_url('/admin/products/') ?><?= $p['id'] ?>/edit" class="font-medium text-sm hover:text-[var(--gold)] transition-colors"><?= htmlspecialchars($p['name']) ?></a>
                             </div>
                         </div>
                     </td>
@@ -98,15 +98,16 @@
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="/admin/products/<?= $p['id'] ?>/edit" class="w-8 h-8 rounded-[6px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--gold)] hover:border-[var(--gold)]/50 transition-colors">
+                            <a href="<?= app_url('/admin/products/') ?><?= $p['id'] ?>/edit" class="w-8 h-8 rounded-[6px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--gold)] hover:border-[var(--gold)]/50 transition-colors">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </a>
                             <button class="w-8 h-8 rounded-[6px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] hover:text-blue-400 hover:border-blue-400/50 transition-colors" title="Duplicate">
                                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                             </button>
-                            <button class="w-8 h-8 rounded-[6px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors" title="Delete">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
+                            <form method="post" action="<?= app_url('/admin/products/' . $p['id'] . '/delete') ?>" onsubmit="return confirm('Delete product “<?= htmlspecialchars($p['name'], ENT_QUOTES) ?>”? This cannot be undone.')">
+                                <?= \App\Core\CSRF::field() ?>
+                                <button type="submit" class="w-8 h-8 rounded-[6px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors" title="Delete"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </form>
                         </div>
                     </td>
                 </tr>

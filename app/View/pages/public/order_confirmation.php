@@ -75,6 +75,9 @@ $__url = function (string $path) use ($__base): string {
                 <div class="order-sum" style="margin: 26px 0 0;">
                     <div class="row"><span>Order Number</span><strong style="color: var(--ink); font-family: monospace;"><?= htmlspecialchars((string) $order['order_number']) ?></strong></div>
                     <div class="row"><span>Date</span><span><?= htmlspecialchars((string) $date) ?></span></div>
+                    <div class="row"><span>Subtotal</span><span>&#8358;<?= number_format((float) $order['subtotal'], 2) ?></span></div>
+                    <div class="row"><span>VAT</span><span>&#8358;<?= number_format((float) $order['tax'], 2) ?></span></div>
+                    <div class="row"><span>Shipping</span><span>&#8358;<?= number_format((float) $order['shipping'], 2) ?></span></div>
                     <div class="row"><span>Total Amount</span><strong style="color: var(--gold-deep);">&#8358;<?= htmlspecialchars((string) $amount) ?></strong></div>
                     <div class="row"><span>Payment Method</span><span><?= htmlspecialchars($methodLabel) ?></span></div>
                 </div>

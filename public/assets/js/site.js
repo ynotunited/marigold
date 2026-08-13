@@ -32,6 +32,7 @@
   function renderHome() {
     const catGrid = $("#catGrid");
     if (catGrid) {
+      // Category tiles derive from the live catalogue so admin changes reflect.
       const defs = {
         "corporate-gifts": { img: "1503602642458-232111445657", label: "Corporate Gifts", sub: "Curation" },
         "apparel": { img: "1521572163474-6864f9cf17ab", label: "Branded Apparel", sub: "Uniform & Wear" },
@@ -40,10 +41,19 @@
         "tech-gadgets": { img: "1505740420928-5e560c06d30e", label: "Tech & Gadgets", sub: "High Value" },
         "event": { img: "1553062407-98eeb64c6a62", label: "Event Essentials", sub: "Activations" },
       };
-      catGrid.innerHTML = Object.keys(defs).map(function (k) {
-        const d = defs[k];
+      const tiles = CATEGORIES.slice(0, 6).map(function (c) {
+        const fallback = defs[c.id] || {};
+        const first = PRODUCTS.find((p) => p.cat === c.id);
+        return {
+          k: c.id,
+          label: c.label,
+          sub: fallback.sub || "Collection",
+          img: first && first.img ? first.img : (fallback.img || ""),
+        };
+      });
+      catGrid.innerHTML = tiles.map(function (d) {
         return (
-          '<a class="cat-card reveal" href="/shop?cat=' + k + '">' +
+          '<a class="cat-card reveal" href="' + appUrl('/shop?cat=') + d.k + '">' +
           '<img src="' + imgSrc(d.img, 500) + '" alt="' + d.label + '" loading="lazy">' +
           '<span class="cat-label"><small>' + d.sub + "</small><span>" + d.label + "</span></span>" +
           "</a>"
@@ -53,9 +63,11 @@
 
     const feat = $("#featuredGrid");
     if (feat) {
-      const ids = ["signature-gift-box", "executive-watch", "insulated-bottle", "studio-headphones"];
-      const items = ids.map((id) => PRODUCTS.find((p) => p.id === id)).filter(Boolean);
-      feat.innerHTML = items.map(card).join("");
+      const ranked = PRODUCTS.slice().sort(function (a, b) {
+        const r = (p) => (p.badge ? 0 : 1);
+        return r(a) - r(b);
+      });
+      feat.innerHTML = ranked.slice(0, 4).map(card).join("");
     }
 
     const testi = $("#testiGrid");
@@ -90,10 +102,12 @@
     const priceMin = $("#priceMin");
     const priceMax = $("#priceMax");
     const priceClear = $("#priceClear");
+    const availInputs = $$(".avail-list input[data-filter]");
 
     let query = "";
     let minP = 0;
     let maxP = Infinity;
+    let availSel = new Set();
     let page = 1;
     const PER_PAGE = 8;
     const pagEl = $("#shopPagination");
@@ -106,7 +120,7 @@
       });
       featBox.innerHTML = ranked.slice(0, 3).map(function (p) {
         return (
-          '<a class="feat-item" href="/product?id=' + p.id + '">' +
+          '<a class="feat-item" href="' + appUrl('/product?id=') + p.id + '">' +
           '<div class="feat-thumb"><img src="' + imgSrc(p.img, 160) + '" alt="' + p.name + '" loading="lazy"></div>' +
           '<div class="feat-info"><span class="feat-name">' + p.name + '</span><span class="feat-price">' + naira(p.price) + "</span></div>" +
           "</a>"
@@ -138,6 +152,13 @@
       }
       if (minP > 0 || maxP !== Infinity) {
         list = list.filter((p) => p.price >= minP && p.price <= maxP);
+      }
+      if (availSel.size) {
+        list = list.filter(function (p) {
+          const v = p.availability || "in_stock";
+          if (availSel.has("in_stock") && (v === "in_stock" || v === "")) return true;
+          return availSel.has(v);
+        });
       }
       if (sortSel.value === "price-asc") list.sort((a, b) => a.price - b.price);
       if (sortSel.value === "price-desc") list.sort((a, b) => b.price - a.price);
@@ -191,6 +212,15 @@
       apply();
     });
 
+    availInputs.forEach(function (cb) {
+      cb.addEventListener("change", function () {
+        const v = this.dataset.filter;
+        if (this.checked) availSel.add(v); else availSel.delete(v);
+        page = 1;
+        apply();
+      });
+    });
+
     apply();
   }
 
@@ -201,13 +231,14 @@
     const id = qs("id") || (window.location.pathname.split("/").filter(Boolean).pop()) || "";
     const p = PRODUCTS.find((x) => x.id === id);
     if (!p) {
-      root.innerHTML = '<div class="shop-empty"><h3>Product not found</h3><p><a class="btn btn-gold" style="margin-top:16px" href="/shop">Back to shop</a></p></div>';
+      root.innerHTML = '<div class="shop-empty"><h3>Product not found</h3><p><a class="btn btn-gold" style="margin-top:16px" href="' + appUrl('/shop') + '">Back to shop</a></p></div>';
       return;
     }
 
     document.title = p.name + " — Marigold Signature";
+    const metaDesc = String(p.desc || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     document.querySelector('meta[name="description"]') &&
-      document.querySelector('meta[name="description"]').setAttribute("content", p.desc);
+      document.querySelector('meta[name="description"]').setAttribute("content", metaDesc.slice(0, 160));
 
     const extraImgs = {
       "signature-gift-box": ["1503602642458-232111445657", "1549465220-1a8b9238cd48"],
@@ -220,6 +251,19 @@
     const metaRows = Object.keys(p.specs || {}).map(function (k) {
       return "<li><span>" + k + "</span><span>" + p.specs[k] + "</span></li>";
     }).join("");
+
+    const AVAIL = {
+      "in_stock": "Available for order",
+      "store_pickup": "In-store pickup only",
+      "preorder": "Pre-order only",
+    };
+    const availKey = p.availability || "in_stock";
+    const availLabel = AVAIL[availKey] || AVAIL.in_stock;
+    const availDot = availKey === "preorder" ? "avail-dot amber"
+      : availKey === "store_pickup" ? "avail-dot blue"
+      : "avail-dot green";
+    const availBadge =
+      '<div class="avail-line"><span class="' + availDot + '"></span><span>' + availLabel + "</span></div>";
 
     const perks =
       '<div class="perk"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Nationwide delivery</div>' +
@@ -237,10 +281,11 @@
         : "") +
       "</div>" +
       '<div class="pinfo reveal d1">' +
-      '<div class="crumbs"><a href="/">Home</a><span>/</span><a href="/shop">Shop</a><span>/</span><a href="/shop?cat=' + p.cat + '">' + slugCat(p.cat) + "</a></div>" +
+      '<div class="crumbs"><a href="' + appUrl('/') + '">Home</a><span>/</span><a href="' + appUrl('/shop') + '">Shop</a><span>/</span><a href="' + appUrl('/shop?cat=') + p.cat + '">' + slugCat(p.cat) + "</a></div>" +
       '<span class="eyebrow">' + (p.badge ? p.badge + " · " : "") + slugCat(p.cat) + "</span>" +
       '<h1 class="display h2">' + p.name + "</h1>" +
       '<div class="p-price">' + naira(p.price) + " <small>per unit · bulk pricing available</small></div>" +
+      availBadge +
       '<p class="p-desc">' + p.desc + "</p>" +
       '<ul class="p-meta">' + metaRows + "</ul>" +
       '<div class="qty-row">' +
@@ -254,13 +299,13 @@
       '<textarea class="field" id="personalNote" placeholder="e.g. Engrave with company logo — debossed, gold foil"></textarea>' +
       "</div>" +
       '<button class="btn btn-gold btn-lg btn-block" id="addBtn" data-act="add" data-id="' + p.id + '">Add to Cart — <span id="addBtnTotal">' + naira(p.price) + "</span></button>" +
-      '<a href="/contact" class="btn btn-ghost btn-lg btn-block" style="margin-top:12px">Request Bulk Quote</a>' +
+      '<a href="' + appUrl('/contact') + '" class="btn btn-ghost btn-lg btn-block" style="margin-top:12px">Request Bulk Quote</a>' +
       '<div class="perk-row">' + perks + "</div>" +
       "</div>" +
       "</div>" +
       '<section class="related">' +
       '<div class="related-head"><div><span class="eyebrow">You may also like</span><h2 class="display h2">Related gifts</h2></div>' +
-      '<a class="btn btn-ghost" href="/shop">View all <span class="arr">→</span></a></div>' +
+      '<a class="btn btn-ghost" href="' + appUrl('/shop') + '">View all <span class="arr">→</span></a></div>' +
       '<div class="pgrid" id="relatedGrid"></div>' +
       "</section>";
 
@@ -288,10 +333,15 @@
     }));
     qtyInput.addEventListener("input", syncPrice);
 
-    /* related */
-    const related = PRODUCTS.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 4);
-    const filler = PRODUCTS.filter((x) => x.id !== p.id).filter((x) => !related.some((r) => r.id === x.id));
-    const picks = related.concat(filler).slice(0, 4);
+    /* related — automatic: same category first, same brand next, then
+       closest price from the rest of the catalogue */
+    const related = PRODUCTS.filter((x) => x.cat === p.cat && x.id !== p.id);
+    const sameBrand = PRODUCTS.filter((x) => x.id !== p.id && !related.some((r) => r.id === x.id) && p.brand && x.brand === p.brand);
+    const rest = PRODUCTS
+      .filter((x) => x.id !== p.id && !related.some((r) => r.id === x.id) && !sameBrand.some((r) => r.id === x.id))
+      .slice()
+      .sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price));
+    const picks = related.concat(sameBrand, rest).slice(0, 4);
     $("#relatedGrid").innerHTML = picks.map(card).join("");
 
     reveal();
@@ -315,7 +365,7 @@
         };
         const btn = form.querySelector('button[type="submit"]');
         if (btn) { btn.disabled = true; }
-        fetch("/contact", {
+        fetch(appUrl("/contact"), {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf ? csrf.value : "" },
           body: JSON.stringify(payload),
@@ -346,7 +396,7 @@
   /* ---------------------------------- BLOG ----------------------------------- */
   function postCard(p) {
     return (
-      '<a class="blog-card reveal" href="/blog/' + p.id + '">' +
+      '<a class="blog-card reveal" href="' + appUrl('/blog/') + p.id + '">' +
       '<div class="bc-img"><img src="' + imgSrc(p.img, 800) + '" alt="' + p.title + '"></div>' +
       '<div class="bc-body">' +
       '<div class="bc-meta"><span class="cat">' + p.category + '</span><span class="dot"></span><span>' + p.date + "</span></div>" +
@@ -365,7 +415,7 @@
     if (featured && POSTS.length) {
       const p = POSTS[0];
       featured.innerHTML =
-        '<a class="blog-featured reveal" href="/blog/' + p.id + '">' +
+        '<a class="blog-featured reveal" href="' + appUrl('/blog/') + p.id + '">' +
         '<div class="bf-img"><img src="' + imgSrc(p.img, 1200) + '" alt="' + p.title + '"></div>' +
         '<div class="bf-body">' +
         '<div class="bc-meta"><span class="cat">' + p.category + '</span><span class="dot"></span><span>' + p.date + " · " + p.readTime + "</span></div>" +
@@ -387,12 +437,12 @@
     const id = qs("id");
     const p = POSTS.find((x) => x.id === id);
     if (!p) {
-      hero.innerHTML = '<div class="shop-empty"><h3>Article not found</h3><p><a class="btn btn-gold" style="margin-top:16px" href="/blog">Back to blog</a></p></div>';
+      hero.innerHTML = '<div class="shop-empty"><h3>Article not found</h3><p><a class="btn btn-gold" style="margin-top:16px" href="' + appUrl('/blog') + '">Back to blog</a></p></div>';
       return;
     }
     document.title = p.title + " — Marigold Signature";
     hero.innerHTML =
-      '<div class="crumbs"><a href="/">Home</a><span>/</span><a href="/blog">Blog</a><span>/</span><span>' + p.category + "</span></div>" +
+      '<div class="crumbs"><a href="' + appUrl('/') + '">Home</a><span>/</span><a href="' + appUrl('/blog') + '">Blog</a><span>/</span><span>' + p.category + "</span></div>" +
       '<span class="eyebrow reveal">' + p.category + "</span>" +
       '<h1 class="display h1 reveal">' + p.title + "</h1>" +
       '<div class="post-meta reveal"><span>' + p.date + '</span><span class="sep">•</span><span>' + p.readTime + '</span><span class="sep">•</span><span>Marigold Studio</span></div>';
@@ -406,7 +456,7 @@
       '<div class="blog-cta">' +
       "<h3>Planning something special?</h3>" +
       "<p>Talk to the Marigold team about your next gifting programme or event.</p>" +
-      '<a class="btn btn-gold btn-lg" href="/contact">Get a Quote <span class="arr">&rarr;</span></a>' +
+      '<a class="btn btn-gold btn-lg" href="' + appUrl('/contact') + '">Get a Quote <span class="arr">&rarr;</span></a>' +
       "</div>";
     if (related) {
       const same = POSTS.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 3);
@@ -414,6 +464,26 @@
       related.innerHTML = same.concat(fill).map(postCard).join("");
     }
     reveal();
+  }
+
+  /* ----------------------------- image slider ------------------------------- */
+  function initSlider() {
+    const el = $(".meeting-slider");
+    if (!el || typeof window.Swiper === "undefined") return;
+    new window.Swiper(el, {
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 1.25,
+      spaceBetween: 16,
+      loop: true,
+      speed: 600,
+      autoplay: { delay: 3200, disableOnInteraction: false, pauseOnMouseEnter: true },
+      pagination: { el: ".ms-pagination", clickable: true },
+      navigation: { nextEl: ".ms-next", prevEl: ".ms-prev" },
+      breakpoints: {
+        860: { slidesPerView: 2.2, spaceBetween: 24 },
+      },
+    });
   }
 
   /* ---------------------------------- INIT ---------------------------------- */
@@ -425,5 +495,6 @@
     else if (page === "contact") initContact();
     else if (page === "blog") renderBlog();
     else if (page === "blog-post") renderPost();
+    initSlider();
   });
 })();

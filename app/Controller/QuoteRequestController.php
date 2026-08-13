@@ -13,6 +13,7 @@ use App\Core\Model;
 use App\Core\RowSecurity;
 use App\Service\RateLimiter;
 use App\Service\Mailer;
+use App\Service\NotificationService;
 
 class QuoteRequestController extends Controller
 {
@@ -247,6 +248,19 @@ class QuoteRequestController extends Controller
 
         Logger::info("Quote {$quoteNumber} persisted. Email: {$email} IP: " . ($_SERVER['REMOTE_ADDR'] ?? ''), 'http');
         RateLimiter::clear($rateLimitKey);
+
+        if ($customerId) {
+            $userId = NotificationService::userIdForOrder($customerId);
+            if ($userId) {
+                NotificationService::notify($userId, 'quote', [
+                    'icon' => 'file-text',
+                    'title' => 'Quote ' . $quoteNumber . ' received',
+                    'message' => 'Your quote request has been received. Our sales team will respond within 24-48 hours.',
+                    'link' => '/account/quotes/' . $quoteNumber,
+                ]);
+            }
+        }
+
         Session::set('success', 'Your quote request has been received. Our sales team will respond within 24-48 hours.');
         $this->redirect('/quote-request/success');
     }

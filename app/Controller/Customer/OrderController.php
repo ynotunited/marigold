@@ -24,6 +24,7 @@ class OrderController extends Controller
             'id' => $order['id'],
             'date' => $order['date'],
             'status' => ucfirst($order['status']),
+            'status_key' => $order['status'],
             'total' => '₦' . number_format((float)$order['total'], 2),
         ], $stmt->fetchAll());
 
@@ -70,7 +71,7 @@ class OrderController extends Controller
             'quantity' => (int)$item['quantity'],
             'price' => '₦' . number_format((float)$item['price'], 2),
             'total' => '₦' . number_format((float)$item['subtotal'], 2),
-            'image' => $item['image'] ?: '/public/ms-logo-icon.png',
+            'image' => $item['image'] ?: app_url('/ms-logo-icon.png'),
         ], $itemsStmt->fetchAll());
 
         $address = $this->shippingAddress($customerId);
@@ -80,6 +81,7 @@ class OrderController extends Controller
             'status' => ucfirst($row['status']),
             'total' => '₦' . number_format((float)$row['grand_total'], 2),
             'subtotal' => '₦' . number_format((float)$row['subtotal'], 2),
+            'tax' => '₦' . number_format((float)$row['tax'], 2),
             'shipping' => '₦' . number_format((float)$row['shipping'], 2),
             'items' => $items,
             'shipping_address' => $address,

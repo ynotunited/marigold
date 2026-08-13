@@ -6,8 +6,8 @@
     
     <!-- Action buttons (Desktop) -->
     <div class="hidden md:flex items-center gap-4">
-        <a href="/shop" class="btn btn-primary h-[44px] px-6">New Order</a>
-        <a href="/quotes/new" class="btn btn-secondary border border-[var(--border)] h-[44px] px-6">Request Quote</a>
+        <a href="<?= app_url('/shop') ?>" class="btn btn-primary h-[44px] px-6">New Order</a>
+        <a href="<?= app_url('/quotes/new') ?>" class="btn btn-secondary border border-[var(--border)] h-[44px] px-6">Request Quote</a>
     </div>
 </div>
 
@@ -61,7 +61,7 @@
         <div class="bg-[var(--card)] border border-[var(--border)] rounded-[16px] overflow-hidden">
             <div class="p-6 border-b border-[var(--border)] flex items-center justify-between">
                 <h2 class="text-xl font-bold font-manrope">Recent Orders</h2>
-                <a href="/account/orders" class="text-sm text-[var(--gold)] hover:text-white transition-colors">View All</a>
+                <a href="<?= app_url('/account/orders') ?>" class="text-sm text-[var(--gold)] hover:text-white transition-colors">View All</a>
             </div>
             
             <div class="overflow-x-auto">
@@ -107,7 +107,7 @@
                     <h2 class="text-xl font-bold font-manrope">Pending Quotes</h2>
                     <span class="bg-[var(--gold)] text-[#111] text-xs font-bold px-2 py-0.5 rounded-full"><?= count($pending_quotes) ?></span>
                 </div>
-                <a href="/account/quotes" class="text-sm text-[var(--gold)] hover:text-white transition-colors">View All</a>
+                <a href="<?= app_url('/account/quotes') ?>" class="text-sm text-[var(--gold)] hover:text-white transition-colors">View All</a>
             </div>
             
             <div class="divide-y divide-[var(--border)]">
@@ -124,7 +124,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-sm text-[var(--text-secondary)] mr-2"><?= $quote['status'] ?></span>
-                        <a href="/account/quotes/<?= $quote['quote_number'] ?>" class="btn btn-secondary border border-[var(--border)] px-4 py-2 text-sm h-auto">Review</a>
+                        <a href="<?= app_url('/account/quotes/') ?><?= $quote['quote_number'] ?>" class="btn btn-secondary border border-[var(--border)] px-4 py-2 text-sm h-auto">Review</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -141,14 +141,23 @@
             <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--gold)]/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[var(--gold)]/10 transition-colors"></div>
             
             <h3 class="text-lg font-bold font-manrope mb-4 relative z-10">Your Account Manager</h3>
+            <?php if ($account_manager): ?>
             <div class="flex items-center gap-4 mb-6 relative z-10">
-                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop" alt="Sarah Jenkins" class="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]">
+                <?php if ($account_manager['avatar']): ?>
+                <img src="<?= htmlspecialchars($account_manager['avatar']) ?>" alt="<?= htmlspecialchars($account_manager['name']) ?>" class="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]">
+                <?php else: ?>
+                <div class="w-14 h-14 rounded-full bg-[var(--gold)]/20 border-2 border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] font-bold text-lg"><?= strtoupper(substr($account_manager['name'], 0, 1)) ?></div>
+                <?php endif; ?>
                 <div>
-                    <p class="font-medium">Sarah Jenkins</p>
-                    <p class="text-sm text-[var(--text-muted)]">sarah@marigoldsignatureng.com</p>
+                    <p class="font-medium"><?= htmlspecialchars($account_manager['name']) ?></p>
+                    <p class="text-sm text-[var(--text-muted)]"><?= htmlspecialchars($account_manager['email']) ?></p>
                 </div>
             </div>
-            <a href="mailto:sarah@marigoldsignatureng.com" class="btn btn-secondary border border-[var(--border)] w-full relative z-10 bg-[var(--bg-primary)]">Contact Sarah</a>
+            <a href="mailto:<?= htmlspecialchars($account_manager['email']) ?>" class="btn btn-secondary border border-[var(--border)] w-full relative z-10 bg-[var(--bg-primary)]">Contact <?= htmlspecialchars(explode(' ', $account_manager['name'])[0]) ?></a>
+            <?php else: ?>
+            <p class="text-sm text-[var(--text-muted)] mb-6 relative z-10">A dedicated Marigold Signature specialist will be assigned to your account shortly. For immediate help, reach our support team.</p>
+            <a href="mailto:support@marigoldsignatureng.com" class="btn btn-secondary border border-[var(--border)] w-full relative z-10 bg-[var(--bg-primary)]">Contact Support</a>
+            <?php endif; ?>
         </div>
 
         <!-- Mobile Carousel: Recommended Products -->

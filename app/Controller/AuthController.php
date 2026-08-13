@@ -19,14 +19,16 @@ class AuthController extends Controller
             $this->redirect('/account/dashboard');
         }
 
-        $this->view('auth/login', [
+        \App\Core\View::renderTemplate('auth/login', 'auth', [
+            'title' => 'Login | Marigold Signature',
             'csrf_token' => CSRF::field()
         ]);
     }
 
     public function showRegister()
     {
-        $this->view('auth/register', [
+        \App\Core\View::renderTemplate('auth/register', 'auth', [
+            'title' => 'Register | Marigold Signature',
             'csrf_token' => CSRF::field()
         ]);
     }
@@ -99,7 +101,8 @@ class AuthController extends Controller
 
     public function showForgotPassword()
     {
-        $this->view('auth/forgot-password', [
+        \App\Core\View::renderTemplate('auth/forgot-password', 'auth', [
+            'title' => 'Forgot Password | Marigold Signature',
             'csrf_token' => CSRF::field()
         ]);
     }
@@ -145,7 +148,8 @@ class AuthController extends Controller
     {
         $token = trim($_GET['token'] ?? '');
 
-        $this->view('auth/reset-password', [
+        \App\Core\View::renderTemplate('auth/reset-password', 'auth', [
+            'title' => 'Reset Password | Marigold Signature',
             'csrf_token' => CSRF::field(),
             'token' => preg_match('/^[a-f0-9]{64}$/i', $token) ? $token : ''
         ]);

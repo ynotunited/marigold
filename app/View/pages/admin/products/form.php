@@ -1,7 +1,7 @@
 <?php $isEdit = !empty($product); ?>
 
 <div class="flex items-center gap-4 mb-6">
-    <a href="/admin/products" class="text-[var(--text-secondary)] hover:text-white transition-colors">
+    <a href="<?= app_url('/admin/products') ?>" class="text-[var(--text-secondary)] hover:text-white transition-colors">
         <i data-lucide="arrow-left" class="w-5 h-5"></i>
     </a>
     <div>
@@ -9,7 +9,7 @@
         <p class="text-sm text-[var(--text-secondary)] mt-0.5"><?= $isEdit ? 'SKU: ' . $product['sku'] : 'Fill in the details below to create a new product' ?></p>
     </div>
     <div class="ml-auto flex items-center gap-3">
-        <button type="button" class="btn btn-secondary border border-[var(--border)] h-9 px-4 text-sm bg-[var(--surface)]">Save Draft</button>
+        <button type="submit" form="product-form" name="save_draft" value="1" class="btn btn-secondary border border-[var(--border)] h-9 px-4 text-sm bg-[var(--surface)]">Save Draft</button>
         <button type="submit" form="product-form" class="btn btn-primary h-9 px-6 text-sm">Publish Product</button>
     </div>
 </div>
@@ -78,8 +78,9 @@
                                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Category</label>
                                 <select name="category_id" class="input-field w-full">
                                     <option value="">Select Category</option>
-                                    <option selected>Stationery</option><option>Drinkware</option><option>Tech</option>
-                                    <option>Apparel</option><option>Bags</option><option>Accessories</option>
+                                    <?php foreach ($categories ?? [] as $cat): ?>
+                                    <option value="<?= $cat['id'] ?>" <?= (int)($product['category_id'] ?? 0) === (int)$cat['id'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -89,15 +90,30 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Full Description (Rich Text)</label>
-                            <div class="border border-[var(--border)] rounded-[10px] overflow-hidden">
+                            <div x-data="richText()" class="border border-[var(--border)] rounded-[10px] overflow-hidden">
                                 <div class="bg-[var(--surface)] border-b border-[var(--border)] flex items-center gap-1 p-2 flex-wrap">
-                                    <?php foreach (['bold', 'italic', 'underline', 'list', 'link'] as $btn): ?>
-                                    <button type="button" class="w-8 h-7 rounded-[4px] hover:bg-[var(--card)] text-[var(--text-secondary)] hover:text-white transition-colors flex items-center justify-center">
-                                        <i data-lucide="<?= $btn ?>" class="w-3.5 h-3.5"></i>
+                                    <button type="button" data-cmd="bold" @click.prevent="cmd('bold')" title="Bold" class="rte-btn">
+                                        <i data-lucide="bold" class="w-3.5 h-3.5"></i>
                                     </button>
-                                    <?php endforeach; ?>
+                                    <button type="button" data-cmd="italic" @click.prevent="cmd('italic')" title="Italic" class="rte-btn">
+                                        <i data-lucide="italic" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <button type="button" data-cmd="underline" @click.prevent="cmd('underline')" title="Underline" class="rte-btn">
+                                        <i data-lucide="underline" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <span class="w-px h-5 bg-[var(--border)] mx-1"></span>
+                                    <button type="button" data-cmd="insertUnorderedList" @click.prevent="cmd('insertUnorderedList')" title="Bullet list" class="rte-btn">
+                                        <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <button type="button" data-cmd="link" @click.prevent="link()" title="Insert link" class="rte-btn">
+                                        <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                                    </button>
                                 </div>
-                                <textarea name="description" rows="8" placeholder="Detailed product description…" class="w-full bg-transparent p-4 text-sm focus:outline-none resize-none"></textarea>
+                                <div contenteditable="true" x-ref="editable" @input="sync()" x-init="init()"
+                                     class="w-full bg-transparent p-4 text-sm focus:outline-none min-h-[180px] leading-relaxed rte-body">
+                                    <?= $product['description'] ?? '' ?>
+                                </div>
+                                <input type="hidden" name="description" x-ref="descriptionInput">
                             </div>
                         </div>
                     </div>
@@ -108,9 +124,15 @@
                         <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Materials</label><input type="text" name="materials" placeholder="e.g. Genuine Leather" class="input-field w-full text-sm"></div>
                         <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Dimensions</label><input type="text" name="dimensions" placeholder="e.g. 14.8 × 21 cm" class="input-field w-full text-sm"></div>
                         <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Weight</label><input type="text" name="weight" placeholder="e.g. 320g" class="input-field w-full text-sm"></div>
-                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">MOQ (Min. Order)</label><input type="number" name="moq" value="10" min="1" class="input-field w-full text-sm"></div>
-                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Max Quantity</label><input type="number" name="max_quantity" placeholder="No limit" class="input-field w-full text-sm"></div>
-                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Brand</label><select name="brand_id" class="input-field w-full text-sm"><option>Custom</option><option>Moleskine</option><option>Thermos</option><option>Anker</option></select></div>
+                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">MOQ (Min. Order)</label><input type="number" name="moq" value="<?= $product['minimum_order_quantity'] ?? 10 ?>" min="1" class="input-field w-full text-sm"></div>
+                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Max Quantity</label><input type="number" name="max_quantity" value="<?= $product['maximum_order_quantity'] ?? '' ?>" placeholder="No limit" class="input-field w-full text-sm"></div>
+                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Brand</label><select name="brand_id" class="input-field w-full text-sm">
+                            <option value="">Custom / No Brand</option>
+                            <?php foreach ($brands ?? [] as $b): ?>
+                            <option value="<?= $b['id'] ?>" <?= (int)($product['brand_id'] ?? 0) === (int)$b['id'] ? 'selected' : '' ?>><?= htmlspecialchars($b['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select></div>
+                        <div><label class="block text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Badge (e.g. Bestseller)</label><input type="text" name="badge" value="<?= htmlspecialchars($product['badge'] ?? '') ?>" placeholder="e.g. Bestseller" class="input-field w-full text-sm"></div>
                     </div>
                 </div>
             </div>
@@ -177,116 +199,133 @@
                         <input type="number" name="stock" value="<?= $product['stock'] ?? '' ?>" placeholder="0" min="0" class="input-field w-full">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Stock Status</label>
-                        <select name="stock_status" class="input-field w-full">
-                            <option value="in_stock">In Stock</option>
-                            <option value="out_of_stock">Out of Stock</option>
-                            <option value="on_backorder">On Backorder</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Low Stock Alert Threshold</label>
-                        <input type="number" name="low_stock_threshold" value="10" min="0" class="input-field w-full">
-                        <p class="text-xs text-[var(--text-muted)] mt-1">You'll receive an alert when stock falls below this number.</p>
-                    </div>
-                    <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Availability</label>
                         <select name="availability" class="input-field w-full">
-                            <option>Available for order</option>
-                            <option>In-store pickup only</option>
-                            <option>Pre-order only</option>
+                            <?php
+                            $avail = $product['availability'] ?? 'in_stock';
+                            $opts = [
+                                'in_stock'     => 'Available for order',
+                                'store_pickup' => 'In-store pickup only',
+                                'preorder'     => 'Pre-order only',
+                            ];
+                            foreach ($opts as $val => $label): ?>
+                                <option value="<?= $val ?>" <?= $avail === $val ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
             </div>
 
             <!-- ========== TAB 4: MEDIA ========== -->
-            <div x-show="tab === 'media'" style="display:none" x-data="mediaUpload()" class="space-y-6">
+            <div x-show="tab === 'media'" style="display:none" class="space-y-6"
+                 x-data="mediaUpload(<?= htmlspecialchars(json_encode([
+                     'featured' => $product['image'] ?? '',
+                     'gallery'  => $product['images'] ?? [],
+                 ]), ENT_QUOTES, 'UTF-8') ?>)">
                 <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
                     <h2 class="text-lg font-bold font-manrope mb-2">Featured Image</h2>
                     <p class="text-sm text-[var(--text-secondary)] mb-6">The main image that appears on listing cards.</p>
-                    <div class="border-2 border-dashed border-[var(--border)] rounded-[14px] p-10 text-center hover:border-[var(--gold)]/50 transition-colors cursor-pointer group" @click="$refs.featuredInput.click()">
-                        <i data-lucide="image-plus" class="w-10 h-10 text-[var(--text-muted)] group-hover:text-[var(--gold)] transition-colors mx-auto mb-3"></i>
-                        <p class="font-medium text-sm mb-1">Click or drag to upload</p>
-                        <p class="text-xs text-[var(--text-muted)]">JPG, PNG, WebP — Min 800×800px recommended</p>
-                        <input x-ref="featuredInput" type="file" name="featured_image" accept="image/*" class="sr-only">
+                    <div class="flex flex-col sm:flex-row gap-5 items-start">
+                        <div class="w-52 aspect-square rounded-[14px] overflow-hidden border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center text-[var(--text-muted)]">
+                            <template x-if="featuredPreview">
+                                <img :src="featuredPreview" class="w-full h-full object-cover" alt="Featured image preview">
+                            </template>
+                            <template x-if="!featuredPreview">
+                                <div class="text-center p-4">
+                                    <i data-lucide="image-plus" class="w-8 h-8 mx-auto mb-2"></i>
+                                    <p class="text-xs">No image yet</p>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="flex-1">
+                            <div class="border-2 border-dashed border-[var(--border)] rounded-[14px] p-8 text-center hover:border-[var(--gold)]/50 transition-colors cursor-pointer group" @click="pickFeatured()">
+                                <p class="font-medium text-sm mb-1">Click to upload or replace</p>
+                                <p class="text-xs text-[var(--text-muted)]">JPG, PNG, WebP — up to 5MB</p>
+                            </div>
+                            <button type="button" x-show="featuredPreview" @click="featuredPreview = ''; $refs.featuredInput.value = ''; $refs.imageUrl.value = ''" class="mt-3 text-xs text-[var(--danger)]/70 hover:text-[var(--danger)] transition-colors">Remove featured image</button>
+                            <input x-ref="featuredInput" type="file" name="featured_image" accept="image/*" @change="onFeaturedSelected($event)" class="sr-only">
+                        </div>
                     </div>
+                    <input x-ref="imageUrl" type="hidden" name="image_url" value="<?= htmlspecialchars($product['image'] ?? '') ?>">
                 </div>
                 <div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
                     <h2 class="text-lg font-bold font-manrope mb-2">Image Gallery</h2>
-                    <p class="text-sm text-[var(--text-secondary)] mb-6">Add multiple images. Drag to reorder. WebP versions are generated automatically.</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4" id="gallery-grid">
-                        <?php if ($isEdit): foreach ($product['images'] ?? [] as $img): ?>
-                        <div class="aspect-square rounded-[10px] overflow-hidden border border-[var(--border)] relative group cursor-grab">
-                            <img src="<?= $img ?>" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                                <button type="button" class="w-8 h-8 rounded-full bg-[var(--danger)] text-white flex items-center justify-center"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <p class="text-sm text-[var(--text-secondary)] mb-6">Add multiple images — a preview appears instantly. The first image is used as the card image.</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                        <template x-for="(g, i) in gallery" :key="i">
+                            <div class="aspect-square rounded-[10px] overflow-hidden border border-[var(--border)] relative group">
+                                <img :src="g.src" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button type="button" @click="removeGallery(i)" class="w-8 h-8 rounded-full bg-[var(--danger)] text-white flex items-center justify-center" title="Remove">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <?php endforeach; endif; ?>
-                        <!-- Upload slot -->
-                        <div class="aspect-square rounded-[10px] border-2 border-dashed border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--gold)]/50 hover:text-[var(--gold)] transition-colors cursor-pointer" @click="$refs.galleryInput.click()">
+                        </template>
+                        <div class="aspect-square rounded-[10px] border-2 border-dashed border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--gold)]/50 hover:text-[var(--gold)] transition-colors cursor-pointer" @click="pickGallery()">
                             <i data-lucide="plus" class="w-8 h-8"></i>
                         </div>
                     </div>
-                    <input x-ref="galleryInput" type="file" name="gallery[]" accept="image/*" multiple class="sr-only">
+                    <input x-ref="galleryInput" type="file" name="gallery[]" accept="image/*" multiple @change="onGallerySelected($event)" class="sr-only">
+                    <p class="text-xs text-[var(--text-muted)]">New uploads are appended to the gallery when you save. Removing a preview here only hides it for this session.</p>
                 </div>
             </div>
 
             <!-- ========== TAB 5: SEO ========== -->
-            <div x-show="tab === 'seo'" style="display:none" class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
+            <div x-show="tab === 'seo'" style="display:none" x-data="seoFields()" class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
                 <h2 class="text-lg font-bold font-manrope mb-6">SEO Settings</h2>
+                <p class="text-xs text-[var(--text-muted)] -mt-4 mb-6">Leave a field blank and it will be generated automatically from the product name and description when you save.</p>
                 <div class="space-y-5">
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Meta Title</label>
-                        <input type="text" name="meta_title" placeholder="60 characters recommended" maxlength="80" class="input-field w-full">
+                        <input type="text" name="meta_title" x-model="metaTitle" value="<?= htmlspecialchars($product['meta_title'] ?? '') ?>" placeholder="Auto-generated: Product Name | Marigold Signature" maxlength="80" class="input-field w-full">
+                        <p class="text-xs text-[var(--text-muted)] mt-1"><span x-text="metaTitle.length"></span>/80 characters</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Meta Description</label>
-                        <textarea name="meta_description" rows="3" placeholder="160 characters recommended" maxlength="200" class="input-field w-full resize-none text-sm"></textarea>
+                        <textarea name="meta_description" x-model="metaDesc" rows="3" value="<?= htmlspecialchars($product['meta_description'] ?? '') ?>" placeholder="Auto-generated from the short description" maxlength="200" class="input-field w-full resize-none text-sm"></textarea>
+                        <p class="text-xs text-[var(--text-muted)] mt-1"><span x-text="metaDesc.length"></span>/200 characters</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Keywords</label>
-                        <input type="text" name="keywords" placeholder="corporate gifts, branded notebooks, premium stationery…" class="input-field w-full text-sm">
+                        <input type="text" name="keywords" value="<?= htmlspecialchars($product['keywords'] ?? '') ?>" placeholder="corporate gifts, branded notebooks, premium stationery…" class="input-field w-full text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Canonical URL</label>
-                        <input type="url" name="canonical_url" placeholder="https://marigoldsignatureng.com/shop/product-name" class="input-field w-full text-sm">
+                        <input type="url" name="canonical_url" value="<?= htmlspecialchars($product['canonical_url'] ?? '') ?>" placeholder="https://marigoldsignatureng.com/shop/product-name" class="input-field w-full text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Open Graph Image</label>
                         <div class="flex items-center gap-3">
-                            <input type="url" name="og_image" placeholder="Image URL or upload…" class="input-field flex-grow text-sm">
+                            <input type="url" name="og_image" value="<?= htmlspecialchars($product['og_image'] ?? '') ?>" placeholder="Image URL or upload…" class="input-field flex-grow text-sm">
                             <button type="button" class="btn btn-secondary border border-[var(--border)] h-10 px-4 text-sm bg-[var(--surface)] shrink-0">Browse</button>
                         </div>
                     </div>
                 </div>
-                <!-- Preview -->
+                <!-- Live preview -->
                 <div class="mt-8 p-4 bg-white rounded-[10px]">
                     <p class="text-[10px] text-gray-400 mb-2 font-mono">Search Result Preview</p>
-                    <p class="text-blue-700 text-sm font-medium truncate">Executive Leather Notebook | Marigold Signature</p>
-                    <p class="text-green-700 text-xs">marigoldsignatureng.com › shop › executive-leather-notebook</p>
-                    <p class="text-gray-600 text-xs mt-0.5 line-clamp-2">Premium corporate gifting with this executive leather set. Perfect for onboarding, client appreciation, or board meetings.</p>
+                    <p class="text-blue-700 text-sm font-medium truncate" x-text="metaTitle || '<?= htmlspecialchars(($product['name'] ?? 'Product Name') . ' | Marigold Signature', ENT_QUOTES) ?>'"></p>
+                    <p class="text-green-700 text-xs">marigoldsignatureng.com › shop › <?= htmlspecialchars($product['slug'] ?? strtolower(str_replace(' ', '-', $product['name'] ?? 'product-name'))) ?></p>
+                    <p class="text-gray-600 text-xs mt-0.5 line-clamp-2" x-text="metaDesc || 'Auto-generated from the product description.'"></p>
                 </div>
             </div>
 
             <!-- ========== TAB 6: RELATED ========== -->
             <div x-show="tab === 'related'" style="display:none" class="bg-[#111] border border-[var(--border)] rounded-[16px] p-6">
-                <h2 class="text-lg font-bold font-manrope mb-6">Related Products</h2>
-                <?php foreach (['Cross-sell' => 'Shown at checkout', 'Upsell' => 'Shown on product page', 'Accessories' => 'Complementary items'] as $type => $desc): ?>
-                <div class="mb-8">
-                    <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold font-manrope mb-2">Related Products</h2>
+                <p class="text-sm text-[var(--text-secondary)]">Related products are chosen automatically on the storefront — no manual setup required.</p>
+                <div class="mt-6 space-y-5">
+                    <?php foreach (['Same category first' => 'Products in the same category are shown first, most relevant first.', 'Same brand next' => 'If fewer than four exist in the category, same-brand items fill the row.', 'Catalogue fill' => 'Any remaining slots are filled from the rest of the catalogue by price similarity.'] as $title => $desc): ?>
+                    <div class="flex items-start gap-4 p-4 rounded-[10px] border border-[var(--border)] bg-[var(--surface)]">
+                        <div class="w-8 h-8 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
                         <div>
-                            <h3 class="font-semibold"><?= $type ?></h3>
-                            <p class="text-xs text-[var(--text-secondary)]"><?= $desc ?></p>
+                            <p class="font-semibold text-sm"><?= $title ?></p>
+                            <p class="text-xs text-[var(--text-secondary)] mt-0.5"><?= $desc ?></p>
                         </div>
                     </div>
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]"></i>
-                        <input type="text" placeholder="Search and select products…" class="input-field w-full pl-10 text-sm">
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
             </div>
 
             <!-- ========== TAB 7: PUBLISHING ========== -->
@@ -296,7 +335,7 @@
                     <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Status</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-data="{ status: 'published' }">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-data="{ status: '<?= strtolower($product['status'] ?? 'published') ?>' }">
                                 <?php foreach (['published' => 'Published', 'draft' => 'Draft', 'scheduled' => 'Scheduled', 'hidden' => 'Hidden', 'archived' => 'Archived'] as $val => $label): ?>
                                 <label class="flex items-center gap-3 p-3 rounded-[10px] border cursor-pointer transition-colors"
                                        :class="status === '<?= $val ?>' ? 'border-[var(--gold)]/50 bg-[var(--gold)]/5' : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--gold)]/30'">
@@ -309,10 +348,17 @@
                                 </label>
                                 <?php endforeach; ?>
                             </div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1.5">Scheduled posts are saved as drafts until published from the list.</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Publish Date (for Scheduled)</label>
-                            <input type="datetime-local" name="publish_at" class="input-field w-full text-sm">
+                            <div class="flex items-center justify-between">
+                                <div><p class="font-medium text-sm">Feature on Homepage</p><p class="text-xs text-[var(--text-secondary)]">Show this product in the home "Featured Gifts" grid</p></div>
+                                <label class="relative cursor-pointer shrink-0">
+                                    <input type="checkbox" name="is_featured" value="1" <?= !empty($product['is_featured']) ? 'checked' : '' ?> class="sr-only peer">
+                                    <div class="w-11 h-6 bg-[var(--surface)] rounded-full peer-checked:bg-[var(--gold)] transition-colors border border-[var(--border)]"></div>
+                                    <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow"></div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -330,9 +376,89 @@
 </div>
 
 <script>
-function mediaUpload() { return {}; }
+/* Rich text toolbar — operates on the contenteditable body, syncs to the
+   hidden `description` input which is what gets saved. */
+function richText() {
+    return {
+        init() {
+            this.$refs.descriptionInput.value = this.$refs.editable.innerHTML;
+        },
+        sync() {
+            this.$refs.descriptionInput.value = this.$refs.editable.innerHTML;
+        },
+        cmd(cmd) {
+            this.$refs.editable.focus();
+            document.execCommand(cmd, false, null);
+            this.sync();
+        },
+        link() {
+            const url = window.prompt('Enter the link URL (https://...)');
+            if (!url) return;
+            this.$refs.editable.focus();
+            document.execCommand('createLink', false, url);
+            this.sync();
+        },
+    };
+}
+
+/* Media tab — live previews for featured + gallery uploads. */
+function mediaUpload(config) {
+    config = config || {};
+    const normalize = (src) => (src && !/^(https?:|data:|blob:)/.test(src) ? appUrl(src) : src);
+    return {
+        featuredPreview: config.featured ? normalize(config.featured) : '',
+        gallery: (config.gallery || []).map((src) => ({ src: normalize(src) })),
+        pickFeatured() { this.$refs.featuredInput.click(); },
+        onFeaturedSelected(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => { this.featuredPreview = ev.target.result; };
+            reader.readAsDataURL(file);
+        },
+        pickGallery() { this.$refs.galleryInput.click(); },
+        onGallerySelected(e) {
+            const files = Array.from(e.target.files || []);
+            files.forEach((file) => {
+                if (!/^image\//.test(file.type)) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => { this.gallery.push({ src: ev.target.result }); };
+                reader.readAsDataURL(file);
+            });
+            e.target.value = '';
+        },
+        removeGallery(i) { this.gallery.splice(i, 1); },
+    };
+}
+
+/* SEO tab — character counts + live search preview. */
+function seoFields() {
+    return {
+        metaTitle: '',
+        metaDesc: '',
+        init() {
+            const t = this.$root.querySelector('input[name="meta_title"]');
+            const d = this.$root.querySelector('textarea[name="meta_description"]');
+            this.metaTitle = t ? t.value : '';
+            this.metaDesc = d ? d.value : '';
+        },
+    };
+}
+
+/* Slug auto-generation from the product name. */
+let slugTouched = false;
 function generateSlug(v) {
     const slug = v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    // Would update slug input here
+    const slugInput = document.querySelector('input[name="slug"]');
+    if (slugInput && !slugTouched) {
+        slugInput.value = slug;
+    }
 }
+document.addEventListener('DOMContentLoaded', function () {
+    const slugInput = document.querySelector('input[name="slug"]');
+    if (slugInput) {
+        slugInput.addEventListener('input', function () { slugTouched = slugInput.value !== ''; });
+        slugInput.addEventListener('blur', function () { if (slugInput.value === '') slugTouched = false; });
+    }
+});
 </script>

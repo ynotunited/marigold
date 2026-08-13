@@ -2,47 +2,112 @@
 namespace App\Controller\Admin;
 
 use App\Core\Controller;
+use App\Core\Model;
 use App\Core\View;
 
 class AdminContentController extends Controller
 {
     public function testimonials()
     {
-        $testimonials = [
-            ['id' => 1, 'name' => 'John Doe', 'company' => 'Acme Corp', 'rating' => 5, 'featured' => true, 'status' => 'Active', 'date' => '2026-05-12'],
-            ['id' => 2, 'name' => 'Jane Smith', 'company' => 'TechFlow', 'rating' => 4, 'featured' => false, 'status' => 'Active', 'date' => '2026-06-01'],
-            ['id' => 3, 'name' => 'Michael Brown', 'company' => 'Globex', 'rating' => 5, 'featured' => true, 'status' => 'Pending', 'date' => '2026-06-20'],
-        ];
-        return View::renderTemplate('pages/admin/content/testimonials', 'admin', ['title' => 'Testimonials | Admin', 'testimonials' => $testimonials]);
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT id, name, company, rating, featured, status, created_at
+            FROM testimonials
+            ORDER BY created_at DESC
+        ")->fetchAll();
+
+        $testimonials = [];
+        foreach ($rows as $t) {
+            $testimonials[] = [
+                'id'       => $t['id'],
+                'name'     => $t['name'],
+                'company'  => $t['company'] ?: '—',
+                'rating'   => (int)$t['rating'],
+                'featured' => (bool)$t['featured'],
+                'status'   => ucfirst($t['status']),
+                'date'     => date('Y-m-d', strtotime($t['created_at'])),
+            ];
+        }
+
+        return View::renderTemplate('pages/admin/content/testimonials', 'admin', [
+            'title' => 'Testimonials | Admin',
+            'testimonials' => $testimonials,
+        ]);
     }
 
     public function faqs()
     {
-        $faqs = [
-            ['id' => 1, 'category' => 'Shipping', 'question' => 'How long does delivery take?', 'sort' => 1, 'status' => 'Active'],
-            ['id' => 2, 'category' => 'Shipping', 'question' => 'Do you ship internationally?', 'sort' => 2, 'status' => 'Active'],
-            ['id' => 3, 'category' => 'Corporate', 'question' => 'What is the minimum order quantity for custom branding?', 'sort' => 1, 'status' => 'Active'],
-            ['id' => 4, 'category' => 'Corporate', 'question' => 'Can I get a sample before ordering?', 'sort' => 2, 'status' => 'Draft'],
-        ];
-        return View::renderTemplate('pages/admin/content/faqs', 'admin', ['title' => 'FAQs | Admin', 'faqs' => $faqs]);
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT id, category, question, sort_order, status
+            FROM faqs
+            ORDER BY sort_order ASC, id ASC
+        ")->fetchAll();
+
+        $faqs = [];
+        foreach ($rows as $f) {
+            $faqs[] = [
+                'id'       => $f['id'],
+                'category' => $f['category'] ?: 'General',
+                'question' => $f['question'],
+                'sort'     => (int)$f['sort_order'],
+                'status'   => ucfirst($f['status']),
+            ];
+        }
+
+        return View::renderTemplate('pages/admin/content/faqs', 'admin', [
+            'title' => 'FAQs | Admin',
+            'faqs' => $faqs,
+        ]);
     }
 
     public function announcements()
     {
-        $announcements = [
-            ['id' => 1, 'message' => 'Free shipping on all corporate orders over ₦500,000!', 'priority' => 'High', 'status' => 'Active', 'schedule' => 'Always'],
-            ['id' => 2, 'message' => 'Holiday discount: Use code XMAS26 for 10% off.', 'priority' => 'Medium', 'status' => 'Scheduled', 'schedule' => 'Dec 1 - Dec 25'],
-            ['id' => 3, 'message' => 'We are experiencing slight delivery delays due to weather.', 'priority' => 'Urgent', 'status' => 'Draft', 'schedule' => 'Manual'],
-        ];
-        return View::renderTemplate('pages/admin/content/announcements', 'admin', ['title' => 'Announcements | Admin', 'announcements' => $announcements]);
+        $db = Model::getDB();
+
+        $rows = $db->query("
+            SELECT id, message, priority, schedule_start, schedule_end, status
+            FROM announcements
+            ORDER BY priority DESC, created_at DESC
+        ")->fetchAll();
+
+        $announcements = [];
+        foreach ($rows as $a) {
+            $announcements[] = [
+                'id'       => $a['id'],
+                'message'  => $a['message'],
+                'priority' => $this->priorityLabel((int)$a['priority']),
+                'status'   => ucfirst($a['status']),
+                'schedule' => $a['schedule_start'] && $a['schedule_end']
+                    ? date('M j', strtotime($a['schedule_start'])) . ' - ' . date('M j', strtotime($a['schedule_end']))
+                    : 'Always',
+            ];
+        }
+
+        return View::renderTemplate('pages/admin/content/announcements', 'admin', [
+            'title' => 'Announcements | Admin',
+            'announcements' => $announcements,
+        ]);
     }
 
     public function popups()
     {
-        $popups = [
-            ['id' => 1, 'title' => 'Join our Newsletter', 'trigger' => 'Exit Intent', 'devices' => 'All', 'status' => 'Active', 'views' => 4500, 'conversions' => 120],
-            ['id' => 2, 'title' => 'New Corporate Gifting Guide', 'trigger' => 'Time Delay (5s)', 'devices' => 'Desktop', 'status' => 'Draft', 'views' => 0, 'conversions' => 0],
-        ];
-        return View::renderTemplate('pages/admin/content/popups', 'admin', ['title' => 'Popups | Admin', 'popups' => $popups]);
+        // No popups table in the schema — return empty list until feature exists.
+        $popups = [];
+
+        return View::renderTemplate('pages/admin/content/popups', 'admin', [
+            'title' => 'Popups | Admin',
+            'popups' => $popups,
+        ]);
+    }
+
+    private function priorityLabel(int $priority): string
+    {
+        if ($priority >= 10) return 'Urgent';
+        if ($priority >= 5) return 'High';
+        if ($priority >= 2) return 'Medium';
+        return 'Low';
     }
 }

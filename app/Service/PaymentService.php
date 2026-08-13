@@ -170,6 +170,11 @@ class PaymentService
             throw new \InvalidArgumentException('Payment intent has no ledger history.', 409);
         }
         if ($current === 'captured') {
+            $this->syncOrderPaymentStatus(
+                (int) $intent['order_id'],
+                'captured',
+                (string) $intent['gateway_ref']
+            );
             return $this->completeReplay($idempotencyKey, [
                 'intent_id' => $intentId,
                 'status' => 'captured',
@@ -203,6 +208,15 @@ class PaymentService
             }
 
             Logger::info("Intent #{$intentId} captured via API reconcile", 'payment');
+
+            // Mirror the payment onto the attached order, exactly like the
+            // webhook path does — an API reconcile must never leave the order
+            // stuck in 'pending'.
+            $this->syncOrderPaymentStatus(
+                (int) $intent['order_id'],
+                'captured',
+                (string) $intent['gateway_ref']
+            );
 
             return $this->completeReplay($idempotencyKey, [
                 'intent_id' => $intentId,
