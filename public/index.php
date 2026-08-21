@@ -122,9 +122,21 @@ date_default_timezone_set(\App\Core\Timezone::forCurrentUser());
 // Start Session
 Session::start();
 
-// Currency — store selection from query param or detect from request
+// Currency — persist via cookie (works even when sessions fail on shared hosting)
 if (isset($_GET['currency']) && in_array(strtoupper($_GET['currency']), \App\Core\Money::supportedCodes(), true)) {
-    \App\Core\Session::set('currency', strtoupper($_GET['currency']));
+    $cur = strtoupper($_GET['currency']);
+    setcookie('ms_currency', $cur, [
+        'expires'  => time() + 86400 * 365,
+        'path'     => '/',
+        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly'  => false,
+        'samesite' => 'Lax',
+    ]);
+    $_COOKIE['ms_currency'] = $cur;
+    \App\Core\Session::set('currency', $cur);
+} elseif (!\App\Core\Session::get('currency') && isset($_COOKIE['ms_currency'])
+    && in_array(strtoupper($_COOKIE['ms_currency']), \App\Core\Money::supportedCodes(), true)) {
+    \App\Core\Session::set('currency', strtoupper($_COOKIE['ms_currency']));
 }
 
 // HTML pages are never cached by the browser: the storefront embeds the live

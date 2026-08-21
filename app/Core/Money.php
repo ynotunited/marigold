@@ -126,13 +126,28 @@ class Money
     }
 
     /**
+     * Resolve the current display currency from session, cookie, or detection.
+     */
+    public static function currentCode(): string
+    {
+        $code = \App\Core\Session::get('currency');
+        if ($code && in_array(strtoupper($code), self::supportedCodes(), true)) {
+            return strtoupper($code);
+        }
+        $cookie = $_COOKIE['ms_currency'] ?? null;
+        if ($cookie && in_array(strtoupper($cookie), self::supportedCodes(), true)) {
+            return strtoupper($cookie);
+        }
+        return self::BASE_CURRENCY;
+    }
+
+    /**
      * Format using the session-selected currency (or NGN fallback).
      * Convenience shorthand for customer-facing code.
      */
     public static function formatSession(float $amount): string
     {
-        $code = \App\Core\Session::get('currency') ?? self::BASE_CURRENCY;
-        return self::format($amount, $code);
+        return self::format($amount, self::currentCode());
     }
 
     /**
@@ -182,7 +197,7 @@ class Money
     public static function jsContext(): array
     {
         $detected = self::detectFromRequest();
-        $currency = Session::get('currency') ?? self::BASE_CURRENCY;
+        $currency = self::currentCode();
         $allRates = \App\Service\CurrencyService::allRates();
         $ratesToBase = [];
         foreach ($allRates as $pair => $rate) {

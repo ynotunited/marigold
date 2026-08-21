@@ -18,7 +18,7 @@ class Session
             ini_set('session.use_strict_mode', '1');
             ini_set('session.use_only_cookies', '1');
             ini_set('session.cookie_httponly', '1');
-            ini_set('session.cookie_samesite', 'Strict');
+            ini_set('session.cookie_samesite', 'Lax');
 
             $sessionPath = defined('BASE_PATH') ? BASE_PATH . '/storage/sessions' : sys_get_temp_dir();
             if (is_dir($sessionPath) && is_writable($sessionPath)) {
@@ -31,7 +31,7 @@ class Session
                 'domain' => '',
                 'secure' => $isHttps,
                 'httponly' => true,
-                'samesite' => 'Strict'
+                'samesite' => 'Lax'
             ]);
 
             session_start();

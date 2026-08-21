@@ -151,8 +151,15 @@ class CheckoutController extends Controller
         if (!in_array($currency, \App\Core\Money::supportedCodes(), true)) {
             $currency = 'NGN';
         }
-        // Store currency selection in session for persistence across requests
+        // Persist currency in session + cookie for cross-request reliability
         Session::set('currency', $currency);
+        setcookie('ms_currency', $currency, [
+            'expires'  => time() + 86400 * 365,
+            'path'     => '/',
+            'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly'  => false,
+            'samesite' => 'Lax',
+        ]);
 
         // ---- Optional account creation at checkout (auto-login) ----
         $customerId = RowSecurity::customerId();

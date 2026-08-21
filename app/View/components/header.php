@@ -69,11 +69,11 @@ $__url = function (string $path) use ($__base): string {
         <div class="nav-cta">
             <div class="cur-sel" style="position:relative;margin-right:4px">
                 <button id="curToggle" aria-label="Currency" style="background:none;border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:4px 8px;color:inherit;font-size:12px;cursor:pointer;font-weight:600;letter-spacing:.03em">
-                    <?= strtoupper(\App\Core\Session::get('currency') ?? 'NGN') ?>
+                    <?= strtoupper(\App\Core\Money::currentCode()) ?>
                 </button>
                 <div id="curMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:var(--ink,#1B1A15);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 0;min-width:80px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.3)">
                     <?php foreach (\App\Core\Money::supportedCodes() as $code): ?>
-                    <a href="?currency=<?= $code ?>" style="display:block;padding:6px 14px;text-decoration:none;font-size:12px;color:rgba(255,255,255,.75);<?= strtoupper(\App\Core\Session::get('currency') ?? 'NGN') === $code ? 'font-weight:700;color:var(--gold,#C89B3C)' : '' ?>"><?= $code ?></a>
+                    <a href="?currency=<?= $code ?>" style="display:block;padding:6px 14px;text-decoration:none;font-size:12px;color:rgba(255,255,255,.75);<?= strtoupper(\App\Core\Money::currentCode()) === $code ? 'font-weight:700;color:var(--gold,#C89B3C)' : '' ?>"><?= $code ?></a>
                     <?php endforeach; ?>
                 </div>
             </div>
