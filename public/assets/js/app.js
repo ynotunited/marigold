@@ -227,20 +227,25 @@
   function renderOrderSummary() {
     const box = $("#orderSummary");
     if (!box) return;
+    const VAT_RATE = 0.075;
     const sub = Cart.subtotal();
+    const subDisplay = convertPrice(sub);
     const rows = Cart.items.map(function (i) {
       const p = PRODUCTS.find((x) => x.id === i.id) || {};
-      return '<div class="row"><span>' + i.qty + " × " + (p.name || "Item") + "</span><span>" + naira(i.qty * i.price) + "</span></div>";
+      return '<div class="row"><span>' + i.qty + " × " + (p.name || "Item") + "</span><span>" + fmtMoney(convertPrice(i.qty * i.price)) + "</span></div>";
     }).join("");
     const fee = selectedCourierFee();
+    const feeDisplay = convertPrice(fee);
     const deliveryRow = currentFulfilment() === "delivery"
-      ? '<div class="row"><span>Courier delivery</span><span>' + (checkoutState.selectedCourier ? naira(fee) : "Rates pending") + "</span></div>"
+      ? '<div class="row"><span>Courier delivery</span><span>' + (checkoutState.selectedCourier ? fmtMoney(feeDisplay) : "Rates pending") + "</span></div>"
       : '<div class="row"><span>Office pickup</span><span>Free</span></div>';
-    const grand = sub + fee;
+    const tax = subDisplay * VAT_RATE;
+    const grand = subDisplay + tax + feeDisplay;
     box.innerHTML =
       rows +
       deliveryRow +
-      '<div class="row total"><span>Total</span><span>' + naira(grand) + "</span></div>";
+      '<div class="row"><span>VAT (7.5%)</span><span>' + fmtMoney(tax) + "</span></div>" +
+      '<div class="row total"><span>Total</span><span>' + fmtMoney(grand) + "</span></div>";
   }
 
   function toggleDeliveryPanel(on) {

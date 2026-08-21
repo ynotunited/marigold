@@ -14,7 +14,7 @@ class OrderController extends Controller
     {
         $customerId = $this->customerId();
         $stmt = Model::getDB()->prepare("
-            SELECT order_number AS id, created_at AS date, status, grand_total AS total
+            SELECT order_number AS id, created_at AS date, status, grand_total AS total, currency
             FROM orders
             WHERE customer_id = :customer_id
             ORDER BY created_at DESC
@@ -26,7 +26,7 @@ class OrderController extends Controller
             'date' => $order['date'],
             'status' => ucfirst($order['status']),
             'status_key' => $order['status'],
-            'total' => Money::formatSession((float)$order['total']),
+            'total' => Money::format((float)$order['total'], $order['currency'] ?? 'NGN'),
         ], $stmt->fetchAll());
 
         return View::renderTemplate('pages/customer/orders/index', 'customer', [
@@ -57,6 +57,8 @@ class OrderController extends Controller
             throw new \Exception('Order not found', 404);
         }
 
+        $orderCurrency = $row['currency'] ?? 'NGN';
+
         $itemsStmt = $db->prepare("
             SELECT oi.quantity, oi.price, oi.subtotal, p.name, pi.image
             FROM order_items oi
@@ -70,8 +72,8 @@ class OrderController extends Controller
         $items = array_map(fn($item) => [
             'name' => $item['name'] ?? 'Product',
             'quantity' => (int)$item['quantity'],
-            'price' => Money::formatSession((float)$item['price']),
-            'total' => Money::formatSession((float)$item['subtotal']),
+            'price' => Money::format((float)$item['price'], $orderCurrency),
+            'total' => Money::format((float)$item['subtotal'], $orderCurrency),
             'image' => $item['image'] ?: app_url('/ms-logo-icon.png'),
         ], $itemsStmt->fetchAll());
 
@@ -80,10 +82,10 @@ class OrderController extends Controller
             'id' => $row['order_number'],
             'date' => $row['created_at'],
             'status' => ucfirst($row['status']),
-            'total' => Money::formatSession((float)$row['grand_total']),
-            'subtotal' => Money::formatSession((float)$row['subtotal']),
-            'tax' => Money::formatSession((float)$row['tax']),
-            'shipping' => Money::formatSession((float)$row['shipping']),
+            'total' => Money::format((float)$row['grand_total'], $orderCurrency),
+            'subtotal' => Money::format((float)$row['subtotal'], $orderCurrency),
+            'tax' => Money::format((float)$row['tax'], $orderCurrency),
+            'shipping' => Money::format((float)$row['shipping'], $orderCurrency),
             'items' => $items,
             'shipping_address' => $address,
         ];

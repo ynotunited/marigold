@@ -260,7 +260,7 @@ $csrfToken = \App\Core\CSRF::generate();
                                                                 <small class="cstep-sub" x-show="c.delivery_eta" x-text="' — ' + c.delivery_eta"></small>
                                                             </span>
                                                         </div>
-                                                        <span class="po-price" x-text="fmtSym() + formatNaira(c.total)"></span>
+                                                        <span class="po-price" x-text="formatNaira(c.total)"></span>
                                                     </div>
                                                 </label>
                                             </template>
@@ -292,7 +292,7 @@ $csrfToken = \App\Core\CSRF::generate();
                                     </div>
                                     <div style="min-width: 0;">
                                         <p class="chk-name" x-text="p.name"></p>
-                                        <p class="chk-sku" x-text="fmtSym() + formatNaira(p.price) + ' / unit'"></p>
+                                        <p class="chk-sku" x-text="formatNaira(p.price) + ' / unit'"></p>
                                     </div>
                                     <div class="qty" style="border-radius: 999px;">
                                         <button type="button" @click="setQty(p.id, qty[p.id] - 1)" aria-label="Decrease quantity">
@@ -413,7 +413,7 @@ $csrfToken = \App\Core\CSRF::generate();
                                             <p class="chk-name" x-text="p.name"></p>
                                             <p class="chk-sku" x-text="p.sku"></p>
                                         </div>
-                                        <span class="chk-price" x-text="fmtSym() + formatNaira(p.price * qty[p.id])"></span>
+                                        <span class="chk-price" x-text="formatNaira(p.price * qty[p.id])"></span>
                                     </div>
                                 </template>
                                 <p x-show="selectedCount() === 0" class="cstep-sub" style="margin-top: 12px;">Your summary is empty.</p>
@@ -421,19 +421,19 @@ $csrfToken = \App\Core\CSRF::generate();
 
                             <div class="row">
                                 <span>Subtotal</span>
-                                <span x-text="fmtSym() + formatNaira(subtotal())"></span>
+                                <span x-text="fmtConverted(subtotal())"></span>
                             </div>
                             <div class="row">
                                 <span>Shipping</span>
-                                <span x-text="fmtSym() + formatNaira(shipping())"></span>
+                                <span x-text="shipping() > 0 ? fmtConverted(shipping()) : 'Free'"></span>
                             </div>
                             <div class="row">
-                                <span>Taxes (VAT <?= round(((float)($tax_rate ?? 0.075)) * 100, 2) ?>%)</span>
-                                <span x-text="fmtSym() + formatNaira(tax())"></span>
+                                <span>VAT (<?= round(((float)($tax_rate ?? 0.075)) * 100, 1) ?>%)</span>
+                                <span x-text="fmtConverted(tax())"></span>
                             </div>
                             <div class="row total">
                                 <span>Total</span>
-                                <span class="amt" x-text="fmtSym() + formatNaira(total())"></span>
+                                <span class="amt" x-text="fmtConverted(total())"></span>
                             </div>
 
                             <button type="submit" :disabled="processing || selectedCount() === 0" class="btn btn-gold btn-lg btn-block" style="margin-top: 22px;">
@@ -502,14 +502,16 @@ function checkoutPage() {
             return this.selected().length;
         },
         subtotal() {
-            return this.selected().reduce((s, p) => s + p.price * (this.qty[p.id] || 0), 0);
+            var ngn = this.selected().reduce((s, p) => s + p.price * (this.qty[p.id] || 0), 0);
+            return window.Marigold ? window.Marigold.convertPrice(ngn) : ngn;
         },
         selectedCourier() {
             return this.couriers.find(c => c.courier_id === this.selectedCourierId) || null;
         },
         shipping() {
             if (this.deliveryMethod === 'delivery' && this.selectedCourier()) {
-                return this.selectedCourier().total;
+                var ngn = Number(this.selectedCourier().total) || 0;
+                return window.Marigold ? window.Marigold.convertPrice(ngn) : ngn;
             }
             return 0;
         },
@@ -518,6 +520,9 @@ function checkoutPage() {
         },
         total() {
             return this.subtotal() + this.shipping() + this.tax();
+        },
+        fmtConverted(n) {
+            return window.Marigold ? window.Marigold.fmtMoney(n) : Number(n || 0).toFixed(2);
         },
         formatNaira(n) {
             return window.Marigold ? window.Marigold.fmtMoney(window.Marigold.convertPrice(n)) : Number(n.toFixed(2)).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
