@@ -67,6 +67,16 @@ $__url = function (string $path) use ($__base): string {
             <a href="<?= $__url('/contact') ?>" data-nav="contact" class="<?= $__isActive('/contact') ? 'active' : '' ?>">Contact</a>
         </div>
         <div class="nav-cta">
+            <div class="cur-sel" style="position:relative;margin-right:4px">
+                <button id="curToggle" aria-label="Currency" style="background:none;border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:4px 8px;color:inherit;font-size:12px;cursor:pointer;font-weight:600;letter-spacing:.03em">
+                    <?= strtoupper(\App\Core\Session::get('currency') ?? 'NGN') ?>
+                </button>
+                <div id="curMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:var(--ink,#1B1A15);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 0;min-width:80px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.3)">
+                    <?php foreach (\App\Core\Money::supportedCodes() as $code): ?>
+                    <a href="?currency=<?= $code ?>" style="display:block;padding:6px 14px;text-decoration:none;font-size:12px;color:rgba(255,255,255,.75);<?= strtoupper(\App\Core\Session::get('currency') ?? 'NGN') === $code ? 'font-weight:700;color:var(--gold,#C89B3C)' : '' ?>"><?= $code ?></a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
             <a class="btn btn-dark" href="<?= $__url('/shop') ?>">Browse Gifts</a>
             <a class="cart-btn" href="<?= $__url('/login') ?>" aria-label="Sign in" title="Sign in / Register">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

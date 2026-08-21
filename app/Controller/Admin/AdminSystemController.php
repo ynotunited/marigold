@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Core\Controller;
 use App\Core\Model;
 use App\Core\View;
+use App\Service\AuditService;
 
 class AdminSystemController extends Controller
 {
@@ -98,34 +99,45 @@ class AdminSystemController extends Controller
 
     public function audit()
     {
-        $db = Model::getDB();
+        $filters = [];
+        if (!empty($_GET['action']))  $filters['action'] = trim($_GET['action']);
+        if (!empty($_GET['entity']))  $filters['entity_type'] = trim($_GET['entity']);
+        if (!empty($_GET['user_id'])) $filters['user_id'] = (int)$_GET['user_id'];
+        if (!empty($_GET['from']))    $filters['date_from'] = $_GET['from'];
+        if (!empty($_GET['to']))      $filters['date_to'] = $_GET['to'];
+        if (!empty($_GET['q']))       $filters['search'] = trim($_GET['q']);
 
-        $rows = $db->query("
-            SELECT id, level, message, context_json, created_at
-            FROM logs
-            ORDER BY created_at DESC
-            LIMIT 100
-        ")->fetchAll();
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $result = AuditService::query($filters, $page, 30);
 
         $logs = [];
-        foreach ($rows as $l) {
-            $ctx = json_decode($l['context_json'], true) ?: [];
-            $module = 'System';
-            if (stripos($l['message'], 'order') !== false) $module = 'Orders';
-            elseif (stripos($l['message'], 'quote') !== false) $module = 'Quotes';
-            elseif (stripos($l['message'], 'payment') !== false) $module = 'Payments';
-            elseif (stripos($l['message'], 'user') !== false || stripos($l['message'], 'login') !== false) $module = 'Auth';
-
+        foreach ($result['rows'] as $r) {
+            $old = json_decode($r['old_values'] ?? '{}', true) ?: [];
+            $new = json_decode($r['new_values'] ?? '{}', true) ?: [];
+            $userName = trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''));
             $logs[] = [
-                'id'     => $l['id'],
-                'user'   => 'System',
-                'action' => ucfirst($l['level']) . ' — ' . $l['message'],
-                'module' => $module,
-                'record' => $ctx['ref'] ?? $ctx['order_number'] ?? $ctx['email'] ?? '—',
-                'date'   => date('M j, Y g:i A', strtotime($l['created_at'])),
+                'id'        => $r['id'],
+                'user'      => $userName ?: ($r['email'] ?? 'System'),
+                'action'    => $r['action'],
+                'module'    => ucfirst(explode('.', $r['action'])[0] ?? $r['entity_type'] ?? 'System'),
+                'entity'    => $r['entity_type'],
+                'entity_id' => $r['entity_id'],
+                'old'       => $old,
+                'new'       => $new,
+                'ip'        => $r['ip_address'] ?? '',
+                'uri'       => $r['request_uri'] ?? '',
+                'method'    => $r['request_method'] ?? '',
+                'date'      => date('M j, Y g:i A', strtotime($r['created_at'])),
             ];
         }
 
-        return View::renderTemplate('pages/admin/system/audit', 'admin', ['title' => 'Audit Logs | Admin', 'logs' => $logs]);
+        return View::renderTemplate('pages/admin/system/audit', 'admin', [
+            'title'    => 'Audit Log | Admin',
+            'logs'     => $logs,
+            'total'    => $result['total'],
+            'page'     => $result['page'],
+            'pages'    => $result['pages'],
+            'filters'  => $filters,
+        ]);
     }
 }

@@ -11,6 +11,7 @@
         <button @click="tab = 'payment'" :class="tab === 'payment' ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/30' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'" class="w-full text-left px-4 py-3 border rounded-[10px] text-sm font-medium transition-colors flex items-center gap-3"><i data-lucide="credit-card" class="w-4 h-4"></i> Payment & Tax</button>
         <button @click="tab = 'shipping'" :class="tab === 'shipping' ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/30' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'" class="w-full text-left px-4 py-3 border rounded-[10px] text-sm font-medium transition-colors flex items-center gap-3"><i data-lucide="truck" class="w-4 h-4"></i> Shipping Methods</button>
         <button @click="tab = 'integrations'" :class="tab === 'integrations' ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/30' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'" class="w-full text-left px-4 py-3 border rounded-[10px] text-sm font-medium transition-colors flex items-center gap-3"><i data-lucide="link" class="w-4 h-4"></i> Integrations</button>
+        <button @click="tab = 'gdpr'" :class="tab === 'gdpr' ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/30' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'" class="w-full text-left px-4 py-3 border rounded-[10px] text-sm font-medium transition-colors flex items-center gap-3"><i data-lucide="shield-check" class="w-4 h-4"></i> GDPR & Retention</button>
     </div>
 
     <!-- Forms Area -->
@@ -120,6 +121,36 @@
                 <div><label class="form-label">Google Analytics Measurement ID</label><input type="text" placeholder="G-XXXXXXXXXX" class="input-field w-full mt-1 text-sm font-mono"></div>
                 <div><label class="form-label">Meta Pixel ID</label><input type="text" placeholder="XXXXXXXXXXXXXXXX" class="input-field w-full mt-1 text-sm font-mono"></div>
                 <div><label class="form-label">WhatsApp Business Number</label><input type="text" value="+2348000000000" class="input-field w-full mt-1 text-sm"></div>
+            </div>
+        </div>
+
+        <!-- GDPR & Data Retention -->
+        <div x-show="tab === 'gdpr'" class="space-y-6" style="display:none">
+            <h2 class="font-bold font-manrope text-lg mb-4 pb-2 border-b border-[var(--border)]">Data Retention Policy</h2>
+            <div class="grid grid-cols-1 gap-5">
+                <div class="max-w-md">
+                    <label class="form-label">Retention Window (days)</label>
+                    <input type="number" value="<?= htmlspecialchars(\App\Service\Settings::get('gdpr_retention_days', '30')) ?>" min="1" max="365" class="input-field w-full mt-1 text-sm">
+                    <p class="text-xs text-[var(--text-muted)] mt-1">Number of days after a user requests deletion before their data is permanently hard-deleted. During this window, the user can cancel the deletion.</p>
+                </div>
+                <div class="flex items-center justify-between bg-[var(--surface)] p-4 rounded-[10px] border border-[var(--border)] max-w-md">
+                    <div>
+                        <p class="font-medium text-sm">Anonymize Orders</p>
+                        <p class="text-xs text-[var(--text-secondary)]">When enabled, order records have PII stripped (name, email, phone, address) but financial data is retained for statutory tax compliance (6-7 years). When disabled, orders are hard-deleted with the user.</p>
+                    </div>
+                    <label class="relative cursor-pointer">
+                        <input type="checkbox" name="gdpr_anonymize_orders" value="1" <?= \App\Service\Settings::get('gdpr_anonymize_orders', '1') === '1' ? 'checked' : '' ?> class="sr-only peer">
+                        <div class="w-11 h-6 bg-[#111] rounded-full peer-checked:bg-[var(--gold)] transition-colors border border-[var(--border)]"></div>
+                        <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform shadow"></div>
+                    </label>
+                </div>
+            </div>
+            <div class="mt-6 p-4 bg-[var(--surface)] rounded-[10px] border border-[var(--border)]">
+                <p class="text-sm font-medium mb-2">Quick Links</p>
+                <div class="flex gap-3">
+                    <a href="<?= app_url('/admin/gdpr') ?>" class="btn btn-secondary h-8 px-4 text-xs border border-[var(--border)]">GDPR Dashboard</a>
+                    <a href="<?= app_url('/admin/audit') ?>" class="btn btn-secondary h-8 px-4 text-xs border border-[var(--border)]">Audit Log</a>
+                </div>
             </div>
         </div>
 

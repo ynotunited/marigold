@@ -20,6 +20,11 @@ class Session
             ini_set('session.cookie_httponly', '1');
             ini_set('session.cookie_samesite', 'Strict');
 
+            $sessionPath = defined('BASE_PATH') ? BASE_PATH . '/storage/sessions' : sys_get_temp_dir();
+            if (is_dir($sessionPath) && is_writable($sessionPath)) {
+                session_save_path($sessionPath);
+            }
+
             session_set_cookie_params([
                 'lifetime' => 0,
                 'path' => '/',
@@ -93,8 +98,74 @@ class Session
         unset($_SESSION['csrf_token']);
     }
 
-    public static function flash(string $key, string $message): void
+    /**
+     * Flash a message that persists for one request only.
+     * Supports type (success, error, warning, info) and a title.
+     */
+    public static function flash(string $key, string $message, string $type = 'info', string $title = ''): void
     {
-        self::set($key, $message);
+        if (!isset($_SESSION['_flash'])) {
+            $_SESSION['_flash'] = [];
+        }
+        $_SESSION['_flash'][$key] = [
+            'message' => $message,
+            'type'    => $type,
+            'title'   => $title,
+        ];
+    }
+
+    /**
+     * Convenience: flash a success message.
+     */
+    public static function success(string $message, string $title = 'Success'): void
+    {
+        self::flash('success', $message, 'success', $title);
+    }
+
+    /**
+     * Convenience: flash an error message.
+     */
+    public static function error(string $message, string $title = 'Error'): void
+    {
+        self::flash('error', $message, 'error', $title);
+    }
+
+    /**
+     * Convenience: flash a warning message.
+     */
+    public static function warning(string $message, string $title = 'Warning'): void
+    {
+        self::flash('warning', $message, 'warning', $title);
+    }
+
+    /**
+     * Convenience: flash an info message.
+     */
+    public static function info(string $message, string $title = ''): void
+    {
+        self::flash('info', $message, 'info', $title);
+    }
+
+    /**
+     * Get all pending flash messages and consume them (one-time read).
+     * Returns array of ['key' => ..., 'message' => ..., 'type' => ..., 'title' => ...].
+     */
+    public static function getFlashes(): array
+    {
+        $flashes = $_SESSION['_flash'] ?? [];
+        unset($_SESSION['_flash']);
+        return $flashes;
+    }
+
+    /**
+     * Read a single flash message by key (consumes it).
+     */
+    public static function getFlash(string $key): ?array
+    {
+        $msg = $_SESSION['_flash'][$key] ?? null;
+        if ($msg !== null) {
+            unset($_SESSION['_flash'][$key]);
+        }
+        return $msg;
     }
 }

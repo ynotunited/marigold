@@ -30,8 +30,13 @@ try {
     foreach ($migrations as $file) {
         $queries = require $file;
         foreach ($queries as $table => $sql) {
-            $pdo->exec($sql);
-            echo " - Migrated table: $table\n";
+            try {
+                $pdo->exec($sql);
+                echo " - Migrated table: $table\n";
+            } catch (\PDOException $e) {
+                // Skip if column/table already exists or other idempotent failures
+                echo " - Skipped: $table (" . $e->getCode() . ")\n";
+            }
         }
     }
 

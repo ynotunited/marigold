@@ -88,6 +88,8 @@
                 ['section' => 'Insights', 'href' => '/admin/reports', 'icon' => 'bar-chart-2', 'label' => 'Reports'],
                 ['section' => 'System', 'href' => '/admin/settings', 'icon' => 'settings', 'label' => 'Settings'],
                 ['section' => null, 'href' => '/admin/users', 'icon' => 'shield', 'label' => 'Administration'],
+                ['section' => null, 'href' => '/admin/audit', 'icon' => 'scroll-text', 'label' => 'Audit Log'],
+                ['section' => null, 'href' => '/admin/gdpr', 'icon' => 'user-x', 'label' => 'GDPR & Deletion'],
             ];
             $lastSection = null;
             foreach ($navItems as $item):

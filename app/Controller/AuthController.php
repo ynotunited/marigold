@@ -8,6 +8,7 @@ use App\Core\CSRF;
 use App\Core\Session;
 use App\Core\Logger;
 use App\Service\AuthService;
+use App\Service\AuditService;
 use App\Service\RateLimiter;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -82,8 +83,9 @@ class AuthController extends Controller
 
         RateLimiter::clear($rateLimitKey);
         $this->sendVerificationEmail($_POST['email'], $result['verify_token']);
+        AuditService::act('auth.register', 'users', $result['user_id'] ?? null, [], ['email' => $_POST['email']]);
 
-        Session::set('success', 'Account created. Please check your email to verify your address before signing in.');
+        Session::success('Account created. Please check your email to verify your address before signing in.');
         $this->redirect('/login');
     }
 
@@ -91,11 +93,11 @@ class AuthController extends Controller
     {
         $token = trim($_GET['token'] ?? '');
         if (!$token || !AuthService::verifyEmail($token)) {
-            Session::set('error', 'This verification link is invalid or has expired.');
+            Session::error('This verification link is invalid or has expired.');
             $this->redirect('/login');
         }
 
-        Session::set('success', 'Email verified. You can now sign in.');
+        Session::success('Email verified. You can now sign in.');
         $this->redirect('/login');
     }
 
@@ -140,7 +142,7 @@ class AuthController extends Controller
             }
         }
 
-        Session::set('success', 'If that email exists, a reset link will be sent.');
+        Session::success('If that email exists, a reset link will be sent.');
         $this->redirect('/login');
     }
 
@@ -168,7 +170,7 @@ class AuthController extends Controller
         $confirm = (string)($_POST['password_confirmation'] ?? '');
 
         if (!preg_match('/^[a-f0-9]{64}$/i', $token)) {
-            Session::set('error', 'This reset link is invalid or has expired.');
+            Session::error('This reset link is invalid or has expired.');
             $this->redirect('/forgot-password');
         }
 
@@ -183,11 +185,12 @@ class AuthController extends Controller
         }
 
         if (!AuthService::resetPassword($token, $password)) {
-            Session::set('error', 'This reset link is invalid or has expired, or the password is too short.');
+            Session::error('This reset link is invalid or has expired, or the password is too short.');
             $this->redirect('/forgot-password');
         }
 
-        Session::set('success', 'Password reset successfully. Please sign in again.');
+        AuditService::act('auth.password_reset', 'users', null, [], ['token_used' => substr($token, 0, 8) . '...']);
+        Session::success('Password reset successfully. Please sign in again.');
         $this->redirect('/login');
     }
 
@@ -207,7 +210,8 @@ class AuthController extends Controller
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             Logger::warning("Login rate-limit hit. Email: $email IP: $ip", 'auth');
-            Session::set('error', 'Too many failed login attempts. Please try again later.');
+            AuditService::act('auth.login_rate_limited', 'users', null, [], ['email' => $email, 'ip' => $ip]);
+            Session::error('Too many failed login attempts. Please try again later.');
             $this->redirect('/login');
         }
 
@@ -222,18 +226,23 @@ class AuthController extends Controller
 
         if (AuthService::login($email, $password, $remember)) {
             RateLimiter::clear($rateLimitKey);
+            AuditService::act('auth.login_success', 'users', Session::get('user_id'), [], ['email' => $email]);
             $this->redirect('/account/dashboard');
         }
 
         RateLimiter::hit($rateLimitKey, 300);
-        Session::set('error', 'Invalid email or password.');
+        AuditService::act('auth.login_failed', 'users', null, [], ['email' => $email, 'ip' => $ip]);
+        Session::error('Invalid email or password. Please check your credentials and try again.');
         $this->redirect('/login');
     }
 
     public function logout()
     {
+        $userId = Session::get('user_id');
         $this->verifyCsrf();
+        AuditService::act('auth.logout', 'users', $userId);
         AuthService::logout();
+        Session::success('You have been signed out successfully.');
         $this->redirect('/login');
     }
 

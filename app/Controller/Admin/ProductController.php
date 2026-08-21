@@ -7,6 +7,7 @@ use App\Core\CSRF;
 use App\Core\Model;
 use App\Core\Session;
 use App\Core\View;
+use App\Service\AuditService;
 
 class ProductController extends Controller
 {
@@ -216,6 +217,10 @@ class ProductController extends Controller
         }
 
         if ($id) {
+            $stmt = $db->prepare("SELECT price, sale_price, stock_quantity, status, name FROM products WHERE id = :id LIMIT 1");
+            $stmt->execute(['id' => $id]);
+            $old = $stmt->fetch() ?: [];
+
             $stmt = $db->prepare("
                 UPDATE products SET
                     sku = :sku, barcode = :barcode, name = :name, slug = :slug,
@@ -245,6 +250,16 @@ class ProductController extends Controller
                 'id' => $id,
             ]);
             $productId = (int)$id;
+
+            $new = ['price' => $price, 'sale_price' => $salePrice, 'stock_quantity' => $stock, 'status' => $status, 'name' => $name];
+            $changed = [];
+            foreach ($new as $k => $v) {
+                if ((string)($old[$k] ?? '') !== (string)$v) {
+                    $changed[$k] = ['from' => $old[$k] ?? null, 'to' => $v];
+                }
+            }
+            AuditService::act('product.updated', 'products', $productId, $old, $changed);
+
             $message = 'Product updated successfully.';
         } else {
             $uuid = self::uuid4();
@@ -274,6 +289,7 @@ class ProductController extends Controller
                 'meta_title' => $metaTitle ?: null, 'meta_description' => $metaDesc ?: null,
             ]);
             $productId = (int)$db->lastInsertId();
+            AuditService::act('product.created', 'products', $productId, [], ['name' => $name, 'sku' => $sku, 'price' => $price, 'status' => $status]);
             $message = 'Product created successfully.';
         }
 
@@ -322,14 +338,19 @@ class ProductController extends Controller
         }
 
         $db = Model::getDB();
+        $stmt = $db->prepare("SELECT id, name, sku FROM products WHERE id = :id AND deleted_at IS NULL LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        $old = $stmt->fetch() ?: [];
+
         $stmt = $db->prepare("UPDATE products SET deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL");
         $stmt->execute(['id' => $id]);
 
         if ($stmt->rowCount() > 0) {
             \App\Core\Catalogue::forget();
-            Session::set('success', 'Product deleted successfully.');
+            AuditService::act('product.deleted', 'products', $id, $old);
+            Session::success('Product "' . ($old['name'] ?? $id) . '" deleted successfully.');
         } else {
-            Session::set('error', 'Product not found or already deleted.');
+            Session::error('Product not found or already deleted.');
         }
         $this->redirect('/admin/products');
     }

@@ -6,6 +6,7 @@ use App\Core\CSRF;
 use App\Core\Model;
 use App\Core\Session;
 use App\Core\View;
+use App\Service\AuditService;
 
 class AdminCustomerController extends Controller
 {
@@ -265,7 +266,13 @@ class AdminCustomerController extends Controller
         $upd = $db->prepare("UPDATE customers SET account_manager_id = :manager_id WHERE id = :customer_id");
         $upd->execute(['manager_id' => $managerId ?: null, 'customer_id' => $customerRow['id']]);
 
-        Session::set('success', $managerId ? 'Account manager assigned.' : 'Account manager removed.');
+        AuditService::act('customer.account_manager_changed', 'customers', $id, [
+            'account_manager_id' => $customerRow['account_manager_id'] ?? null,
+        ], [
+            'account_manager_id' => $managerId ?: null,
+        ]);
+
+        Session::success($managerId ? 'Account manager assigned.' : 'Account manager removed.');
         $this->redirect('/admin/customers/' . $id);
     }
 

@@ -16,6 +16,7 @@ use App\Service\RateLimiter;
 use App\Service\AuthService;
 use App\Service\Settings;
 use App\Service\NotificationService;
+use App\Service\AuditService;
 
 class CheckoutController extends Controller
 {
@@ -145,6 +146,14 @@ class CheckoutController extends Controller
             $this->json(['error' => 'Order notes are too long.'], 422);
         }
 
+        // ---- Currency ----
+        $currency = strtoupper(trim((string) ($data['currency'] ?? 'NGN')));
+        if (!in_array($currency, \App\Core\Money::supportedCodes(), true)) {
+            $currency = 'NGN';
+        }
+        // Store currency selection in session for persistence across requests
+        Session::set('currency', $currency);
+
         // ---- Optional account creation at checkout (auto-login) ----
         $customerId = RowSecurity::customerId();
         $accountCreated = false;
@@ -252,7 +261,6 @@ class CheckoutController extends Controller
         // Shipping is priced authoritatively from the persisted ShipBubble quote
         // (or 0.00 for pickup / legacy WhatsApp-coordinated delivery).
         $grandTotal = round($subtotal + $tax + $shipping, 2);
-        $amountKobo = (int) round($grandTotal * 100);
 
         // ---- Persist order + items + address snapshots ----
         $db = Model::getDB();
@@ -263,10 +271,10 @@ class CheckoutController extends Controller
             $orderNumber = $this->nextOrderNumber($db);
             $stmt = $db->prepare(
                 "INSERT INTO orders
-                    (order_number, customer_id, status, payment_status, delivery_method, whatsapp, subtotal, tax, shipping, grand_total, payment_method, notes,
+                    (order_number, customer_id, status, payment_status, delivery_method, whatsapp, subtotal, tax, shipping, grand_total, currency, payment_method, notes,
                      shipbubble_request_token, shipbubble_service_code, shipbubble_courier_id, shipbubble_courier_name)
                  VALUES
-                    (:n, :c, 'pending', 'pending', :dm, :wa, :sub, :tax, :ship, :gt, :pm, :notes,
+                    (:n, :c, 'pending', 'pending', :dm, :wa, :sub, :tax, :ship, :gt, :cur, :pm, :notes,
                      :sb_tok, :sb_svc, :sb_cou, :sb_name)"
             );
             $stmt->execute([
@@ -278,6 +286,7 @@ class CheckoutController extends Controller
                 'tax' => $tax,
                 'ship' => $shipping,
                 'gt' => $grandTotal,
+                'cur' => $currency,
                 'pm' => $paymentMethod,
                 'notes' => $notes ?: null,
                 'sb_tok' => $shipbubbleMeta['request_token'] ?? null,
@@ -346,6 +355,13 @@ class CheckoutController extends Controller
         $confirmationUrl = rtrim((string) ($_ENV['APP_URL'] ?? ''), '/');
 
         // ---- Initiate payment (card gateways only; transfers are handled offline) ----
+        // Convert to target currency for the payment gateway
+        $paymentAmountNgn = $grandTotal;
+        if ($currency !== 'NGN') {
+            $paymentAmountNgn = \App\Core\Money::convert($grandTotal, $currency);
+        }
+        $amountKobo = (int) round($paymentAmountNgn * 100);
+
         $intent = null;
         if ($paystack || $flutterwave) {
             try {
@@ -390,17 +406,27 @@ class CheckoutController extends Controller
             } elseif (strlen($waDigits) <= 10) {
                 $waDigits = '234' . $waDigits;
             }
+            $formattedTotal = \App\Core\Money::format($grandTotal, $currency);
             if ($shipbubbleMeta) {
-                $message = "Hi {$first}! This is Marigold Signature. Your order {$orderNumber} (total ₦"
-                    . number_format($grandTotal, 0) . ") has been received. Delivery via {$shipbubbleMeta['courier_name']} — we'll confirm the schedule with you here on WhatsApp.";
+                $message = "Hi {$first}! This is Marigold Signature. Your order {$orderNumber} (total "
+                    . $formattedTotal . ") has been received. Delivery via {$shipbubbleMeta['courier_name']} — we'll confirm the schedule with you here on WhatsApp.";
             } else {
-                $message = "Hi {$first}! This is Marigold Signature. Your order {$orderNumber} (total ₦"
-                    . number_format($grandTotal, 0) . ") has been received. You chose delivery — we'll confirm the delivery fee and schedule with you here on WhatsApp.";
+                $message = "Hi {$first}! This is Marigold Signature. Your order {$orderNumber} (total "
+                    . $formattedTotal . ") has been received. You chose delivery — we'll confirm the delivery fee and schedule with you here on WhatsApp.";
             }
             $whatsappLink = 'https://wa.me/' . $waDigits . '?text=' . rawurlencode($message);
         }
 
-        Logger::info("Order {$orderNumber} placed (total {$grandTotal} NGN, {$paymentMethod}, {$deliveryMethod})", 'order');
+        Logger::info("Order {$orderNumber} placed (total {$grandTotal} {$currency}, {$paymentMethod}, {$deliveryMethod})", 'order');
+        AuditService::act('order.placed', 'orders', $orderId, [], [
+            'order_number'  => $orderNumber,
+            'grand_total'   => $grandTotal,
+            'currency'      => $currency,
+            'payment_method'=> $paymentMethod,
+            'delivery_method'=> $deliveryMethod,
+            'customer_id'   => $customerId,
+            'item_count'    => count($orderItems),
+        ]);
 
         if ($customerId) {
             $userId = NotificationService::userIdForOrder($customerId);
@@ -421,8 +447,9 @@ class CheckoutController extends Controller
             'intent_id' => $intent['intent_id'] ?? null,
             'redirect_url' => $redirectUrl,
             'grand_total' => $grandTotal,
+            'grand_total_formatted' => \App\Core\Money::format($grandTotal, $currency),
             'amount_kobo' => $amountKobo,
-            'currency' => 'NGN',
+            'currency' => $currency,
             'delivery_method' => $deliveryMethod,
             'whatsapp' => $deliveryMethod === 'delivery' ? $whatsapp : null,
             'whatsapp_link' => $whatsappLink,
@@ -505,7 +532,10 @@ class CheckoutController extends Controller
                 // Reflect the actual gateway the order was paid through.
                 $data['method'] = (string) ($order['payment_method'] ?? $method);
                 $data['status_label'] = $statusLabel;
-                $data['amount'] = number_format((float) $order['grand_total'], 2);
+                $orderCurrency = (string) ($order['currency'] ?? 'NGN');
+                $data['amount'] = \App\Core\Money::format((float) $order['grand_total'], $orderCurrency);
+                $data['amount_raw'] = (float) $order['grand_total'];
+                $data['currency'] = $orderCurrency;
                 $data['date'] = date('F j, Y', strtotime((string) $order['created_at']));
             }
         }

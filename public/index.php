@@ -92,6 +92,19 @@ function app_url(string $path = ''): string
     return app_base() . '/' . ltrim($path, '/');
 }
 
+/**
+ * Global helper: format a price using the session currency.
+ * Usage in views: <?= money_format(15000) ?>
+ * Admin views can pass 'NGN' explicitly: <?= money_format(15000, 'NGN') ?>
+ */
+function money_format(float $amount, ?string $code = null): string
+{
+    if ($code === null) {
+        return \App\Core\Money::formatSession($amount);
+    }
+    return \App\Core\Money::format($amount, $code);
+}
+
 // Check Maintenance Mode
 if (file_exists(BASE_PATH . '/.maintenance') || ($_ENV['APP_MAINTENANCE'] ?? 'false') === 'true') {
     http_response_code(503);
@@ -103,8 +116,16 @@ if (file_exists(BASE_PATH . '/.maintenance') || ($_ENV['APP_MAINTENANCE'] ?? 'fa
 set_exception_handler(['App\Core\ExceptionHandler', 'handle']);
 set_error_handler(['App\Core\ExceptionHandler', 'errorHandler']);
 
+// Timezone — set from user preference or APP_TIMEZONE default
+date_default_timezone_set(\App\Core\Timezone::forCurrentUser());
+
 // Start Session
 Session::start();
+
+// Currency — store selection from query param or detect from request
+if (isset($_GET['currency']) && in_array(strtoupper($_GET['currency']), \App\Core\Money::supportedCodes(), true)) {
+    \App\Core\Session::set('currency', strtoupper($_GET['currency']));
+}
 
 // HTML pages are never cached by the browser: the storefront embeds the live
 // DB-backed catalogue (window.MS_CATALOG) directly in the page, so serving a
@@ -153,6 +174,21 @@ $router->get('/blog/{slug}', ['App\Controller\BlogController', 'show']);
 
 // FAQ Route
 $router->get('/faq', ['App\Controller\FaqController', 'index']);
+
+$router->get('/hero', function () {
+    // Hero concept preview — a standalone 3D WebGL experiment. Kept on its own
+    // route so the live homepage is never affected.
+    try {
+        $catalogue = \App\Core\Catalogue::all();
+        $conceptProducts = $catalogue['products'] ?? [];
+    } catch (\Throwable $e) {
+        $conceptProducts = [];
+    }
+    return \App\Core\View::render('pages/public/hero_concept', [
+        'title' => 'Hero Concept | Marigold Signature',
+        'concept_products' => $conceptProducts,
+    ]);
+});
 
 // Static Policy Pages
 $router->get('/privacy-policy', ['App\Controller\PageController', 'privacy']);
@@ -265,6 +301,13 @@ $router->get('/admin/users', adminRoute(['App\Controller\Admin\AdminSystemContro
 $router->get('/admin/roles', adminRoute(['App\Controller\Admin\AdminSystemController', 'roles']));
 $router->get('/admin/audit', adminRoute(['App\Controller\Admin\AdminSystemController', 'audit']));
 
+// GDPR & Data Retention Routes
+$router->get('/admin/gdpr', adminRoute(['App\Controller\Admin\AdminGdprController', 'index']));
+$router->get('/admin/gdpr/export/{id}', adminRoute(['App\Controller\Admin\AdminGdprController', 'export']));
+$router->get('/admin/gdpr/export/{id}/json', adminRoute(['App\Controller\Admin\AdminGdprController', 'exportJson']));
+$router->post('/admin/gdpr/force-delete/{id}', adminRoute(['App\Controller\Admin\AdminGdprController', 'forceDelete']));
+$router->post('/admin/gdpr/restore/{id}', adminRoute(['App\Controller\Admin\AdminGdprController', 'restore']));
+
 // Email Previews
 $router->get('/admin/email-previews', adminRoute(['App\Controller\Admin\EmailPreviewController', 'index']));
 $router->get('/admin/email-previews/{template}', adminRoute(['App\Controller\Admin\EmailPreviewController', 'preview']));
@@ -306,6 +349,13 @@ $router->get('/account/downloads', customerRoute(['App\Controller\Customer\Downl
 $router->get('/account/notifications', customerRoute(['App\Controller\Customer\NotificationController', 'index']));
 $router->post('/account/notifications/read-all', customerRoute(['App\Controller\Customer\NotificationController', 'markAllRead']));
 $router->get('/account/settings', customerRoute(['App\Controller\Customer\SettingsController', 'index']));
+
+// Account Deletion & GDPR (customer self-serve)
+$router->get('/account/delete', customerRoute(['App\Controller\Customer\AccountDeletionController', 'index']));
+$router->post('/account/delete/request', customerRoute(['App\Controller\Customer\AccountDeletionController', 'request']));
+$router->post('/account/delete/cancel', customerRoute(['App\Controller\Customer\AccountDeletionController', 'cancel']));
+$router->get('/account/delete/export', customerRoute(['App\Controller\Customer\AccountDeletionController', 'exportData']));
+$router->get('/account/delete/view', customerRoute(['App\Controller\Customer\AccountDeletionController', 'viewData']));
 
 // Dispatch
 $url = $_SERVER['REQUEST_URI'] ?? '/';
