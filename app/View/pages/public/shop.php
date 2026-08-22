@@ -80,12 +80,12 @@ $availability = [
                         </h3>
                         <div class="range-row">
                             <div class="range-input">
-                                <span class="cur-sym"><?= \App\Core\Money::meta(\App\Core\Session::get('currency') ?? 'NGN')['symbol'] ?></span>
+                                <span class="cur-sym"><?= \App\Core\Money::meta(\App\Core\Money::currentCode())['symbol'] ?></span>
                                 <input id="priceMin" type="number" min="0" step="500" placeholder="Min" aria-label="Minimum price">
                             </div>
                             <span class="range-sep">&ndash;</span>
                             <div class="range-input">
-                                <span class="cur-sym"><?= \App\Core\Money::meta(\App\Core\Session::get('currency') ?? 'NGN')['symbol'] ?></span>
+                                <span class="cur-sym"><?= \App\Core\Money::meta(\App\Core\Money::currentCode())['symbol'] ?></span>
                                 <input id="priceMax" type="number" min="0" step="500" placeholder="Max" aria-label="Maximum price">
                             </div>
                         </div>

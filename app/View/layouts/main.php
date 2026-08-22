@@ -169,6 +169,28 @@ $__asset = function (string $path) use ($__assetBase): string {
         window.MS_CATALOG = <?= json_encode($__catalogue, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.MS_CURRENCY = <?= json_encode(\App\Core\Money::jsContext(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
+    <!-- Currency cookie fallback: if OPcache serves an old layout without
+         MS_CURRENCY, or if the server context is stale, read the cookie directly
+         so prices always reflect the user's choice. -->
+    <script>
+        (function() {
+            function getCookie(name) {
+                var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+                return m ? decodeURIComponent(m[1]) : null;
+            }
+            var RATES_NGN = {
+                NGN: 1, USD: 0.000653, GBP: 0.000485, EUR: 0.000573,
+                GHS: 0.00801, ZAR: 0.0118, KES: 0.0838, XAF: 0.361, GMD: 0.0460
+            };
+            var saved = getCookie('ms_currency');
+            if (saved) saved = saved.toUpperCase();
+            if (!window.MS_CURRENCY) {
+                window.MS_CURRENCY = { base: 'NGN', selected: saved || 'NGN', detected: null, rates: RATES_NGN, currencies: ['NGN','USD','GBP','EUR','GHS','ZAR','KES','XAF','GMD'] };
+            } else if (saved && window.MS_CURRENCY.selected !== saved) {
+                window.MS_CURRENCY.selected = saved;
+            }
+        })();
+    </script>
     <script>
         (function() {
             try {

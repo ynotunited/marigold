@@ -7,6 +7,17 @@
  */
 
 define('APP_START', microtime(true));
+
+// Bust PHP OPcache after deploys — shared hosts often serve stale compiled files.
+// This resets once per deploy (checks a sentinel file).
+if (function_exists('opcache_reset')) {
+    $sentinel = __DIR__ . '/.opcache_bust';
+    if (!file_exists($sentinel) || (time() - filemtime($sentinel)) > 3600) {
+        @opcache_reset();
+        @file_put_contents($sentinel, date('c'));
+    }
+}
+
 // Resolve the app root: walk up from the entry point until a directory
 // containing both app/ and vendor/ is found. Handles the project layout
 // (public/ -> project root), a localhost subfolder, and any shared-hosting

@@ -9,7 +9,11 @@
   const CART_KEY = "marigold_cart";
 
   /* ---- Currency system ---- */
-  const CUR = (window.MS_CURRENCY || { base: 'NGN', selected: 'NGN', rates: {} });
+  var CUR = (window.MS_CURRENCY || { base: 'NGN', selected: 'NGN', rates: {} });
+  // Ensure rates object exists — fallback hardcoded rates (NGN→target)
+  if (!CUR.rates || Object.keys(CUR.rates).length === 0) {
+    CUR.rates = { NGN:1, USD:0.000653, GBP:0.000485, EUR:0.000573, GHS:0.00801, ZAR:0.0118, KES:0.0838, XAF:0.361, GMD:0.0460 };
+  }
   function fmtMoney(n, code) {
     code = code || CUR.selected || CUR.base || 'NGN';
     n = Number(n || 0);
