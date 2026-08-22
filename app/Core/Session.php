@@ -21,6 +21,9 @@ class Session
             ini_set('session.cookie_samesite', 'Lax');
 
             $sessionPath = defined('BASE_PATH') ? BASE_PATH . '/storage/sessions' : sys_get_temp_dir();
+            if (!is_dir($sessionPath)) {
+                @mkdir($sessionPath, 0755, true);
+            }
             if (is_dir($sessionPath) && is_writable($sessionPath)) {
                 session_save_path($sessionPath);
             }
@@ -29,12 +32,12 @@ class Session
                 'lifetime' => 0,
                 'path' => '/',
                 'domain' => '',
-                'secure' => $isHttps,
+                'secure' => false,
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]);
 
-            session_start();
+            @session_start();
 
             if (!isset($_SESSION['_created_at'])) {
                 $_SESSION['_created_at'] = time();

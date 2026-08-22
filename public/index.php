@@ -119,21 +119,25 @@ set_error_handler(['App\Core\ExceptionHandler', 'errorHandler']);
 // Timezone — set from user preference or APP_TIMEZONE default
 date_default_timezone_set(\App\Core\Timezone::forCurrentUser());
 
-// Start Session
-Session::start();
-
-// Currency — persist via cookie (works even when sessions fail on shared hosting)
+// Currency — persist via cookie BEFORE session (avoids "headers already sent" if session_path fails)
 if (isset($_GET['currency']) && in_array(strtoupper($_GET['currency']), \App\Core\Money::supportedCodes(), true)) {
     $cur = strtoupper($_GET['currency']);
     setcookie('ms_currency', $cur, [
         'expires'  => time() + 86400 * 365,
         'path'     => '/',
-        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure'   => false,
         'httponly'  => false,
         'samesite' => 'Lax',
     ]);
     $_COOKIE['ms_currency'] = $cur;
-    \App\Core\Session::set('currency', $cur);
+}
+
+// Start Session
+Session::start();
+
+// Sync currency: cookie → session
+if (isset($_GET['currency']) && in_array(strtoupper($_GET['currency']), \App\Core\Money::supportedCodes(), true)) {
+    \App\Core\Session::set('currency', strtoupper($_GET['currency']));
 } elseif (!\App\Core\Session::get('currency') && isset($_COOKIE['ms_currency'])
     && in_array(strtoupper($_COOKIE['ms_currency']), \App\Core\Money::supportedCodes(), true)) {
     \App\Core\Session::set('currency', strtoupper($_COOKIE['ms_currency']));

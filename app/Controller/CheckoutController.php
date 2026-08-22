@@ -156,7 +156,7 @@ class CheckoutController extends Controller
         setcookie('ms_currency', $currency, [
             'expires'  => time() + 86400 * 365,
             'path'     => '/',
-            'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'secure'   => false,
             'httponly'  => false,
             'samesite' => 'Lax',
         ]);
