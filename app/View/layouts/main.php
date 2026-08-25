@@ -85,6 +85,59 @@ $__asset = function (string $path) use ($__assetBase): string {
     
     <!-- Custom Animations JS -->
     <script src="<?= $__asset('/assets/js/animations.js') ?>" defer></script>
+    
+    <?php $sentryDsn = trim($_ENV['SENTRY_DSN'] ?? ''); if ($sentryDsn !== ''): ?>
+    <!-- Sentry: error tracking + session replay + rage click detection -->
+    <script src="https://browser.sentry-cdn.com/8.52.1/bundle.min.js" crossorigin="anonymous"></script>
+    <script>
+    Sentry.init({
+        dsn: <?= json_encode($sentryDsn) ?>,
+        integrations: [
+            Sentry.replayIntegration({
+                maskAllText: false,
+                blockAllMedia: false,
+                mask: ['.sensitive-data', '[data-sentry-mask]'],
+                block: ['iframe[data-sentry-block]'],
+            }),
+        ],
+        replaysSessionSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
+        tracesSampleRate: 0.1,
+        environment: <?= json_encode($_ENV['APP_ENV'] ?? 'production') ?>,
+        attachStacktrace: true,
+        sendDefaultPii: false,
+        beforeBreadcrumb(breadcrumb) {
+            if (breadcrumb.category === 'ui.click') {
+                breadcrumb.data = breadcrumb.data || {};
+                breadcrumb.data.rageClick = false;
+            }
+            return breadcrumb;
+        },
+    });
+    // Tag rage clicks: Sentry replays auto-detect rapid clicks on the same element.
+    // This hook adds a custom breadcrumb when the user fires 3+ clicks in <1s.
+    (function() {
+        var clicks = [];
+        var THRESHOLD = 1000;
+        var MIN_CLICKS = 3;
+        document.addEventListener('click', function(e) {
+            var now = Date.now();
+            var target = e.target;
+            clicks.push({ time: now, target: target });
+            clicks = clicks.filter(function(c) { return now - c.time < THRESHOLD; });
+            if (clicks.length === MIN_CLICKS) {
+                Sentry.addBreadcrumb({
+                    category: 'ui.click',
+                    message: 'Rage click detected on: ' + (target.tagName || 'unknown') + (target.id ? '#' + target.id : '') + (target.className ? '.' + String(target.className).split(' ').filter(Boolean).join('.') : ''),
+                    level: 'warning',
+                    data: { rageClick: true, count: clicks.length, selector: target.tagName + (target.id ? '#' + target.id : '') },
+                });
+                clicks = [];
+            }
+        }, true);
+    })();
+    </script>
+    <?php endif; ?>
 </head>
 <body class="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen flex flex-col antialiased" data-page="<?= htmlspecialchars($page_key ?? '', ENT_QUOTES, 'UTF-8') ?>">
     
