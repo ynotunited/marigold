@@ -15,6 +15,29 @@ class ExceptionHandler
             $status = 500;
         }
 
+        // ── Send to Sentry before rendering the error page ──────────────
+        if (class_exists(\Sentry\SentrySdk::class)) {
+            \Sentry\configureScope(function (\Sentry\State\HubInterface $scope) use ($exception, $status) {
+                $scope->setTag('http.status_code', (string) $status);
+                $scope->setTag('http.method', $_SERVER['REQUEST_METHOD'] ?? 'CLI');
+                $scope->setTag('http.url', $_SERVER['REQUEST_URI'] ?? '/');
+                $scope->setContext('request', [
+                    'method'  => $_SERVER['REQUEST_METHOD'] ?? 'CLI',
+                    'url'     => $_SERVER['REQUEST_URI'] ?? '/',
+                    'ip'      => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'headers' => [
+                        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                        'referer'    => $_SERVER['HTTP_REFERER'] ?? null,
+                    ],
+                ]);
+                $userId = \App\Core\Session::get('user_id');
+                if ($userId) {
+                    $scope->setUser(['id' => (string) $userId]);
+                }
+            });
+            \Sentry\captureException($exception);
+        }
+
         http_response_code($status);
 
         $errorId = self::logException($exception, $status);

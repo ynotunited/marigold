@@ -83,6 +83,25 @@ function customerRoute($handler): callable
 // Load Environment variables
 Env::load(BASE_PATH . '/.env');
 
+// ── Sentry: capture fatal errors and unhandled exceptions ────────────
+$sentryDsn = trim($_ENV['SENTRY_DSN_PHP'] ?? $_ENV['SENTRY_DSN'] ?? '');
+if ($sentryDsn !== '' && class_exists(\Sentry\SentrySdk::class)) {
+    \Sentry\init([
+        'dsn' => $sentryDsn,
+        'environment' => $_ENV['APP_ENV'] ?? 'production',
+        'traces_sample_rate' => 0.1,
+        'send_default_pii' => false,
+        'attach_stacktrace' => true,
+        'before_send' => function (\Sentry\Event $event) {
+            // Strip local file paths in production
+            if (($_ENV['APP_ENV'] ?? 'production') === 'production') {
+                $event->setMessage(str_replace(BASE_PATH, '', $event->getMessage() ?? ''));
+            }
+            return $event;
+        },
+    ]);
+}
+
 // Global URL helpers — compute the app base path once so every root-relative
 // link/asset works whether the app is served from the domain root (base === '')
 // or from a subdirectory such as /ms on shared hosting.
