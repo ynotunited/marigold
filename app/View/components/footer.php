@@ -52,7 +52,7 @@
         </div>
         <div class="foot-bottom">
             <span>© <?= date('Y') ?> Marigold Signature Nigeria Limited. All rights reserved.</span>
-            <span><a href="<?= app_url('/privacy-policy') ?>">Privacy</a> · <a href="<?= app_url('/terms-and-conditions') ?>">Terms</a> · <a href="<?= app_url('/shipping-policy') ?>">Shipping</a> · <a href="<?= app_url('/return-policy') ?>">Returns</a> · <a href="<?= app_url('/data-and-compliance') ?>">Data &amp; Compliance</a> · <a href="<?= app_url('/ip-infringement') ?>">IP Infringement</a> · <a href="https://madeitcodes.online" target="_blank" rel="noopener">Webxpress Technologies MadeIT</a></span>
+            <span><a href="<?= app_url('/privacy-policy') ?>">Privacy</a> · <a href="<?= app_url('/terms-and-conditions') ?>">Terms</a> · <a href="<?= app_url('/shipping-policy') ?>">Shipping</a> · <a href="<?= app_url('/return-policy') ?>">Returns</a> · <a href="<?= app_url('/data-and-compliance') ?>">Data &amp; Compliance</a> · <a href="<?= app_url('/ip-infringement') ?>">IP Infringement</a> · <a href="<?= htmlspecialchars($_ENV['STATUS_PAGE_URL'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">System Status</a> · <a href="https://madeitcodes.online" target="_blank" rel="noopener">Webxpress Technologies MadeIT</a></span>
         </div>
     </div>
 </footer>

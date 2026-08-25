@@ -246,6 +246,15 @@ $router->get('/return-policy', ['App\Controller\PageController', 'returns']);
 $router->get('/data-and-compliance', ['App\Controller\PageController', 'dataCompliance']);
 $router->get('/ip-infringement', ['App\Controller\PageController', 'ipInfringement']);
 
+// System Status — embeds the Better Stack status page
+$router->get('/status', function () {
+    $statusUrl = htmlspecialchars($_ENV['STATUS_PAGE_URL'] ?? '', ENT_QUOTES, 'UTF-8');
+    return \App\Core\View::render('pages/public/status', [
+        'title' => 'System Status | Marigold Signature',
+        'status_url' => $statusUrl,
+    ]);
+});
+
 // Events Pages
 $router->get('/events', ['App\Controller\PageController', 'events']);
 $router->get('/events/corporate-meeting', ['App\Controller\PageController', 'corporateMeeting']);
