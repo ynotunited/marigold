@@ -29,7 +29,23 @@ try {
     $migrations = glob(__DIR__ . '/database/migrations/*.php');
     foreach ($migrations as $file) {
         $queries = require $file;
+
+        // Support closure-based migrations: ['up' => fn, 'down' => fn]
+        if (isset($queries['up']) && is_callable($queries['up'])) {
+            try {
+                $queries['up']($pdo);
+                echo " - Migrated: " . basename($file) . " (closure)\n";
+            } catch (\Throwable $e) {
+                echo " - Skipped: " . basename($file) . " (" . $e->getCode() . ")\n";
+            }
+            continue;
+        }
+
+        // Flat format: ['label' => 'SQL string', ...]
         foreach ($queries as $table => $sql) {
+            if (!is_string($sql)) {
+                continue;
+            }
             try {
                 $pdo->exec($sql);
                 echo " - Migrated table: $table\n";

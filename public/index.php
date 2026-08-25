@@ -178,6 +178,8 @@ $router->post('/forgot-password', ['App\Controller\AuthController', 'forgotPassw
 $router->get('/reset-password', ['App\Controller\AuthController', 'showResetPassword']);
 $router->post('/reset-password', ['App\Controller\AuthController', 'resetPassword']);
 $router->post('/logout', ['App\Controller\AuthController', 'logout']);
+$router->get('/auth/google', ['App\Controller\AuthController', 'googleLogin']);
+$router->get('/auth/google/callback', ['App\Controller\AuthController', 'googleCallback']);
 
 // Public Routes
 $router->get('/', ['App\Controller\HomeController', 'index']);

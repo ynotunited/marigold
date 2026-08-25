@@ -8,6 +8,7 @@ use App\Core\CSRF;
 use App\Core\Session;
 use App\Core\Logger;
 use App\Service\AuthService;
+use App\Service\GoogleOAuthService;
 use App\Service\AuditService;
 use App\Service\RateLimiter;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -244,6 +245,92 @@ class AuthController extends Controller
         AuthService::logout();
         Session::success('You have been signed out successfully.');
         $this->redirect('/login');
+    }
+
+    /**
+     * Redirect the user to Google's OAuth consent screen.
+     */
+    public function googleLogin()
+    {
+        if (empty($_ENV['GOOGLE_CLIENT_ID']) || empty($_ENV['GOOGLE_CLIENT_SECRET'])) {
+            Session::error('Google sign-in is not configured yet.');
+            $this->redirect('/login');
+        }
+
+        $this->redirect(GoogleOAuthService::getAuthorizationUrl());
+    }
+
+    /**
+     * Handle the callback from Google after user authorises.
+     */
+    public function googleCallback()
+    {
+        // CSRF state validation
+        $state = $_GET['state'] ?? '';
+        if (!GoogleOAuthService::validateState($state)) {
+            Logger::warning('Google OAuth invalid state', 'auth');
+            Session::error('Invalid sign-in state. Please try again.');
+            $this->redirect('/login');
+        }
+
+        // Check for error from Google
+        if (!empty($_GET['error'])) {
+            Logger::warning('Google OAuth error: ' . ($_GET['error'] ?? ''), 'auth');
+            Session::error('Google sign-in was cancelled or failed. Please try again.');
+            $this->redirect('/login');
+        }
+
+        $code = $_GET['code'] ?? '';
+        if (empty($code)) {
+            Session::error('Missing authorization code. Please try again.');
+            $this->redirect('/login');
+        }
+
+        // Rate limit the callback by IP
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $rateLimitKey = 'google_callback_' . hash('sha256', $ip);
+        if (\App\Service\RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            Logger::warning("Google OAuth rate-limit hit. IP: $ip", 'auth');
+            Session::error('Too many attempts. Please try again later.');
+            $this->redirect('/login');
+        }
+
+        // Exchange code for profile
+        $profile = GoogleOAuthService::getUserProfile($code);
+        if (!$profile) {
+            \App\Service\RateLimiter::hit($rateLimitKey, 3600);
+            Session::error('Could not retrieve your Google profile. Please try again.');
+            $this->redirect('/login');
+        }
+
+        // Find or create user
+        try {
+            $result = GoogleOAuthService::findOrCreateUser($profile);
+        } catch (\Throwable $e) {
+            \App\Service\RateLimiter::hit($rateLimitKey, 3600);
+            Logger::error('Google login failed: ' . $e->getMessage(), 'auth');
+            Session::error('Sign-in failed. Please try again.');
+            $this->redirect('/login');
+        }
+
+        \App\Service\RateLimiter::clear($rateLimitKey);
+        $user = $result['user'];
+        $created = $result['created'];
+
+        // Establish session
+        AuthService::establishSessionById((int)$user['id']);
+        AuditService::act(
+            $created ? 'auth.google_register' : 'auth.google_login',
+            'users',
+            $user['id'],
+            [],
+            ['email' => $user['email']]
+        );
+
+        Session::success($created
+            ? 'Welcome! Your account has been created via Google.'
+            : 'Welcome back, ' . htmlspecialchars($user['first_name'] ?? '') . '!');
+        $this->redirect('/account/dashboard');
     }
 
     private function verifyCsrf(): void
