@@ -735,7 +735,7 @@
         links[i].style.color = 'var(--gold, #C89B3C)';
       } else {
         links[i].style.fontWeight = '';
-        links[i].style.color = '';
+        links[i].style.color = 'rgba(255,255,255,.75)';
       }
     }
   });
