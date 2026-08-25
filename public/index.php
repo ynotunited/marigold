@@ -341,6 +341,23 @@ $router->post('/admin/gdpr/restore/{id}', adminRoute(['App\Controller\Admin\Admi
 $router->get('/admin/email-previews', adminRoute(['App\Controller\Admin\EmailPreviewController', 'index']));
 $router->get('/admin/email-previews/{template}', adminRoute(['App\Controller\Admin\EmailPreviewController', 'preview']));
 
+// Invoice Routes (Admin)
+$router->get('/admin/invoices', adminRoute(['App\Controller\Admin\InvoiceController', 'index']));
+$router->get('/admin/invoices/create', adminRoute(['App\Controller\Admin\InvoiceController', 'create']));
+$router->post('/admin/invoices', adminRoute(['App\Controller\Admin\InvoiceController', 'store']));
+$router->get('/admin/invoices/{id}', adminRoute(['App\Controller\Admin\InvoiceController', 'show']));
+$router->post('/admin/invoices/{id}', adminRoute(['App\Controller\Admin\InvoiceController', 'update']));
+$router->post('/admin/invoices/{id}/items', adminRoute(['App\Controller\Admin\InvoiceController', 'addItem']));
+$router->post('/admin/invoices/{id}/items/{itemId}/remove', adminRoute(['App\Controller\Admin\InvoiceController', 'removeItem']));
+$router->post('/admin/invoices/{id}/send', adminRoute(['App\Controller\Admin\InvoiceController', 'send']));
+$router->post('/admin/invoices/{id}/cancel', adminRoute(['App\Controller\Admin\InvoiceController', 'cancel']));
+$router->post('/admin/invoices/{id}/delete', adminRoute(['App\Controller\Admin\InvoiceController', 'destroy']));
+
+// Public Invoice Routes
+$router->get('/invoice/{token}', ['App\Controller\InvoicePublicController', 'show']);
+$router->post('/invoice/{token}/pay', ['App\Controller\InvoicePublicController', 'pay']);
+$router->get('/invoice/{token}/callback', ['App\Controller\InvoicePublicController', 'callback']);
+
 // Storefront Routes
 $router->get('/search', ['App\Controller\Storefront\SearchController', 'index']);
 $router->get('/api/search', ['App\Controller\Storefront\SearchController', 'ajaxSearch']);

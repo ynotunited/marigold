@@ -79,6 +79,7 @@
                 ['section' => null, 'href' => '/admin/collections', 'icon' => 'layers', 'label' => 'Collections'],
                 ['section' => null, 'href' => '/admin/solutions', 'icon' => 'briefcase', 'label' => 'Corp. Solutions'],
                 ['section' => 'Commerce', 'href' => '/admin/orders', 'icon' => 'package', 'label' => 'Orders'],
+                ['section' => null, 'href' => '/admin/invoices', 'icon' => 'file-text', 'label' => 'Invoices'],
                 ['section' => null, 'href' => '/admin/quotes', 'icon' => 'file-text', 'label' => 'Quotes'],
                 ['section' => null, 'href' => '/admin/messages', 'icon' => 'inbox', 'label' => 'Messages'],
                 ['section' => null, 'href' => '/admin/customers', 'icon' => 'users', 'label' => 'Customers'],

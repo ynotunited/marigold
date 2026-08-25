@@ -9,7 +9,32 @@
   const CART_KEY = "marigold_cart";
 
   /* ---- Currency system ---- */
+  // Read currency from cookie FIRST — works even if PHP layout is OPcache-stale
+  function _readCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function _writeCookie(name, val) {
+    document.cookie = name + '=' + encodeURIComponent(val) + ';path=/;max-age=31536000;SameSite=Lax';
+  }
+
+  // Detect ?currency=XXX in URL — set cookie via JS (bypasses stale PHP)
+  var _urlParam = new URLSearchParams(window.location.search).get('currency');
+  if (_urlParam) {
+    _urlParam = _urlParam.toUpperCase();
+    _writeCookie('ms_currency', _urlParam);
+    // Clean the URL and reload so the page renders with the cookie
+    var clean = window.location.pathname + window.location.hash;
+    window.location.replace(clean);
+    return; // stop executing — page is reloading
+  }
+
+  var _cookieCur = (_readCookie('ms_currency') || '').toUpperCase();
   var CUR = (window.MS_CURRENCY || { base: 'NGN', selected: 'NGN', rates: {} });
+  // Override selected from cookie if PHP layout is stale
+  if (_cookieCur && CUR.selected !== _cookieCur) {
+    CUR.selected = _cookieCur;
+  }
   // Ensure rates object exists — fallback hardcoded rates (NGN→target)
   if (!CUR.rates || Object.keys(CUR.rates).length === 0) {
     CUR.rates = { NGN:1, USD:0.000653, GBP:0.000485, EUR:0.000573, GHS:0.00801, ZAR:0.0118, KES:0.0838, XAF:0.361, GMD:0.0460 };
@@ -694,4 +719,24 @@
 
   /* expose for inline usage */
   window.Marigold = { Cart, naira, imgSrc, productCard, toast, subscribe, fmtMoney, convertPrice, CUR };
+
+  // Fix header currency button if PHP layout is OPcache-stale
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('curToggle');
+    if (btn && _cookieCur) {
+      btn.textContent = _cookieCur;
+    }
+    // Highlight active currency in dropdown
+    var links = document.querySelectorAll('#curMenu a');
+    for (var i = 0; i < links.length; i++) {
+      var code = (links[i].getAttribute('href') || '').match(/currency=([A-Z]+)/);
+      if (code && code[1] === _cookieCur) {
+        links[i].style.fontWeight = '700';
+        links[i].style.color = 'var(--gold, #C89B3C)';
+      } else {
+        links[i].style.fontWeight = '';
+        links[i].style.color = '';
+      }
+    }
+  });
 })();
