@@ -374,6 +374,10 @@ class PaymentService
             return ['received' => true, 'matched' => false, 'event_id' => $eventId];
         }
 
+        // Link the raw event row to the resolved intent for full traceability.
+        $stmt = $db->prepare("UPDATE webhook_events SET payment_intent_id = :pi WHERE id = :w");
+        $stmt->execute(['pi' => (int) $intent['id'], 'w' => $webhookId]);
+
         // 4. Map to a ledger event. Unmappable events are acked, not appended.
         $ledgerType = self::mapEventType($eventType);
         // Flutterwave sends charge.completed for both outcomes — the transaction
