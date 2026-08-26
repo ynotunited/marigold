@@ -13,7 +13,7 @@ if (empty($_ENV['GOOGLE_CLIENT_ID']) || empty($_ENV['GOOGLE_CLIENT_SECRET'])) {
 }
 
 $clientId    = $_ENV['GOOGLE_CLIENT_ID'];
-$redirectUri = $_ENV['GOOGLE_REDIRECT_URI'] ?? 'https://marigold.gt.tc/public/auth/google-callback.php';
+$redirectUri = $_ENV['GOOGLE_REDIRECT_URI'] ?? 'https://marigoldsignatureng.com/public/auth/google-callback.php';
 $scope       = 'openid email profile';
 
 $state = bin2hex(random_bytes(32));

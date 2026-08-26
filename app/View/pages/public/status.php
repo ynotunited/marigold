@@ -34,7 +34,7 @@ $statusUrl = $status_url ?? '#';
                     <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
                     <span style="font-weight:600;font-size:0.9rem;">Website</span>
                 </div>
-                <span style="font-size:0.8rem;color:var(--text-secondary,#888);">marigold.gt.tc</span>
+                <span style="font-size:0.8rem;color:var(--text-secondary,#888);">marigoldsignatureng.com</span>
             </div>
             <div style="padding:1rem 1.25rem;border:1px solid var(--border,rgba(0,0,0,.08));border-radius:12px;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">

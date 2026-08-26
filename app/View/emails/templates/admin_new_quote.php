@@ -4,4 +4,4 @@
     <strong>Reference:</strong> <?= htmlspecialchars($quote_id) ?><br>
     <strong>Date:</strong> <?= htmlspecialchars($date) ?>
 </div>
-<center><a href="https://marigoldsignatureng.com/admin/quotes/<?= htmlspecialchars($quote_id) ?>" class="btn">Review Request</a></center>
+<center><a href="<?= $base_url ?? 'https://marigoldsignatureng.com' ?>/admin/quotes/<?= htmlspecialchars($quote_id) ?>" class="btn">Review Request</a></center>

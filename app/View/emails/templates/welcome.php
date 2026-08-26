@@ -2,5 +2,5 @@
 <p>Hello <?= htmlspecialchars($customer_name) ?>,</p>
 <p>Thank you for creating an account with Marigold Signature. We are thrilled to have you join our community.</p>
 <p>You can now log in to your account to view our premium corporate gifting catalog, request custom quotes, and track your orders.</p>
-<center><a href="https://marigoldsignatureng.com/login" class="btn">Login to Your Account</a></center>
+<center><a href="<?= $base_url ?? 'https://marigoldsignatureng.com' ?>/login" class="btn">Login to Your Account</a></center>
 <p>If you need any assistance, our dedicated account managers are here to help.</p>
