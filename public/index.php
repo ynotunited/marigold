@@ -135,13 +135,6 @@ function money_format(float $amount, ?string $code = null): string
     return \App\Core\Money::format($amount, $code);
 }
 
-// Check Maintenance Mode
-if (file_exists(BASE_PATH . '/.maintenance') || ($_ENV['APP_MAINTENANCE'] ?? 'false') === 'true') {
-    http_response_code(503);
-    require BASE_PATH . '/app/View/pages/public/errors/maintenance.php';
-    exit;
-}
-
 // Set error handler
 set_exception_handler(['App\Core\ExceptionHandler', 'handle']);
 set_error_handler(['App\Core\ExceptionHandler', 'errorHandler']);
@@ -171,6 +164,22 @@ if (isset($_GET['currency']) && in_array(strtoupper($_GET['currency']), \App\Cor
 } elseif (!\App\Core\Session::get('currency') && isset($_COOKIE['ms_currency'])
     && in_array(strtoupper($_COOKIE['ms_currency']), \App\Core\Money::supportedCodes(), true)) {
     \App\Core\Session::set('currency', strtoupper($_COOKIE['ms_currency']));
+}
+
+// Check Maintenance Mode — bypass for admins so they can manage the site
+$isMaintenance = file_exists(BASE_PATH . '/.maintenance') || ($_ENV['APP_MAINTENANCE'] ?? 'false') === 'true';
+if ($isMaintenance) {
+    $roles = \App\Core\Session::get('user_roles') ?? [];
+    $isAdmin = in_array('super-admin', $roles) || in_array('admin', $roles);
+    // Also allow the maintenance toggle route itself (POST) and admin API routes
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $isApi = stripos($uri, '/api') === 0;
+    $isToggle = stripos($uri, '/admin/maintenance') === 0;
+    if (!$isAdmin && !$isToggle && !$isApi) {
+        http_response_code(503);
+        require BASE_PATH . '/app/View/pages/public/errors/maintenance.php';
+        exit;
+    }
 }
 
 // HTML pages are never cached by the browser: the storefront embeds the live
@@ -357,6 +366,7 @@ $router->get('/admin/settings', adminRoute(['App\Controller\Admin\AdminSystemCon
 $router->get('/admin/users', adminRoute(['App\Controller\Admin\AdminSystemController', 'users']));
 $router->get('/admin/roles', adminRoute(['App\Controller\Admin\AdminSystemController', 'roles']));
 $router->get('/admin/audit', adminRoute(['App\Controller\Admin\AdminSystemController', 'audit']));
+$router->post('/admin/maintenance/toggle', adminRoute(['App\Controller\Admin\AdminDashboardController', 'toggleMaintenance']));
 
 // GDPR & Data Retention Routes
 $router->get('/admin/gdpr', adminRoute(['App\Controller\Admin\AdminGdprController', 'index']));

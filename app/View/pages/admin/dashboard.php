@@ -39,6 +39,31 @@
     <?php endforeach; ?>
 </div>
 
+<!-- ========== MAINTENANCE MODE ========== -->
+<div class="bg-[#111] border border-[var(--border)] rounded-[16px] p-5 mb-8" x-data="maintenanceToggle()">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="w-11 h-11 rounded-[10px] flex items-center justify-center"
+                 :class="on ? 'bg-red-500/10 border border-red-500/30' : 'bg-green-500/10 border border-green-500/30'">
+                <i data-lucide="power" class="w-5 h-5" :class="on ? 'text-red-400' : 'text-green-400'"></i>
+            </div>
+            <div>
+                <h3 class="font-bold font-manrope text-sm">Maintenance Mode</h3>
+                <p class="text-xs text-[var(--text-muted)] mt-0.5" x-text="on ? 'Site is in maintenance — public visitors see the maintenance page' : 'Site is live — all visitors can access the storefront'"></p>
+            </div>
+        </div>
+        <button @click="toggle()" :disabled="loading"
+                class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#111]"
+                :class="on ? 'bg-red-500 focus:ring-red-500' : 'bg-green-500 focus:ring-green-500'"
+                role="switch" :aria-checked="on.toString()" aria-label="Toggle maintenance mode">
+            <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200"
+                  :class="on ? 'translate-x-6' : 'translate-x-1'"></span>
+        </button>
+    </div>
+    <div x-show="loading" x-cloak class="mt-3 text-xs text-[var(--text-muted)]">Updating...</div>
+    <div x-show="error" x-cloak class="mt-3 text-xs text-red-400" x-text="error"></div>
+</div>
+
 <!-- ========== CHARTS ROW ========== -->
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
 
@@ -276,4 +301,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     lucide.createIcons();
 });
+
+function maintenanceToggle() {
+    return {
+        on: <?= file_exists(BASE_PATH . '/.maintenance') ? 'true' : 'false' ?>,
+        loading: false,
+        error: null,
+        async toggle() {
+            this.loading = true;
+            this.error = null;
+            try {
+                const res = await fetch('<?= app_url('/admin/maintenance/toggle') ?>', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await res.json();
+                this.on = data.maintenance === 'on';
+            } catch (e) {
+                this.error = 'Failed to toggle maintenance mode.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
 </script>

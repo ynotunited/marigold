@@ -154,4 +154,33 @@ class AdminDashboardController extends Controller
         if ($diff < 604800) return floor($diff / 86400) . ' days ago';
         return date('M j', $ts);
     }
+
+    /**
+     * Toggle maintenance mode on/off. Writes/removes the .maintenance sentinel
+     * file. Only accessible to admins.
+     */
+    public function toggleMaintenance(): void
+    {
+        $sentinel = BASE_PATH . '/.maintenance';
+        $isOn = file_exists($sentinel);
+
+        if ($isOn) {
+            @unlink($sentinel);
+            $status = 'off';
+        } else {
+            @file_put_contents($sentinel, json_encode([
+                'enabled_at' => date('c'),
+                'enabled_by' => Session::get('user_id') ?? 'admin',
+            ]));
+            $status = 'on';
+        }
+
+        // Audit log
+        \App\Core\Logger::info(
+            "Maintenance mode turned {$status} by user #" . (Session::get('user_id') ?? '?'),
+            'admin'
+        );
+
+        $this->json(['maintenance' => $status]);
+    }
 }
